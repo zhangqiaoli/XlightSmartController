@@ -26,11 +26,11 @@
  * 3. Define basic data structures
  * 4. Define fundamental status machine
  * 5. Define primary messages
+ * 6. Define cloud variables and Functions
  *
  * ToDo:
- * 1. Define cloud variables and Functions
- * 2. Include MySensor lib
- * 3. Include MQTT lib
+ * 1. Include MySensor lib
+ * 2. Include MQTT lib
 **/
 
 //------------------------------------------------------------------
@@ -51,19 +51,8 @@
 #define RTE_DELAY_SELFCHECK       1000        // Self-check interval
 
 //------------------------------------------------------------------
-// Cloud Variables & Functions
-//------------------------------------------------------------------
-// ToDo:
-
-//------------------------------------------------------------------
 // Program Body Begins Here
 //------------------------------------------------------------------
-// Initialize Cloud Objects
-void InitCloudObj()
-{
-  // ToDo:
-}
-
 // Define hardware IntervalTimer
 IntervalTimer sysTimer;
 void SysteTimerCB()
@@ -96,7 +85,7 @@ void setup()
   theSys.InitNetwork();
 
   // Initiaze Cloud Variables & Functions
-  InitCloudObj();
+  theSys.InitCloudObj();
 
   // Initialize Sensors
   theSys.InitSensors();

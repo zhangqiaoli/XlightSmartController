@@ -22,13 +22,14 @@
  *
  * ToDo:
 **/
-
 #include "xlSmartController.h"
-#include "xlxConfig.h"
-#include "xlxLogger.h"
 #include "xliMemoryMap.h"
 #include "xliPinMap.h"
+#include "xlxConfig.h"
+#include "xlxLogger.h"
+
 #include "Adafruit_DHT.h"
+#include "ArduinoJson.h"
 #include "LightSensor.h"
 #include "TimeAlarms.h"
 
@@ -46,8 +47,6 @@ LightSensor senLight(PIN_SEN_LIGHT);
 //------------------------------------------------------------------
 SmartControllerClass::SmartControllerClass()
 {
-  m_Status = STATUS_OFF;
-  m_SysID = "";
   m_isRF = false;
   m_isBLE = false;
   m_isLAN = false;
@@ -58,8 +57,8 @@ SmartControllerClass::SmartControllerClass()
 void SmartControllerClass::Init()
 {
   // Get System ID
-  m_Status = STATUS_INIT;
   m_SysID = System.deviceID();
+  m_devStatus = STATUS_INIT;
 
   // Initialize Logger: Serial & Flash
   theLog.Init(m_SysID);
@@ -103,7 +102,7 @@ void SmartControllerClass::InitNetwork()
     //theLog.InitSysLog();
     //theLog.InitCloud();
   }
-  else if( m_Status == STATUS_BMW && IsLANGood() )
+  else if( GetStatus() == STATUS_BMW && IsLANGood() )
   {
     LOGN(LOGTAG_MSG, "LAN is working.");
     SetStatus(STATUS_DIS);
@@ -163,6 +162,15 @@ void SmartControllerClass::InitSensors()
   //...
 }
 
+void SmartControllerClass::InitCloudObj()
+{
+  // Set cloud variable initial value
+  m_tzString = theConfig.GetTimeZoneJSON();
+
+  CloudObjClass::InitCloudObj();
+  LOGN(LOGTAG_MSG, "Cloud Objects registered.");
+}
+
 // Get the controller started
 BOOL SmartControllerClass::Start()
 {
@@ -172,16 +180,21 @@ BOOL SmartControllerClass::Start()
   return true;
 }
 
+String SmartControllerClass::GetSysID()
+{
+  return m_SysID;
+}
+
 UC SmartControllerClass::GetStatus()
 {
-  return m_Status;
+  return (UC)m_devStatus;
 }
 
 void SmartControllerClass::SetStatus(UC st)
 {
-  LOGN(LOGTAG_STATUS, "System status changed from %d to %d", m_Status, st);
-  if( m_Status != st )
-    m_Status = st;
+  LOGN(LOGTAG_STATUS, "System status changed from %d to %d", m_devStatus, st);
+  if( (UC)m_devStatus != st )
+    m_devStatus = st;
 }
 
 BOOL SmartControllerClass::CheckRF()
@@ -207,12 +220,22 @@ BOOL SmartControllerClass::CheckBLE()
 
 BOOL SmartControllerClass::SelfCheck(UL ms)
 {
+  UC tickSaveConfig = 0;
+
   // Check timers
+  // ToDo:...
 
   // Check all alarms
   Alarm.delay(ms);
 
+  // Save config if it was changed
+  if( ++tickSaveConfig > 10 ) {
+    tickSaveConfig = 0;
+    theConfig.SaveConfig();
+  }
+
   // ToDo:
+  //...
 
   return true;
 }
@@ -235,4 +258,47 @@ BOOL SmartControllerClass::IsLANGood()
 BOOL SmartControllerClass::IsWANGood()
 {
   return m_isWAN;
+}
+
+int SmartControllerClass::CldSetTimeZone(String tzStr)
+{
+  // Parse JSON string
+  StaticJsonBuffer<200> jsonBuf;
+  JsonObject& root = jsonBuf.parseObject((char *)tzStr.c_str());
+  if( !root.success() )
+    return -1;
+  if( root.size() != 3 )  // Expected 3 KVPs
+    return -1;
+
+  // Set timezone id
+  if( !theConfig.SetTimeZoneID((US)root["id"]) )
+    return 1;
+
+  // Set timezone offset
+  if( !theConfig.SetTimeZoneOffset((SHORT)root["offset"]) )
+    return 2;
+
+  // Set timezone offset
+  if( !theConfig.SetTimeZoneOffset((UC)root["dst"]) )
+    return 3;
+
+  return 0;
+}
+
+int SmartControllerClass::CldPowerSwitch(String swStr)
+{
+  BOOL blnOn;
+
+  swStr.toLowerCase();
+  blnOn = (swStr == "0" || swStr == "off");
+
+  // ToDo: turn the switch on or off
+  //SetStatus();
+  return 0;
+}
+
+int SmartControllerClass::CldJSONCommand(String jsonData)
+{
+  // ToDo: parse JSON string and execute command
+  return 0;
 }

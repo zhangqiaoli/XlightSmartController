@@ -3,7 +3,6 @@
 #ifndef xlxLogger_h
 #define xlxLogger_h
 
-#include "application.h"
 #include "xliCommon.h"
 
 #define MAX_MESSAGE_LEN     480

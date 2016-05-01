@@ -29,6 +29,7 @@
 **/
 
 #include "xlxLogger.h"
+#include "xlSmartController.h"
 
 // the one and only instance of LoggerClass
 LoggerClass theLog = LoggerClass();
@@ -109,6 +110,9 @@ void LoggerClass::WriteLog(UC level, const char *tag, const char *msg, ...)
     buf[nSize+1] = '\n';
     Serial.println(buf);
   }
+
+  // Output Log to Particle cloud variable
+  theSys.m_lastMsg = buf;
 
   // ToDo: send log to other destinations
   //buf[nSize] = NULL;

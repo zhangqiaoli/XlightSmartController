@@ -36,12 +36,13 @@
 #include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xliMemoryMap.h"
+#include "xlSmartController.h"
 
 // the one and only instance of ConfigClass
 ConfigClass theConfig = ConfigClass();
 
 //------------------------------------------------------------------
-// Xlight Logger Class
+// Xlight Config Class
 //------------------------------------------------------------------
 ConfigClass::ConfigClass()
 {
@@ -56,7 +57,9 @@ void ConfigClass::InitConfig()
 {
   memset(&m_config, 0x00, sizeof(m_config));
   m_config.version = VERSION_CONFIG_DATA;
-  m_config.timeZone = -5;
+  m_config.timeZone.id = 90;              // Toronto
+  m_config.timeZone.offset = -300;        // -5 hours
+  m_config.timeZone.dst = 1;              // 1 or 0
   m_config.sensorBitmap = 7;
   strcpy(m_config.Organization, XLA_ORGANIZATION);
   strcpy(m_config.ProductName, XLA_PRODUCT_NAME);
@@ -73,8 +76,11 @@ BOOL ConfigClass::LoadConfig()
   {
     EEPROM.get(MEM_CONFIG_OFFSET, m_config);
     if( m_config.version == 0xFF
-      || m_config.timeZone < -12
-      || m_config.timeZone > 12
+      || m_config.timeZone.id == 0
+      || m_config.timeZone.id > 500
+      || m_config.timeZone.dst > 1
+      || m_config.timeZone.offset < -780
+      || m_config.timeZone.offset > 780
       || m_config.numDevices > MAX_DEVICE_PER_CONTROLLER
       || m_config.typeMainDevice == devtypUnknown
       || m_config.typeMainDevice >= devtypDummy )
@@ -181,23 +187,74 @@ BOOL ConfigClass::SetVersion(UC ver)
   }
 }
 
-BYTE ConfigClass::GetTimeZone()
+US ConfigClass::GetTimeZoneID()
 {
-  return m_config.timeZone;
+  return m_config.timeZone.id;
 }
 
-BOOL ConfigClass::SetTimeZone(BYTE tz)
+BOOL ConfigClass::SetTimeZoneID(US tz)
 {
-  if( tz >= -12 && tz <= 12 )
+  if( tz == 0 || tz > 500 )
+    return false;
+
+  if( tz != m_config.timeZone.id )
   {
-    if( tz != m_config.timeZone )
+    m_config.timeZone.id = tz;
+    m_isChanged = true;
+    theSys.m_tzString = GetTimeZoneJSON();
+  }
+  return true;
+}
+
+UC ConfigClass::GetDaylightSaving()
+{
+  return m_config.timeZone.dst;
+}
+
+BOOL ConfigClass::SetDaylightSaving(UC flag)
+{
+  if( flag > 1 )
+    return false;
+
+  if( flag != m_config.timeZone.dst )
+  {
+    m_config.timeZone.dst = flag;
+    m_isChanged = true;
+    theSys.m_tzString = GetTimeZoneJSON();
+  }
+  return true;
+}
+
+SHORT ConfigClass::GetTimeZoneOffset()
+{
+  return m_config.timeZone.offset;
+}
+
+SHORT ConfigClass::GetTimeZoneDSTOffset()
+{
+  return (m_config.timeZone.offset + m_config.timeZone.dst * 60);
+}
+
+BOOL ConfigClass::SetTimeZoneOffset(SHORT offset)
+{
+  if( offset >= -780 && offset <= 780)
+  {
+    if( offset != m_config.timeZone.offset )
     {
-      m_config.timeZone = tz;
+      m_config.timeZone.offset = offset;
       m_isChanged = true;
+      theSys.m_tzString = GetTimeZoneJSON();
     }
     return true;
   }
   return false;
+}
+
+String ConfigClass::GetTimeZoneJSON()
+{
+  String jsonStr = String::format("{\"id\":%d,\"offset\":%d,\"dst\":%d}",
+      GetTimeZoneID(), GetTimeZoneOffset(), GetDaylightSaving());
+  return jsonStr;
 }
 
 String ConfigClass::GetOrganization()

@@ -3,19 +3,17 @@
 #ifndef xlSmartController_h
 #define xlSmartController_h
 
-#include "application.h"
 #include "xliCommon.h"
+#include "xlxCloudObj.h"
 
 class SmartControllerClass;           // forward reference
 
 //------------------------------------------------------------------
 // Smart Controller Class
 //------------------------------------------------------------------
-class SmartControllerClass
+class SmartControllerClass : public CloudObjClass
 {
 private:
-  UC m_Status;
-  String m_SysID;
   BOOL m_isRF;
   BOOL m_isBLE;
   BOOL m_isLAN;
@@ -28,8 +26,10 @@ public:
   void InitNetwork();
   void InitPins();
   void InitSensors();
+  void InitCloudObj();
 
   BOOL Start();
+  String GetSysID();
   UC GetStatus();
   void SetStatus(UC st);
 
@@ -41,6 +41,11 @@ public:
   BOOL IsBLEGood();
   BOOL IsLANGood();
   BOOL IsWANGood();
+
+  // Cloud interface implementation
+  int CldSetTimeZone(String tzStr);
+  int CldPowerSwitch(String swStr);
+  int CldJSONCommand(String jsonData);
 };
 
 //------------------------------------------------------------------
