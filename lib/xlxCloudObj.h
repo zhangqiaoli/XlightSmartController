@@ -4,6 +4,7 @@
 #define xliCloudObj_h
 
 #include "xliCommon.h"
+#include "ArduinoJson.h"
 
 // Comment it off if we don't use Particle public cloud
 /// Notes:
@@ -45,6 +46,10 @@ public:
   String m_jsonData;
   String m_lastMsg;
 
+  float m_temperature;
+  float m_humidity;
+  uint16_t m_brightness;
+
 public:
   CloudObjClass();
 
@@ -52,8 +57,17 @@ public:
   virtual int CldPowerSwitch(String swStr) = 0;
   virtual int CldJSONCommand(String jsonData) = 0;
 
+  BOOL UpdateTemperature(float value);
+  BOOL UpdateHumidity(float value);
+  BOOL UpdateBrigntness(uint16_t value);
+  void UpdateJSONData();
+
 protected:
   void InitCloudObj();
+
+  StaticJsonBuffer<SENSORDATA_JSON_SIZE> m_jBuf;
+  JsonObject *m_jpRoot;
+  JsonObject *m_jpData;
 };
 
 #endif /* xliCloudObj_h */

@@ -45,7 +45,6 @@
 // System level working constants
 //------------------------------------------------------------------
 // Running Time Environment Parameters
-#define RTE_DELAY_LOOP            5000        // 5000ms per loop
 #define RTE_DELAY_PUBLISH         500
 #define RTE_DELAY_SYSTIMER        500         // System Timer interval, can be very fast, e.g. 500 means 250ms
 #define RTE_DELAY_SELFCHECK       1000        // Self-check interval
@@ -61,7 +60,7 @@ void SysteTimerCB()
   // e.g: fast blink, slow blink, breath, etc
   // ToDo:
 
-  // ToDo:
+  // ToDo: MIC input (tone detection)
 }
 
 void setup()
@@ -94,16 +93,21 @@ void setup()
   theSys.Start();
 }
 
+// Notes: approximate RTE_DELAY_SELFCHECK ms per loop
+/// If you need more accurate and faster timer, do it with sysTimer
 void loop()
 {
+  static UC tick = 0;
+
   // ToDo: process commands
 
-  // ToDo: collect data
+  // Collect data
+  theSys.CollectData(tick++);
 
   // ToDo: transfer data
 
   // ToDo: status synchronize
 
-  // Self-test & alarm trigger
+  // Self-test & alarm trigger, also insert delay between each loop
   theSys.SelfCheck(RTE_DELAY_SELFCHECK);
 }

@@ -32,6 +32,16 @@ CloudObjClass::CloudObjClass()
 {
   m_SysID = "";
   m_devStatus = STATUS_OFF;
+  m_temperature = 0.0;
+  m_humidity = 0.0;
+  m_brightness = 0;
+  m_jpRoot = &(m_jBuf.createObject());
+  if( m_jpRoot->success() ) {
+    (*m_jpRoot)["device"] = m_SysID.c_str();
+    m_jpData = &(m_jpRoot->createNestedObject("sensor"));
+  } else {
+    m_jpData = &(JsonObject::invalid());
+  }
 }
 
 // Initialize Cloud Variables & Functions
@@ -48,4 +58,58 @@ void CloudObjClass::InitCloudObj()
   Particle.function(CLF_PowerSwitch, &CloudObjClass::CldPowerSwitch, this);
   Particle.function(CLF_JSONCommand, &CloudObjClass::CldJSONCommand, this);
 #endif
+}
+
+// Here we can either send/publish data on individual data entry basis,
+/// or compose data entries into one larger json string and transfer it in main loop.
+BOOL CloudObjClass::UpdateTemperature(float value)
+{
+  if( m_temperature != value ) {
+    m_temperature = value;
+    if( m_jpData->success() )
+    {
+      (*m_jpData)["DHTt"] = value;
+      UpdateJSONData();
+    }
+    return true;
+  }
+  return false;
+}
+
+BOOL CloudObjClass::UpdateHumidity(float value)
+{
+  if( m_humidity != value ) {
+    m_humidity = value;
+    if( m_jpData->success() )
+    {
+      (*m_jpData)["DHTh"] = value;
+      UpdateJSONData();
+    }
+    return true;
+  }
+  return false;
+}
+
+BOOL CloudObjClass::UpdateBrigntness(uint16_t value)
+{
+  if( m_brightness != value ) {
+    m_brightness = value;
+    if( m_jpData->success() )
+    {
+      (*m_jpData)["ALS"] = value;
+      UpdateJSONData();
+    }
+    return true;
+  }
+  return false;
+}
+
+// Compose JSON Data String
+void CloudObjClass::UpdateJSONData()
+{
+  if( m_jpData->success() ) {
+    char buf[SENSORDATA_JSON_SIZE];
+    m_jpData->printTo(buf, SENSORDATA_JSON_SIZE);
+    m_jsonData = buf;
+  }
 }

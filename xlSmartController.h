@@ -42,6 +42,11 @@ public:
   BOOL IsLANGood();
   BOOL IsWANGood();
 
+  void CollectData(UC tick);
+
+  // Device Control Functions
+  int DevSoftSwitch(BOOL sw, UC dev = 0);
+
   // Cloud interface implementation
   int CldSetTimeZone(String tzStr);
   int CldPowerSwitch(String swStr);

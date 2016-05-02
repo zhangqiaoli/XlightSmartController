@@ -153,7 +153,7 @@ void SmartControllerClass::InitSensors()
   }
 
   // Light
-  if( theConfig.IsSensorEnabled(sensorLIGHT) ) {
+  if( theConfig.IsSensorEnabled(sensorALS) ) {
     senLight.begin(SEN_LIGHT_MIN, SEN_LIGHT_MAX);
     LOGD(LOGTAG_MSG, "Light sensor works.");
   }
@@ -260,10 +260,100 @@ BOOL SmartControllerClass::IsWANGood()
   return m_isWAN;
 }
 
+// Collect data from all enabled sensors
+/// use tick to control the collection speed of each sensor,
+/// and avoid reading too many data in one loop
+void SmartControllerClass::CollectData(UC tick)
+{
+  BOOL blnReadDHT = false;
+  BOOL blnReadALS = false;
+  BOOL blnReadPIR = false;
+
+  switch( GetStatus() ) {
+    case STATUS_DIS:
+    case STATUS_NWS:    // Normal speed
+      if( theConfig.IsSensorEnabled(sensorDHT) ) {
+        if( tick % SEN_DHT_SPEED_NORMAL == 0 )
+          blnReadDHT = true;
+      }
+      if( theConfig.IsSensorEnabled(sensorALS) ) {
+        if( tick % SEN_ALS_SPEED_NORMAL == 0 )
+          blnReadALS = true;
+      }
+      if( theConfig.IsSensorEnabled(sensorPIR) ) {
+        if( tick % SEN_PIR_SPEED_NORMAL == 0 )
+          blnReadPIR = true;
+      }
+      break;
+
+    case STATUS_SLP:    // Lower speed in sleep mode
+      if( theConfig.IsSensorEnabled(sensorDHT) ) {
+        if( tick % SEN_DHT_SPEED_LOW == 0 )
+          blnReadDHT = true;
+      }
+      if( theConfig.IsSensorEnabled(sensorALS) ) {
+        if( tick % SEN_ALS_SPEED_LOW == 0 )
+          blnReadALS = true;
+      }
+      if( theConfig.IsSensorEnabled(sensorPIR) ) {
+        if( tick % SEN_PIR_SPEED_LOW == 0 )
+          blnReadPIR = true;
+      }
+      break;
+
+    default:
+      return;
+  }
+
+  // Read from DHT
+  if( blnReadDHT ) {
+    float t = senDHT.getTempCelcius();
+    float h = senDHT.getHumidity();
+
+    if( !isnan(t) ) {
+      UpdateTemperature(t);
+    }
+    if( !isnan(h) ) {
+      UpdateHumidity(h);
+    }
+  }
+
+  // Read from ALS
+  if( blnReadALS ) {
+    UpdateBrigntness(senLight.getLevel());
+  }
+
+  // Motion detection
+  if( blnReadPIR ) {
+    // ToDo:...
+  }
+
+  // Proximity detection
+  // ToDo: Wi-Fi, BLE, etc.
+}
+
+//------------------------------------------------------------------
+// Device Control Functions
+//------------------------------------------------------------------
+// Turn the switch of specific device and all devices on or off
+/// Input parameters:
+///   sw: true = on; false = off
+///   dev: device id or 0 (all devices under this controller)
+int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
+{
+  // ToDo:
+  //SetStatus();
+
+  return 0;
+}
+
+//------------------------------------------------------------------
+// Cloud interface implementation
+//------------------------------------------------------------------
 int SmartControllerClass::CldSetTimeZone(String tzStr)
 {
   // Parse JSON string
-  StaticJsonBuffer<200> jsonBuf;
+  StaticJsonBuffer<COMMAND_JSON_SIZE> jsonBuf;
   JsonObject& root = jsonBuf.parseObject((char *)tzStr.c_str());
   if( !root.success() )
     return -1;
@@ -278,7 +368,7 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
   if( !theConfig.SetTimeZoneOffset((SHORT)root["offset"]) )
     return 2;
 
-  // Set timezone offset
+  // Set timezone dst
   if( !theConfig.SetTimeZoneOffset((UC)root["dst"]) )
     return 3;
 
@@ -292,8 +382,9 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
   swStr.toLowerCase();
   blnOn = (swStr == "0" || swStr == "off");
 
-  // ToDo: turn the switch on or off
-  //SetStatus();
+  // Turn the switch on or off
+  DevSoftSwitch(blnOn);
+
   return 0;
 }
 

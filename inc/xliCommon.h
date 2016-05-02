@@ -35,17 +35,34 @@
 #define SERIALPORT_SPEED_HIGH     115200
 #define SERIALPORT_SPEED_DEFAULT  SERIALPORT_SPEED_LOW
 
+// Sensor Read Speed (in ticks)
+#define SEN_DHT_SPEED_LOW         30
+#define SEN_DHT_SPEED_NORMAL      5
+#define SEN_DHT_SPEED_HIGH        2
+
+#define SEN_ALS_SPEED_LOW         10
+#define SEN_ALS_SPEED_NORMAL      2
+#define SEN_ALS_SPEED_HIGH        1
+
+#define SEN_PIR_SPEED_LOW         4
+#define SEN_PIR_SPEED_NORMAL      2
+#define SEN_PIR_SPEED_HIGH        1
+
 // Maximun number of device associated to one controller
 #define MAX_DEVICE_PER_CONTROLLER 16
+
+// Maximun JSON data length
+#define COMMAND_JSON_SIZE         64
+#define SENSORDATA_JSON_SIZE      196
 
 // Sensor list: maximun 16 sensors
 typedef enum
 {
   sensorDHT = 0,
-  sensorLIGHT,
+  sensorALS,
   sensorMIC,
   sensorVIBRATION,
-  sensorIRED,
+  sensorPIR,
   sensorSMOKE,
   sensorGAS,
   sensorDUST,
