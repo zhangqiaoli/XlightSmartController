@@ -97,7 +97,7 @@ void LoggerClass::WriteLog(UC level, const char *tag, const char *msg, ...)
   char buf[MAX_MESSAGE_LEN+2];
 
   // Prepare message
-  int nPos = snprintf(buf, MAX_MESSAGE_LEN - 1, "%s %02d:%02d:%02d %d %s",
+  int nPos = snprintf(buf, MAX_MESSAGE_LEN, "%s %02d:%02d:%02d %d %s",
       m_SysID.c_str(), Time.hour(), Time.minute(), Time.second(), level, tag);
   va_list args;
   va_start(args, msg);
@@ -112,8 +112,13 @@ void LoggerClass::WriteLog(UC level, const char *tag, const char *msg, ...)
   }
 
   // Output Log to Particle cloud variable
-  theSys.m_lastMsg = buf;
+  buf[nSize] = NULL;
+  if( level <= m_level[LOGDEST_CLOUD] )
+    theSys.m_lastMsg = buf;
 
   // ToDo: send log to other destinations
-  //buf[nSize] = NULL;
+  //if( level <= m_level[LOGDEST_SYSLOG] ) {
+  //;}
+  //if( level <= m_level[LOGDEST_FLASH] ) {
+  //}
 }
