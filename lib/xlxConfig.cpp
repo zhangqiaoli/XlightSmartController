@@ -28,7 +28,7 @@
  * 4. Please refer to xliMemoryMap.h for memory allocation.
  *
  * ToDo:
- * 1.
+ * 1. Move default config values to header as global #define's
  * 2.
  * 3.
 **/
@@ -87,7 +87,7 @@ BOOL ConfigClass::LoadConfig()
     {
       InitConfig();
       m_isChanged = true;
-      LOGW(LOGTAG_MSG, "Sysconfig is empety, use default settings.");
+      LOGW(LOGTAG_MSG, "Sysconfig is empty, use default settings.");
       SaveConfig();
     }
     else
