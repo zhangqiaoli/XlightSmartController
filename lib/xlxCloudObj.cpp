@@ -69,7 +69,6 @@ BOOL CloudObjClass::UpdateTemperature(float value)
     if( m_jpData->success() )
     {
       (*m_jpData)["DHTt"] = value;
-      UpdateJSONData();
     }
     return true;
   }
@@ -83,7 +82,6 @@ BOOL CloudObjClass::UpdateHumidity(float value)
     if( m_jpData->success() )
     {
       (*m_jpData)["DHTh"] = value;
-      UpdateJSONData();
     }
     return true;
   }
@@ -97,7 +95,6 @@ BOOL CloudObjClass::UpdateBrigntness(uint16_t value)
     if( m_jpData->success() )
     {
       (*m_jpData)["ALS"] = value;
-      UpdateJSONData();
     }
     return true;
   }
@@ -111,5 +108,10 @@ void CloudObjClass::UpdateJSONData()
     char buf[SENSORDATA_JSON_SIZE];
     m_jpData->printTo(buf, SENSORDATA_JSON_SIZE);
     m_jsonData = buf;
+
+    // Publish sensor data
+#ifdef USE_PARTICLE_CLOUD
+    Particle.publish(CLT_NAME_SensorData, m_jsonData, CLT_TTL_SensorData, PRIVATE);
+#endif
   }
 }

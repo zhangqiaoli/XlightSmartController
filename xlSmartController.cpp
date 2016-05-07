@@ -328,6 +328,11 @@ void SmartControllerClass::CollectData(UC tick)
     // ToDo:...
   }
 
+  // Update json data and publish on to the cloud
+  if( blnReadDHT || blnReadALS || blnReadPIR ) {
+    UpdateJSONData();
+  }
+
   // Proximity detection
   // ToDo: Wi-Fi, BLE, etc.
 }
