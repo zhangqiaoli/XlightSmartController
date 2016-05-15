@@ -129,7 +129,7 @@ BOOL ConfigClass::SaveConfig()
 {
   if( m_isChanged )
   {
-    EEPROM.get(MEM_CONFIG_OFFSET, m_config);
+    EEPROM.put(MEM_CONFIG_OFFSET, m_config);
     m_isChanged = false;
     LOGI(LOGTAG_MSG, "Sysconfig saved.");
   }
