@@ -144,7 +144,10 @@ BOOL ConfigClass::SaveConfig()
 
   if( m_isSCTChanged )
   {
-    //ToDo:
+	//ToDo: Read SCT table, add/delete changed alarm/timer entries
+	
+	//ToDo: create new alarms/timers (tie to SmartControllerClass::AlarmTimerTriggered() function)
+	//ToDo: create updateAlarm() func with param of only info to be used to create the alarm/timer
 
     m_isSCTChanged = false;
     LOGD(LOGTAG_MSG, "Schedule table saved.");

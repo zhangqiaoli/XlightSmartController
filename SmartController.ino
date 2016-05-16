@@ -31,7 +31,6 @@
  * ToDo:
  * 1. Include MySensor lib
  * 2. Include MQTT lib
- 333333
 **/
 
 //------------------------------------------------------------------
@@ -55,6 +54,7 @@
 //------------------------------------------------------------------
 // Define hardware IntervalTimer
 IntervalTimer sysTimer;
+
 void SysteTimerCB()
 {
   // Change Status Indicator according to system status
@@ -69,6 +69,10 @@ void SysteTimerCB()
 
 void setup()
 {
+  //theSys: SmartControllerClass
+  //theConfig: ConfigClass
+  //sysTimer: IntervalTimer (Spark)
+
   // System Initialization
   theSys.Init();
 
@@ -79,7 +83,8 @@ void setup()
   theSys.InitPins();
 
   // Start system timer: callback every n * 0.5ms using hmSec timescale
-  sysTimer.begin(SysteTimerCB, RTE_DELAY_SYSTIMER, hmSec);
+  //Use TIMER6 to retain PWM capabilities on all pins
+  sysTimer.begin(SysteTimerCB, RTE_DELAY_SYSTIMER, hmSec, TIMER6);
 
   // Initialization Radio Interfaces
   theSys.InitRadio();

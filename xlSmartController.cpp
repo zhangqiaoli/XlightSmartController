@@ -97,9 +97,9 @@ void SmartControllerClass::InitRadio()
 /// check LAN & WAN
 void SmartControllerClass::InitNetwork()
 {
-  // Check LAN
+  // Check WAN and LAN
   CheckNetwork();
-  if( IsWANGood() )
+  if( IsWANGood() ) 
   {
     LOGN(LOGTAG_MSG, "WAN is working.");
     SetStatus(STATUS_NWS);
@@ -227,21 +227,23 @@ void SmartControllerClass::SetStatus(UC st)
 
 BOOL SmartControllerClass::CheckRF()
 {
-  // ToDo:
+  // ToDo: change value of m_isRF
 
   return true;
 }
 
 BOOL SmartControllerClass::CheckNetwork()
 {
-  // ToDo:
+  // ToDo: check WAN, change value of m_isWAN 
+
+  // ToDo: check LAN, change value of m_isLan
 
   return true;
 }
 
 BOOL SmartControllerClass::CheckBLE()
 {
-  // ToDo:
+  // ToDo: change value of m_isBLE
 
   return true;
 }
@@ -250,10 +252,10 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 {
   UC tickSaveConfig = 0;
 
-  // Check timers
+  // Check timers: check state, reset if necessary 
   // ToDo:...
 
-  // Check all alarms
+  // Check all alarms. This triggers them.
   Alarm.delay(ms);
 
   // Save config if it was changed
@@ -442,5 +444,20 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 int SmartControllerClass::CldJSONCommand(String jsonData)
 {
   // ToDo: parse JSON string and execute command
+
+  // ToDo: if command is change schedule, add/delete entry in schedule, set m_isSCTChanged true
+  
+	
   return 0;
+}
+
+//------------------------------------------------------------------
+// Set New Alarms and Timers
+//------------------------------------------------------------------
+void SmartControllerClass::AlarmTimerTriggered(int SCTindex) 
+{
+  //ToDo: read schedule table entry for metadata
+  
+  //ToDo: impliment alarm sound/message using metadata
+  //...
 }

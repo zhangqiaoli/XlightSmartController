@@ -32,15 +32,6 @@
 #define CLF_SetHue              "SetHue"
 #define CLF_SetCurTime          "SetCurTime"
 
-// Publish topics, notes:
-// 1. For Particle cloud the publishing speed is about 1 event per sec.
-// 2. The length of the topic is limited to a max of 63 characters.
-// 3. The maximum length of data is 255 bytes.
-#define CLT_NAME_Alarm          "xlc-event-alarm"
-#define CLT_TTL_Alarm           3600              // 1 hour
-#define CLT_NAME_SensorData     "xlc-data-sensor"
-#define CLT_TTL_SensorData      SEN_DHT_SPEED_LOW
-
 
 //------------------------------------------------------------------
 // Xlight CloudObj Class
