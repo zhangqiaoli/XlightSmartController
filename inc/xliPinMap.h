@@ -4,8 +4,11 @@
 #ifndef xliPinMap_h
 #define xliPinMap_h
 
-// MCU Type: Photon or P1
+// MCU Type: Particle family, and Photon or P1
+#define MCU_TYPE_Particle
+#ifdef MCU_TYPE_Particle
 #define MCU_TYPE_P1
+#endif
 
 //------------------------------------------------------------------
 // MCU Pin Usage

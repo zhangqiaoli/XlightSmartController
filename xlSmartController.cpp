@@ -120,6 +120,9 @@ void SmartControllerClass::InitPins()
   pinMode(PIN_LED_GREEN, OUTPUT);
   pinMode(PIN_LED_BLUE, OUTPUT);
 #endif
+
+// Workaround for Paricle Analog Pin mode problem
+#ifndef MCU_TYPE_Particle
   pinMode(PIN_BTN_UP, INPUT);
   pinMode(PIN_BTN_OK, INPUT);
   pinMode(PIN_BTN_DOWN, INPUT);
@@ -130,6 +133,7 @@ void SmartControllerClass::InitPins()
   pinMode(PIN_SEN_LIGHT, INPUT);
   pinMode(PIN_SEN_MIC, INPUT);
   pinMode(PIN_SEN_PIR, INPUT);
+#endif
 
   // Set communication pin mode
   pinMode(PIN_BLE_RX, INPUT);
