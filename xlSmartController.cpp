@@ -346,7 +346,7 @@ void SmartControllerClass::CollectData(UC tick)
 
   // Read from ALS
   if( blnReadALS ) {
-    UpdateBrigntness(senLight.getLevel());
+    UpdateBrightness(senLight.getLevel());
   }
 
   // Motion detection

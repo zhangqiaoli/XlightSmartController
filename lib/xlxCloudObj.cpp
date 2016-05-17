@@ -88,7 +88,7 @@ BOOL CloudObjClass::UpdateHumidity(float value)
   return false;
 }
 
-BOOL CloudObjClass::UpdateBrigntness(uint16_t value)
+BOOL CloudObjClass::UpdateBrightness(uint16_t value)
 {
   if( m_brightness != value ) {
     m_brightness = value;

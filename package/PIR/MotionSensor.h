@@ -1,7 +1,7 @@
 //  MotionSensor.h - Xlight motion sensor lib
 
 #ifndef MotionSensor_h
-#define MotionSensor_h 
+#define MotionSensor_h
 
 #include "application.h"
 
@@ -9,7 +9,7 @@ class MotionSensor {
 private:
 	uint8_t _pin;
 	uint8_t _type;
-	boolean firstreading;
+	bool firstreading;
 	unsigned long _lastreadtime;
 
 	bool pirState = 0;
@@ -17,7 +17,7 @@ private:
 	bool _motion = 0;
 	//unsigned long currentlow = 0;
 	//unsigned long lastlow = 0;
-	
+
 	uint16_t read();
 
 public:
@@ -27,4 +27,3 @@ public:
 };
 
 #endif /* MotionSensor_h */
-
