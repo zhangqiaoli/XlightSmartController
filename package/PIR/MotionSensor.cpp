@@ -40,7 +40,7 @@ void MotionSensor::begin()
 	_lastValue = 0;
 }
 
-uint16_t MotionSensor::getMotion()
+bool MotionSensor::getMotion()
 {
 	bool isMotionDetected = read();
 	return isMotionDetected;

@@ -21,7 +21,7 @@ private:
 public:
 	MotionSensor(uint8_t pin, uint8_t type = 0);
 	void begin();
-	uint16_t getLevel();
+	bool getMotion();
 };
 
 #endif /* MotionSensor_h */
