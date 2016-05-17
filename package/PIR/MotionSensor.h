@@ -15,8 +15,6 @@ private:
 	bool pirState = 0;
 	uint16_t _lastValue;
 	bool _motion = 0;
-	//unsigned long currentlow = 0;
-	//unsigned long lastlow = 0;
 
 	uint16_t read();
 

@@ -35,6 +35,7 @@ MotionSensor::MotionSensor(uint8_t pin, uint8_t type)
 
 void MotionSensor::begin()
 {
+	pinMode(_pin, INPUT);
 	_lastreadtime = 0;
 	_lastValue = 0;
 }
