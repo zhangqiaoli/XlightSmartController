@@ -33,20 +33,19 @@ MotionSensor::MotionSensor(uint8_t pin, uint8_t type)
 	firstreading = true;
 }
 
-void LightSensor::begin()
+void MotionSensor::begin()
 {
-	pinMode(_pin, INPUT);
 	_lastreadtime = 0;
 	_lastValue = 0;
 }
 
-uint16_t LightSensor::getMotion()
+uint16_t MotionSensor::getMotion()
 {
 	bool isMotionDetected = read();
 	return isMotionDetected;
 }
 
-bool LightSensor::read()
+bool MotionSensor::read()
 {
 	unsigned long currenttime;
 
