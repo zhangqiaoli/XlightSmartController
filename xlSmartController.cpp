@@ -42,7 +42,11 @@ SmartControllerClass theSys = SmartControllerClass();
 
 DHT senDHT(PIN_SEN_DHT, SEN_TYPE_DHT);
 LightSensor senLight(PIN_SEN_LIGHT);
+
 LedLevelBar indicatorBrightness(ledLBarProgress, 3);
+
+MotionSensor senMotion(PIN_SEN_PIR);
+
 
 //------------------------------------------------------------------
 // Smart Controller Class
@@ -166,11 +170,19 @@ void SmartControllerClass::InitSensors()
     LOGD(LOGTAG_MSG, "Light sensor works.");
   }
 
+
   // Brightness indicator
   indicatorBrightness.configPin(0, PIN_LED_LEVEL_B0);
   indicatorBrightness.configPin(1, PIN_LED_LEVEL_B1);
   indicatorBrightness.configPin(2, PIN_LED_LEVEL_B2);
   indicatorBrightness.setLevel(theConfig.GetBrightIndicator());
+
+  //PIR
+  if( theConfig.IsSensorEnabled(sensorPIR) ) {
+    senMotion.begin();
+    LOGD(LOGTAG_MSG, "Motion sensor works.");
+  }
+
 
   // ToDo:
   //...
@@ -339,7 +351,7 @@ void SmartControllerClass::CollectData(UC tick)
 
   // Motion detection
   if( blnReadPIR ) {
-    // ToDo:...
+	  UpdateMotion(senMotion.getMotion());
   }
 
   // Update json data and publish on to the cloud

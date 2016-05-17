@@ -101,6 +101,19 @@ BOOL CloudObjClass::UpdateBrigntness(uint16_t value)
   return false;
 }
 
+BOOL CloudObjClass::UpdateMotion(bool value)
+{
+  if( m_motion != value ) {
+    m_motion = value;
+    if( m_jpData->success() )
+    {
+      (*m_jpData)["PIR"] = value;
+    }
+    return true;
+  }
+  return false;
+}
+
 // Compose JSON Data String
 void CloudObjClass::UpdateJSONData()
 {
