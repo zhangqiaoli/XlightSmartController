@@ -1,7 +1,7 @@
 /**
 * MotionSensor.cpp - Xlight motion sensor lib
 *
-* Created by Baoshi Sun <bs.sun@datatellit.com>
+* Created by Umar Bhutta <umar.bh@datatellit.com>
 * Copyright (C) 2015-2016 DTIT
 * Full contributor list:
 *
@@ -15,13 +15,12 @@
 *******************************
 *
 * REVISION HISTORY
-* Version 1.0 - Created by Baoshi Sun <bs.sun@datatellit.com>
+* Version 1.0 - Created by Umar Bhutta <umar.bh@datatellit.com>
 *
 * DESCRIPTION
 * 1. support PIR motion sensor (3 pin)
 *
-* ToDo:
-* 1.
+* 
 **/
 
 #include "MotionSensor.h"
