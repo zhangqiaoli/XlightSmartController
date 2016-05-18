@@ -32,6 +32,7 @@
 #include "ArduinoJson.h"
 #include "LedLevelBar.h"
 #include "LightSensor.h"
+#include "MotionSensor.h"
 #include "TimeAlarms.h"
 
 //------------------------------------------------------------------

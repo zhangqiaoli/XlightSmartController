@@ -16,7 +16,7 @@ private:
 	uint16_t _lastValue;
 	bool _motion = 0;
 
-	uint16_t read();
+	bool read();
 
 public:
 	MotionSensor(uint8_t pin, uint8_t type = 0);

@@ -4,6 +4,7 @@
 * Created by Umar Bhutta <umar.bh@datatellit.com>
 * Copyright (C) 2015-2016 DTIT
 * Full contributor list:
+*   Baoshi Sun <bs.sun@datatellit.com>
 *
 * Documentation:
 * Support Forum:
@@ -20,7 +21,7 @@
 * DESCRIPTION
 * 1. support PIR motion sensor (3 pin)
 *
-* 
+*
 **/
 
 #include "MotionSensor.h"
@@ -60,13 +61,13 @@ bool MotionSensor::read()
 		if (_lastValue == 1) {
 			if (pirState == 0) {
 				// we have just turned on
-				motion = 1;
+				_motion = 1;
 				pirState = 1;
 			}
 		}
 		else {
 			if (pirState == 1) {
-				motion = 0;
+				_motion = 0;
 				pirState = 0;
 			}
 		}
@@ -75,5 +76,5 @@ bool MotionSensor::read()
 		_lastreadtime = millis();
 	}
 
-	return motion;
+	return _motion;
 }
