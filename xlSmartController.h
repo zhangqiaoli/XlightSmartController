@@ -47,6 +47,9 @@ public:
   // Device Control Functions
   int DevSoftSwitch(BOOL sw, UC dev = 0);
 
+  // High speed system timer process
+  void FastProcess();
+
   // Cloud interface implementation
   int CldSetTimeZone(String tzStr);
   int CldPowerSwitch(String swStr);

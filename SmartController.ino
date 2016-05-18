@@ -46,7 +46,7 @@
 //------------------------------------------------------------------
 // Running Time Environment Parameters
 #define RTE_DELAY_PUBLISH         500
-#define RTE_DELAY_SYSTIMER        500         // System Timer interval, can be very fast, e.g. 500 means 250ms
+#define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
 #define RTE_DELAY_SELFCHECK       1000        // Self-check interval
 
 //------------------------------------------------------------------
@@ -61,6 +61,9 @@ void SysteTimerCB()
   // ToDo:
 
   // ToDo: MIC input (tone detection)
+
+  // High speed non-block process
+  theSys.FastProcess();
 }
 
 void setup()

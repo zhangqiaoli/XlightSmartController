@@ -30,6 +30,7 @@
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
+#include "LedLevelBar.h"
 #include "LightSensor.h"
 #include "TimeAlarms.h"
 
@@ -41,6 +42,7 @@ SmartControllerClass theSys = SmartControllerClass();
 
 DHT senDHT(PIN_SEN_DHT, SEN_TYPE_DHT);
 LightSensor senLight(PIN_SEN_LIGHT);
+LedLevelBar indicatorBrightness(ledLBarProgress, 3);
 
 //------------------------------------------------------------------
 // Smart Controller Class
@@ -163,6 +165,12 @@ void SmartControllerClass::InitSensors()
     senLight.begin(SEN_LIGHT_MIN, SEN_LIGHT_MAX);
     LOGD(LOGTAG_MSG, "Light sensor works.");
   }
+
+  // Brightness indicator
+  indicatorBrightness.configPin(0, PIN_LED_LEVEL_B0);
+  indicatorBrightness.configPin(1, PIN_LED_LEVEL_B1);
+  indicatorBrightness.configPin(2, PIN_LED_LEVEL_B2);
+  indicatorBrightness.setLevel(theConfig.GetBrightIndicator());
 
   // ToDo:
   //...
@@ -356,6 +364,15 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
   //SetStatus();
 
   return 0;
+}
+
+// High speed system timer process
+void SmartControllerClass::FastProcess()
+{
+  // Refresh LED brightness indicator
+  indicatorBrightness.refreshLevelBar();
+
+  // ToDo:
 }
 
 //------------------------------------------------------------------
