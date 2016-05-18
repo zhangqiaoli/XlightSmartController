@@ -135,13 +135,15 @@ void SmartControllerClass::InitPins()
   pinMode(PIN_SEN_PIR, INPUT);
 #endif
 
+  // Brightness level indicator to LS138
+  pinMode(PIN_LED_LEVEL_B0, OUTPUT);
+  pinMode(PIN_LED_LEVEL_B1, OUTPUT);
+  pinMode(PIN_LED_LEVEL_B2, OUTPUT);
+
   // Set communication pin mode
   pinMode(PIN_BLE_RX, INPUT);
   pinMode(PIN_BLE_TX, OUTPUT);
-  pinMode(PIN_EXT_SPI_MOSI, OUTPUT);
   pinMode(PIN_EXT_SPI_MISO, INPUT);
-  pinMode(PIN_EXT_SPI_STCP, INPUT);
-  pinMode(PIN_EXT_SPI_CS, OUTPUT);
   pinMode(PIN_RF_CHIPSELECT, OUTPUT);
   pinMode(PIN_RF_RESET, OUTPUT);
   pinMode(PIN_RF_EOFFLAG, INPUT);

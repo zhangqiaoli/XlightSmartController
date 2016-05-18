@@ -23,9 +23,10 @@
 #endif
 
 // Digital only GPIO pins (D0 - D7, D0-D4 may also be PWM)
-#define PIN_EXT_SPI_STCP          D0          // HC595 STCP, may also be PWM
-#define PIN_EXT_SPI_CS            D1          // HC595 SPI3CS, may also be PWM
-#define PIN_EXT_SPI_MOSI          D2          // SPI3MOSI, may also be PWM
+#define PIN_LED_LEVEL_B0          D0          // Brightness indicator bit0, may also be PWM
+#define PIN_LED_LEVEL_B1          D1          // Brightness indicator bit1, may also be PWM
+#define PIN_LED_LEVEL_B2          D2          // Brightness indicator bit2, may also be PWM
+
 #define PIN_EXT_SPI_MISO          D3          // SPI3MISO, may also be PWM
 #define PIN_EXT_SPI_SCK           D4          // SPI3SCK
 #define PIN_RF_CHIPSELECT         D5          // LT8910 chip select - output
