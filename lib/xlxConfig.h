@@ -19,28 +19,28 @@
 //------------------------------------------------------------------
 typedef struct
 {
-  US id                       :2;           // timezone id
-  SHORT offset                :2;           // offser in minutes
+  US id;                                    // timezone id
+  SHORT offset;                             // offser in minutes
   UC dst                      :1;           // daylight saving time flag
 } Timezone_t;
 
 typedef struct
 {
-  UC State                    :1;           // Component state
-  UC CW                       :1;           // Brightness of cold white
-  UC WW                       :1;           // Brightness of warm white
-  UC R                        :1;           // Brightness of red
-  UC G                        :1;           // Brightness of green
-  UC B                        :1;           // Brightness of blue
+  UC State                    :4;           // Component state
+  UC CW                       :8;           // Brightness of cold white
+  UC WW                       :8;           // Brightness of warm white
+  UC R                        :8;           // Brightness of red
+  UC G                        :8;           // Brightness of green
+  UC B                        :8;           // Brightness of blue
 } Hue_t;
 
 typedef struct
 {
-  UC version                  :1;           // Data version, other than 0xFF
-  US sensorBitmap             :2;           // Sensor enable bitmap
-  UC indBrightness            :1;           // Indicator of brightness
-  UC typeMainDevice           :1;           // Type of the main lamp
-  UC numDevices               :1;           // Number of devices
+  UC version                  :4;           // Data version, other than 0xFF
+  US sensorBitmap             :16;          // Sensor enable bitmap
+  UC indBrightness            :4;           // Indicator of brightness
+  UC typeMainDevice           :8;           // Type of the main lamp
+  UC numDevices               :8;           // Number of devices
   Timezone_t timeZone;                      // Time zone
   char Organization[24];                    // Organization name
   char ProductName[24];                     // Product name
@@ -52,8 +52,8 @@ typedef struct
 //------------------------------------------------------------------
 typedef struct
 {
-  UC id                       :1;           // ID, 1 based
-  UC type                     :1;           // Type of lamp
+  UC id;                                    // ID, 1 based
+  UC type;                                  // Type of lamp
   Hue_t ring1;
   Hue_t ring2;
   Hue_t ring3;
