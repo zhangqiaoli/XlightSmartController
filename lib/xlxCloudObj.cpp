@@ -88,13 +88,26 @@ BOOL CloudObjClass::UpdateHumidity(float value)
   return false;
 }
 
-BOOL CloudObjClass::UpdateBrigntness(uint16_t value)
+BOOL CloudObjClass::UpdateBrightness(uint16_t value)
 {
   if( m_brightness != value ) {
     m_brightness = value;
     if( m_jpData->success() )
     {
       (*m_jpData)["ALS"] = value;
+    }
+    return true;
+  }
+  return false;
+}
+
+BOOL CloudObjClass::UpdateMotion(bool value)
+{
+  if( m_motion != value ) {
+    m_motion = value;
+    if( m_jpData->success() )
+    {
+      (*m_jpData)["PIR"] = value;
     }
     return true;
   }
