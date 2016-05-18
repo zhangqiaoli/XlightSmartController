@@ -135,12 +135,11 @@ void SmartControllerClass::InitPins()
   pinMode(PIN_ANA_WKP, INPUT);
 
   // Set Sensors pin Mode
-  /* pinModes are already defined in the ::begin() method of each sensor library
+  //pinModes are already defined in the ::begin() method of each sensor library, may need to be ommitted from here
   pinMode(PIN_SEN_DHT, INPUT);
   pinMode(PIN_SEN_LIGHT, INPUT);
   pinMode(PIN_SEN_MIC, INPUT);
   pinMode(PIN_SEN_PIR, INPUT);
-  */
 #endif
 
   // Brightness level indicator to LS138
