@@ -5,6 +5,7 @@
 
 #include "xliCommon.h"
 #include "xlxCloudObj.h"
+#include "xlxInterfaceRF24.h"
 
 class SmartControllerClass;           // forward reference
 
@@ -42,6 +43,8 @@ public:
   BOOL IsLANGood();
   BOOL IsWANGood();
 
+  // Process all kinds of commands
+  void ProcessCommands();
   void CollectData(UC tick);
 
   // Device Control Functions
@@ -54,6 +57,10 @@ public:
   int CldSetTimeZone(String tzStr);
   int CldPowerSwitch(String swStr);
   int CldJSONCommand(String jsonData);
+
+protected:
+  // Communication Interfaces
+  RF24InterfaceClass m_cmRF24;
 };
 
 //------------------------------------------------------------------

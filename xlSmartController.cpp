@@ -39,7 +39,7 @@
 // Global Data Structures & Variables
 //------------------------------------------------------------------
 // make an instance for main program
-SmartControllerClass theSys = SmartControllerClass();
+SmartControllerClass theSys;
 
 DHT senDHT(PIN_SEN_DHT, SEN_TYPE_DHT);
 LightSensor senLight(PIN_SEN_LIGHT);
@@ -286,6 +286,15 @@ BOOL SmartControllerClass::IsLANGood()
 BOOL SmartControllerClass::IsWANGood()
 {
   return m_isWAN;
+}
+
+// Process all kinds of commands
+void SmartControllerClass::ProcessCommands()
+{
+  // Check and process RF2.4 messages
+  m_cmRF24.CheckMessageBuffer();
+
+  // ToDo: process commands from other sources
 }
 
 // Collect data from all enabled sensors

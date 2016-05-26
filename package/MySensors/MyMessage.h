@@ -274,6 +274,11 @@ public:
 	MyMessage& set(unsigned int value);
 	MyMessage& set(int value);
 
+	// Sun added 2016-05-18
+	char* getSerialString(char *buffer);
+	// Sun added 2016-05-26
+	char* getJsonString(char *buffer);
+
 #else
 
 typedef union {

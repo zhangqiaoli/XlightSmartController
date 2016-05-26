@@ -21,7 +21,7 @@
 #include "MyMessage.h"
 //#include <stdio.h>
 //#include <stdlib.h>
-
+#include "ArduinoJson.h"
 
 MyMessage::MyMessage() {
 	destination = 0; // Gateway is default destination
@@ -244,4 +244,41 @@ MyMessage& MyMessage::set(int value) {
 	miSetLength(2);
 	iValue = value;
 	return *this;
+}
+
+// Sun added 2016-05-18
+char* MyMessage::getSerialString(char *buffer) {
+	if (buffer != NULL) {
+		char payl[MAX_PAYLOAD];
+
+		sprintf(buffer, "%d;%d;%d;%d;%d;%s\n",
+		  destination, sensor, miGetCommand(), miGetRequestAck(), type,
+			getString(payl));
+		return buffer;
+	}
+
+	return NULL;
+}
+
+// Sun added 2016-05-26
+char* MyMessage::getJsonString(char *buffer) {
+	if (buffer != NULL) {
+		char payl[MAX_PAYLOAD];
+		StaticJsonBuffer<MAX_MESSAGE_LENGTH*2> jBuf;
+		JsonObject *jroot;
+		jroot = &(jBuf.createObject());
+		if( jroot->success() ) {
+	    (*jroot)["node-id"] = destination;
+			(*jroot)["sensor-id"] = sensor;
+			(*jroot)["msg-type"] = miGetCommand();
+			(*jroot)["ack"] = miGetRequestAck();
+			(*jroot)["sub-type"] = type;
+			(*jroot)["payload"] = getString(payl);
+
+			jroot->printTo(buffer, MAX_MESSAGE_LENGTH*2);
+	    return buffer;
+	  }
+	}
+
+	return NULL;
 }
