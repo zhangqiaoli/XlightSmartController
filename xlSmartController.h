@@ -58,6 +58,8 @@ public:
   int CldPowerSwitch(String swStr);
   int CldJSONCommand(String jsonData);
 
+  void AlarmTimerTriggered(int SCTindex);
+
 protected:
   // Communication Interfaces
   RF24InterfaceClass m_cmRF24;

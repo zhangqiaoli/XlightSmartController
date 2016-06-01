@@ -1,3 +1,5 @@
+#define UNIT_TEST_ENABLE //toggle unit testing
+
 /**
  * This is the firmware of Xlight SmartController based on Photon/P1 MCU.
  * There are two Protocol Domains:
@@ -34,20 +36,22 @@
 **/
 
 //------------------------------------------------------------------
-// Include dependency packages below
-//------------------------------------------------------------------
-#include "application.h"
-#include "xlxConfig.h"
-#include "xlSmartController.h"
-#include "SparkIntervalTimer.h"
-
-//------------------------------------------------------------------
 // System level working constants
 //------------------------------------------------------------------
 // Running Time Environment Parameters
 #define RTE_DELAY_PUBLISH         500
 #define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
 #define RTE_DELAY_SELFCHECK       1000        // Self-check interval
+
+#ifdef UNIT_TEST_ENABLE
+
+//------------------------------------------------------------------
+// Include dependency packages below
+//------------------------------------------------------------------
+#include "application.h"
+#include "xlxConfig.h"
+#include "xlSmartController.h"
+#include "SparkIntervalTimer.h"
 
 //------------------------------------------------------------------
 // Program Body Begins Here
@@ -121,3 +125,5 @@ void loop()
   // Self-test & alarm trigger, also insert delay between each loop
   theSys.SelfCheck(RTE_DELAY_SELFCHECK);
 }
+
+#endif
