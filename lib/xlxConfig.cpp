@@ -28,7 +28,7 @@
  * 4. Please refer to xliMemoryMap.h for memory allocation.
  *
  * ToDo:
- * 1.
+ * 1. Move default config values to header as global #define's
  * 2.
  * 3.
 **/
@@ -87,7 +87,7 @@ BOOL ConfigClass::LoadConfig()
     {
       InitConfig();
       m_isChanged = true;
-      LOGW(LOGTAG_MSG, "Sysconfig is empety, use default settings.");
+      LOGW(LOGTAG_MSG, "Sysconfig is empty, use default settings.");
       SaveConfig();
     }
     else
@@ -144,7 +144,10 @@ BOOL ConfigClass::SaveConfig()
 
   if( m_isSCTChanged )
   {
-    //ToDo:
+	//ToDo: Read SCT table, add/delete changed alarm/timer entries
+	
+	//ToDo: create new alarms/timers (tie to SmartControllerClass::AlarmTimerTriggered() function)
+	//ToDo: create updateAlarm() func with param of only info to be used to create the alarm/timer
 
     m_isSCTChanged = false;
     LOGD(LOGTAG_MSG, "Schedule table saved.");

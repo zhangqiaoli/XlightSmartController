@@ -41,7 +41,6 @@
 #define CLT_NAME_SensorData     "xlc-data-sensor"
 #define CLT_TTL_SensorData      SEN_DHT_SPEED_LOW
 
-
 //------------------------------------------------------------------
 // Xlight CloudObj Class
 //------------------------------------------------------------------
@@ -58,7 +57,7 @@ public:
   float m_temperature;
   float m_humidity;
   uint16_t m_brightness;
-  bool m_motion; 
+  bool m_motion;
 
 public:
   CloudObjClass();

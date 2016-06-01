@@ -10,6 +10,8 @@
 #define BITSET(var,pos)           ((var) | BITMASK(pos))
 #define BITUNSET(var,pos)         ((var) & (~BITMASK(pos)))
 
+//Here, common data types have been given alternative names through #define statements
+
 // Common Data Type
 #define BOOL                      boolean
 #define UC                        uint8_t

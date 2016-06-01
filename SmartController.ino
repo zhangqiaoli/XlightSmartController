@@ -1,3 +1,5 @@
+#define UNIT_TEST_ENABLE //toggle unit testing
+
 /**
  * This is the firmware of Xlight SmartController based on Photon/P1 MCU.
  * There are two Protocol Domains:
@@ -34,6 +36,16 @@
 **/
 
 //------------------------------------------------------------------
+// System level working constants
+//------------------------------------------------------------------
+// Running Time Environment Parameters
+#define RTE_DELAY_PUBLISH         500
+#define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
+#define RTE_DELAY_SELFCHECK       1000        // Self-check interval
+
+#ifdef UNIT_TEST_ENABLE
+
+//------------------------------------------------------------------
 // Include dependency packages below
 //------------------------------------------------------------------
 #include "application.h"
@@ -42,18 +54,11 @@
 #include "SparkIntervalTimer.h"
 
 //------------------------------------------------------------------
-// System level working constants
-//------------------------------------------------------------------
-// Running Time Environment Parameters
-#define RTE_DELAY_PUBLISH         500
-#define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
-#define RTE_DELAY_SELFCHECK       1000        // Self-check interval
-
-//------------------------------------------------------------------
 // Program Body Begins Here
 //------------------------------------------------------------------
 // Define hardware IntervalTimer
 IntervalTimer sysTimer;
+
 void SysteTimerCB()
 {
   // Change Status Indicator according to system status
@@ -68,6 +73,10 @@ void SysteTimerCB()
 
 void setup()
 {
+  //theSys: SmartControllerClass
+  //theConfig: ConfigClass
+  //sysTimer: IntervalTimer (Spark)
+
   // System Initialization
   theSys.Init();
 
@@ -78,7 +87,8 @@ void setup()
   theSys.InitPins();
 
   // Start system timer: callback every n * 0.5ms using hmSec timescale
-  sysTimer.begin(SysteTimerCB, RTE_DELAY_SYSTIMER, hmSec);
+  //Use TIMER6 to retain PWM capabilities on all pins
+  sysTimer.begin(SysteTimerCB, RTE_DELAY_SYSTIMER, hmSec, TIMER6);
 
   // Initialization Radio Interfaces
   theSys.InitRadio();
@@ -115,3 +125,5 @@ void loop()
   // Self-test & alarm trigger, also insert delay between each loop
   theSys.SelfCheck(RTE_DELAY_SELFCHECK);
 }
+
+#endif
