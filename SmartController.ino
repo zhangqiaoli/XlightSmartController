@@ -44,6 +44,8 @@
 #define RTE_DELAY_SELFCHECK       1000        // Self-check interval
 
 #ifdef UNIT_TEST_ENABLE
+	#include "test.ino"
+#else
 
 //------------------------------------------------------------------
 // Include dependency packages below
