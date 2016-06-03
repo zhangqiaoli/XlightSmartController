@@ -252,9 +252,6 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 {
   UC tickSaveConfig = 0;
 
-  // Check timers: check state, reset if necessary 
-  // ToDo:...
-
   // Check all alarms. This triggers them.
   Alarm.delay(ms);
 
@@ -391,6 +388,13 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
   return 0;
 }
 
+int SmartControllerClass::DevChangeColor()
+{
+	// ToDo:
+
+	return 0;
+}
+
 // High speed system timer process
 void SmartControllerClass::FastProcess()
 {
@@ -436,6 +440,7 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
   blnOn = (swStr == "0" || swStr == "off");
 
   // Turn the switch on or off
+  //ToDo: send this the command queue, have command queue call DevSoftSwitch instead?
   DevSoftSwitch(blnOn);
 
   return 0;
@@ -443,21 +448,79 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 
 int SmartControllerClass::CldJSONCommand(String jsonData)
 {
-  // ToDo: parse JSON string and execute command
+	// ToDo: parse JSON string into all variables
+	// etc: UID, temp, light, mic, motion, dayofweek, repeat, hour, min, ScenerioUID, hue1, hue2, hue3, filter, on/off
 
-  // ToDo: if command is change schedule, add/delete entry in schedule, set m_isSCTChanged true
-  
+	// ToDo: Depending on the type of action to be performed:
+	// Alarm, Scenerio, PowerColor, Sensors
+	// ...call the corresponding function, pass in all variables that matter
+
 	
   return 0;
 }
+//------------------------------------------------------------------
+// Cloud Interface Action Types
+//------------------------------------------------------------------
+
+bool SmartControllerClass::Change_Alarm()
+{
+	//Possible subactions: Delete, Post (create), Put (update)
+
+	//ToDo:
+
+	//DELETE
+	//set state_flag = empty in flash
+	//locate AlarmID using the alarm UID
+	//delete alarm object using the AlarmID
+
+	//POST
+	//create alarm using repeat + date(s) + timestamp info
+	//get AlarmID, add new row to Basic Rules Table along with Rule UID, SCT UID, Senerio UID, notif UID
+	//change basic rules changed flag to true
+	
+	//PUT
+	//find AlarmID using Alarm UID
+	//convert time to time_t, update alarm using the AlarmID, new timestamp (call TimeAlarmsClass::write())
+	//update basic rules table with new UIDs corresponding to updated alarm
+	//change basic rules changed flag to true
+}
+
+bool SmartControllerClass::Change_Scenerio()
+{
+	//Possible subactions: Delete, Put (update)
+
+	//DELETE
+	//set state_flag = empty in flash
+
+	//PUT
+	//queue scenerio row into scenerio_queue, change scenerio_queue changed flag
+
+}
+
+bool SmartControllerClass::Change_PowerColor()
+{
+	//Possible subactions: Put
+
+	//PUT
+	//package action, add action to command queue
+	//update status_row, change the status changed flag
+}
+
+bool SmartControllerClass::Change_Sensor()
+{
+	//Possible subactions: Get
+
+	//GET
+	//get current sensor values
+	//send response back to cloud
+}
 
 //------------------------------------------------------------------
-// Set New Alarms and Timers
+// Alarm Triggered Actions
 //------------------------------------------------------------------
 void SmartControllerClass::AlarmTimerTriggered(int SCTindex) 
 {
-  //ToDo: read schedule table entry for metadata
+  //ToDo: get corresponding scenerio UID / notif UID
   
-  //ToDo: impliment alarm sound/message using metadata
-  //...
+  //ToDo: add action to command queue, send notif UID to cloud (to send to app)
 }

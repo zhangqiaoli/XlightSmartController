@@ -48,9 +48,9 @@ typedef struct
 } Config_t;
 
 //------------------------------------------------------------------
-// Xlight Device Status Structures
+// Xlight Device Status Table Structures
 //------------------------------------------------------------------
-typedef struct
+typedef struct //max 64 bytes
 {
   UC id;                                    // ID, 1 based
   UC type;                                  // Type of lamp
@@ -58,6 +58,33 @@ typedef struct
   Hue_t ring2;
   Hue_t ring3;
 } DevStatus_t;
+
+	//ToDo: Create a row instance of DevStatus to act as the working memory table?
+	//Or just write current state to flash (assuming we can retrieve it somehow)
+
+//------------------------------------------------------------------
+// Xlight Schedule Table Structures
+//------------------------------------------------------------------
+
+	//ToDo: queue?
+
+//------------------------------------------------------------------
+// Xlight Rule Table Structures
+//------------------------------------------------------------------
+
+	//ToDo: table
+
+//------------------------------------------------------------------
+// Xlight Scenerio Table Structures
+//------------------------------------------------------------------
+
+	//ToDo: queue?
+
+//------------------------------------------------------------------
+// Xlight Command Queue Structures
+//------------------------------------------------------------------
+
+	//ToDo: Create command queue
 
 //------------------------------------------------------------------
 // Xlight Configuration Class
@@ -69,7 +96,11 @@ private:
   BOOL m_isChanged;         // Config Change Flag
   BOOL m_isDSTChanged;      // Device Status Table Change Flag
   BOOL m_isSCTChanged;      // Schedule Table Change Flag
+  BOOL m_isRTChanged;		// Rules Table Change Flag 
+  BOOL m_isSNTChanged;		// Scenerio Table Change Flag
+
   Config_t m_config;
+  DevStatus_t m_devStatus;
 
 public:
   ConfigClass();
@@ -81,6 +112,8 @@ public:
   BOOL IsConfigChanged();
   BOOL IsDSTChanged();
   BOOL IsSCTChanged();
+  BOOL IsRTChanged();
+  BOOL IsSNTChanged();
 
   UC GetVersion();
   BOOL SetVersion(UC ver);
