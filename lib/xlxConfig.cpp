@@ -50,6 +50,8 @@ ConfigClass::ConfigClass()
   m_isChanged = false;
   m_isDSTChanged = false;
   m_isSCTChanged = false;
+  m_isRTChanged = false;
+  m_isSNTChanged = false;
   InitConfig();
 }
 
@@ -103,10 +105,21 @@ BOOL ConfigClass::LoadConfig()
   // ToDo: load device status
   if( EEPROM.length() >= MEM_DEVICE_STATUS_OFFSET + MEM_DEVICE_STATUS_LEN )
   {
-    //...
-
+	//load from memory
+	if (//check row values
+		// ToDo: add error test cases
+		)
+	{
+		//InitDevStatus();
+		//m_isDSTChanged = true;
+		//LOGW(LOGTAG_MSG, "Corrupt Device Status Table, using default status");
+		//SaveConfig();
+	}
+	else
+	{
+		LOGD(LOGTAG_MSG, "Device status table loaded.");
+	}
     m_isDSTChanged = false;
-    LOGD(LOGTAG_MSG, "Device status table loaded.");
   } else {
     LOGW(LOGTAG_MSG, "Failed to load device status table.");
   }
@@ -116,11 +129,21 @@ BOOL ConfigClass::LoadConfig()
   {
     //...
 
+	//ToDo: load schedule, create alarms for all state_flag = full rows
+
     m_isSCTChanged = false;
     LOGD(LOGTAG_MSG, "Schedule table loaded.");
   } else {
     LOGW(LOGTAG_MSG, "Failed to load schedule table.");
   }
+
+  // ToDo: load Rules from P1 Flash, change m_isRTChanged to false
+  // Use PI Flash access library
+  // MEM_RULES_OFFSET
+
+  // ToDo: load Scenerios from P1 Flash, change m_isSNTChanged to false
+  // Use PI Flash access library
+  // MEM_SCENARIOS_OFFSET
 
   return m_isLoaded;
 }
@@ -137,6 +160,8 @@ BOOL ConfigClass::SaveConfig()
   if( m_isDSTChanged )
   {
     //ToDo:
+	//read devStatusRow, add/update the device status table in memory
+	//MEM_DEVICE_STATUS_OFFSET
 
     m_isDSTChanged = false;
     LOGD(LOGTAG_MSG, "Device status table saved.");
@@ -144,13 +169,32 @@ BOOL ConfigClass::SaveConfig()
 
   if( m_isSCTChanged )
   {
-	//ToDo: Read SCT table, add/delete changed alarm/timer entries
-	
-	//ToDo: create new alarms/timers (tie to SmartControllerClass::AlarmTimerTriggered() function)
-	//ToDo: create updateAlarm() func with param of only info to be used to create the alarm/timer
+	//ToDo: Write ScheduleTable_queue to memory (indexs are taken care of by cloud input)
+	// MEM_SCHEDULE_OFFSET
+	//ToDo: Clear ScheduleTable_queue except for last MAX_WORKINGQUEUE_ROWS rows
 
     m_isSCTChanged = false;
     LOGD(LOGTAG_MSG, "Schedule table saved.");
+  }
+
+  if ( m_isRTChanged )
+  {
+	  //ToDo: Write RuleTable_queue to memory
+	  // MEM_RULES_OFFSET
+	  //Do not clear queue! Keep all of Rule Table in working memory
+
+	  m_isRTChanged = false;
+	  LOGD(LOGTAG_MSG, "Rule table saved.");
+  }
+
+  if (m_isSNTChanged)
+  {
+	  //ToDo: Write ScenerioTable_queue to memory (indexs are taken care of by cloud input)
+	  // MEM_RULES_OFFSET
+	  //ToDo: Clear ScenerioTable_queue except for last MAX_WORKINGQUEUE_ROWS rows
+
+	  m_isRTChanged = false;
+	  LOGD(LOGTAG_MSG, "Scenerio table saved.");
   }
 
   return true;
@@ -174,6 +218,16 @@ BOOL ConfigClass::IsDSTChanged()
 BOOL ConfigClass::IsSCTChanged()
 {
   return m_isSCTChanged;
+}
+
+BOOL ConfigClass::IsRTChanged()
+{
+	return m_isRTChanged;
+}
+
+BOOL ConfigClass::IsSNTChanged()
+{
+	return m_isSNTChanged;
 }
 
 UC ConfigClass::GetVersion()

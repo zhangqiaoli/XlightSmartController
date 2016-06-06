@@ -7,6 +7,13 @@
 #include "xlxCloudObj.h"
 #include "xlxInterfaceRF24.h"
 
+//------------------------------------------------------------------
+// Xlight Command Queue Structures
+//------------------------------------------------------------------
+
+//ToDo: Create command queue
+
+
 class SmartControllerClass;           // forward reference
 
 //------------------------------------------------------------------
@@ -49,6 +56,7 @@ public:
 
   // Device Control Functions
   int DevSoftSwitch(BOOL sw, UC dev = 0);
+  int DevChangeColor();					//ToDo: Params
 
   // High speed system timer process
   void FastProcess();
@@ -58,6 +66,13 @@ public:
   int CldPowerSwitch(String swStr);
   int CldJSONCommand(String jsonData);
 
+  // Cloud Interface Action Types
+  bool Change_Alarm();					//ToDo: Params
+  bool Change_Scenerio();				//ToDo: Params
+  bool Change_PowerColor();				//ToDo: Params
+  bool Change_Sensor();					//ToDo: Params
+
+  //Alarm Triggered Actions
   void AlarmTimerTriggered(int SCTindex);
 
 protected:

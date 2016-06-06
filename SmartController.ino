@@ -1,4 +1,4 @@
-#define UNIT_TEST_ENABLE //toggle unit testing
+//#define UNIT_TEST_ENABLE //toggle unit testing
 
 /**
  * This is the firmware of Xlight SmartController based on Photon/P1 MCU.
