@@ -7,6 +7,13 @@
 #include "xlxCloudObj.h"
 #include "xlxInterfaceRF24.h"
 
+//------------------------------------------------------------------
+// Xlight Command Queue Structures
+//------------------------------------------------------------------
+
+//ToDo: Create command queue
+
+
 class SmartControllerClass;           // forward reference
 
 //------------------------------------------------------------------

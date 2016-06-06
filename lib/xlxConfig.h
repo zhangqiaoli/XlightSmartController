@@ -81,12 +81,6 @@ typedef struct //max 64 bytes
 	//ToDo: queue?
 
 //------------------------------------------------------------------
-// Xlight Command Queue Structures
-//------------------------------------------------------------------
-
-	//ToDo: Create command queue
-
-//------------------------------------------------------------------
 // Xlight Configuration Class
 //------------------------------------------------------------------
 class ConfigClass
@@ -100,7 +94,6 @@ private:
   BOOL m_isSNTChanged;		// Scenerio Table Change Flag
 
   Config_t m_config;
-  DevStatus_t m_devStatus;
 
 public:
   ConfigClass();

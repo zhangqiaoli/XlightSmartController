@@ -51,7 +51,7 @@ ConfigClass::ConfigClass()
   m_isDSTChanged = false;
   m_isSCTChanged = false;
   m_isRTChanged = false;
-  m_isSNTChanged;
+  m_isSNTChanged = false;
   InitConfig();
 }
 
@@ -105,8 +105,8 @@ BOOL ConfigClass::LoadConfig()
   // ToDo: load device status
   if( EEPROM.length() >= MEM_DEVICE_STATUS_OFFSET + MEM_DEVICE_STATUS_LEN )
   {
-	EEPROM.get(MEM_DEVICE_STATUS_OFFSET, m_config);
-	if (m_devStatus.id == 0
+	//load from memory
+	if (//check row values
 		// ToDo: add error test cases
 		)
 	{
