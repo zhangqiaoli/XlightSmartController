@@ -462,27 +462,37 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 // Cloud Interface Action Types
 //------------------------------------------------------------------
 
-bool SmartControllerClass::Change_Alarm()
+bool SmartControllerClass::Change_Alarm(CMD cmd, uint8_t UID, String weekdays, bool repeat, int hour, int min, uint8_t scenerio_UID)
 {
-	//Possible subactions: Delete, Post (create), Put (update)
-
-	//ToDo:
-
-	//DELETE
-	//set state_flag = empty in flash
-	//locate AlarmID using the alarm UID
-	//delete alarm object using the AlarmID
-
-	//POST
-	//create alarm using repeat + date(s) + timestamp info
-	//get AlarmID, add new row to Basic Rules Table along with Rule UID, SCT UID, Senerio UID, notif UID
-	//change basic rules changed flag to true
+	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
 	
-	//PUT
-	//find AlarmID using Alarm UID
-	//convert time to time_t, update alarm using the AlarmID, new timestamp (call TimeAlarmsClass::write())
-	//update basic rules table with new UIDs corresponding to updated alarm
-	//change basic rules changed flag to true
+	switch (cmd)
+	{
+		case DELETE:
+			//DELETE
+			//delete rule table using uid, change rule table changed flag to true
+			//search queue for alarm uid, if exist change row state flag
+			//access flash and change row state flag there too 
+			//locate AlarmID using the alarm UID
+			//delete alarm object using the AlarmID
+			break;
+		case POST:
+			//POST
+			//create alarm using repeat + date(s) + timestamp info
+			//get AlarmID, add new row to Basic Rules Table along with Rule UID, SCT UID, Senerio UID, notif UID
+			//change basic rules changed flag to true
+			//queue new sct table row, change sct table changed flag
+			break;
+		case PUT: 
+			//PUT
+			//find AlarmID using Alarm UID
+			//convert time to time_t, update alarm using the AlarmID, new timestamp (call TimeAlarmsClass::write())
+			//change queue row if the UID exists already, if not add it to queue and change sct changed flag
+			//update basic rules table with new UIDs corresponding to updated alarm
+			//change basic rules changed flag to true
+			break;
+
+	}
 }
 
 bool SmartControllerClass::Change_Scenerio()
@@ -518,9 +528,14 @@ bool SmartControllerClass::Change_Sensor()
 //------------------------------------------------------------------
 // Alarm Triggered Actions
 //------------------------------------------------------------------
-void SmartControllerClass::AlarmTimerTriggered(int SCTindex) 
+void SmartControllerClass::AlarmTimerTriggered() 
 {
   //ToDo: get corresponding scenerio UID / notif UID
-  
   //ToDo: add action to command queue, send notif UID to cloud (to send to app)
+
+	AlarmId triggered_id = Alarm.getTriggeredAlarmId();
+
+	//search through rules table to find alarm id, and the scenerio UID
+
+	//add action to command queue
 }

@@ -4,6 +4,7 @@
 #define xlxConfig_h
 
 #include "xliCommon.h"
+#include "TimeAlarms.h"
 
 // Change it only if Config_t structure is updated
 #define VERSION_CONFIG_DATA   1
@@ -13,6 +14,10 @@
 #define XLA_PRODUCT_NAME          "XController"             // Default value. Read from EEPROM
 #define XLA_AUTHORIZATION         "use-token-auth"
 #define XLA_TOKEN                 "your-access-token"       // Can update online
+
+// state_flag values for writing to Flash
+#define ACTIVE 1
+#define EMPTY 0
 
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
@@ -66,7 +71,16 @@ typedef struct //max 64 bytes
 // Xlight Schedule Table Structures
 //------------------------------------------------------------------
 
-	//ToDo: queue?
+typedef struct //Schedule Table 6 bytes
+{
+	BOOL state_flag		: 1;    //values: 0-1
+	UC UID				: 8;
+	UC weekdays			: 7;
+	BOOL isRepeat		: 1;
+	UC hour				: 5;    //values: 0-23
+	UC min				: 6;    //values: 0-59
+	AlarmId alarm_id	: 8;
+} ScheduleTable_t;
 
 //------------------------------------------------------------------
 // Xlight Rule Table Structures
@@ -98,6 +112,8 @@ private:
 public:
   ConfigClass();
   void InitConfig();
+
+  //Dev_Alarms: instance of sct queue
 
   BOOL LoadConfig();
   BOOL SaveConfig();

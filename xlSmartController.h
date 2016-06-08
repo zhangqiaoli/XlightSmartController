@@ -22,6 +22,7 @@ class SmartControllerClass;           // forward reference
 class SmartControllerClass : public CloudObjClass
 {
 private:
+  enum CMD { DELETE, GET, POST, PUT };
   BOOL m_isRF;
   BOOL m_isBLE;
   BOOL m_isLAN;
@@ -67,13 +68,13 @@ public:
   int CldJSONCommand(String jsonData);
 
   // Cloud Interface Action Types
-  bool Change_Alarm();					//ToDo: Params
+  bool Change_Alarm(CMD cmd, uint8_t UID, String weekdays, bool repeat, int hour, int min, uint8_t scenerio_UID);
   bool Change_Scenerio();				//ToDo: Params
   bool Change_PowerColor();				//ToDo: Params
   bool Change_Sensor();					//ToDo: Params
 
   //Alarm Triggered Actions
-  void AlarmTimerTriggered(int SCTindex);
+  void AlarmTimerTriggered();
 
 protected:
   // Communication Interfaces
