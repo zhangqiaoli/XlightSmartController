@@ -4,6 +4,7 @@
 #define xlxConfig_h
 
 #include "xliCommon.h"
+#include "TimeAlarms.h"
 
 // Change it only if Config_t structure is updated
 #define VERSION_CONFIG_DATA   1
@@ -59,26 +60,45 @@ typedef struct //max 64 bytes
   Hue_t ring3;
 } DevStatus_t;
 
-	//ToDo: Create a row instance of DevStatus to act as the working memory table?
-	//Or just write current state to flash (assuming we can retrieve it somehow)
-
 //------------------------------------------------------------------
 // Xlight Schedule Table Structures
 //------------------------------------------------------------------
 
-	//ToDo: queue?
+typedef struct //Schedule Table
+{
+	UC uid				: 8;
+	UC weekdays			: 7;	//values: 1-7
+	BOOL isRepeat		: 1;	//values: 0-1
+	UC hour				: 5;    //values: 0-23
+	UC min				: 6;    //values: 0-59
+	AlarmId alarm_id	: 8;
+} ScheduleRow_t;
 
 //------------------------------------------------------------------
 // Xlight Rule Table Structures
 //------------------------------------------------------------------
 
-	//ToDo: table
+typedef struct
+{
+	UC uid : 8;
+	UC SCT_uid : 8;
+	UC alarm_id : 8;
+	UC SNT_uid : 8;
+	UC notif_uid : 8;
+} RuleRow_t;
 
 //------------------------------------------------------------------
 // Xlight Scenerio Table Structures
 //------------------------------------------------------------------
 
-	//ToDo: queue?
+typedef struct ScenarioRow
+{
+	UC uid			: 8;
+	Hue_t ring1;
+	Hue_t ring2;
+	Hue_t ring3;
+	UC filter		: 8;
+} ScenarioRow_t;
 
 //------------------------------------------------------------------
 // Xlight Configuration Class
@@ -90,7 +110,7 @@ private:
   BOOL m_isChanged;         // Config Change Flag
   BOOL m_isDSTChanged;      // Device Status Table Change Flag
   BOOL m_isSCTChanged;      // Schedule Table Change Flag
-  BOOL m_isRTChanged;		// Rules Table Change Flag 
+  BOOL m_isRTChanged;		// Rules Table Change Flag
   BOOL m_isSNTChanged;		// Scenerio Table Change Flag
 
   Config_t m_config;

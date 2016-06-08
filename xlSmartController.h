@@ -6,6 +6,9 @@
 #include "xliCommon.h"
 #include "xlxCloudObj.h"
 #include "xlxInterfaceRF24.h"
+#include "xlxConfig.h"
+#include "xlxChain.h"
+
 
 //------------------------------------------------------------------
 // Xlight Command Queue Structures
@@ -74,6 +77,12 @@ public:
 
   //Alarm Triggered Actions
   void AlarmTimerTriggered(int SCTindex);
+
+  //LinkedLists (Working memory tables)
+  DevStatus_t DevStatus_row;
+  ChainClass<ScheduleRow_t> Schedule_table = ChainClass<ScheduleRow_t>();
+  ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>();
+  ChainClass<ScenarioRow_t> Scenario_table = ChainClass<ScenarioRow_t>();
 
 protected:
   // Communication Interfaces
