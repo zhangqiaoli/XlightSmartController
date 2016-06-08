@@ -106,7 +106,7 @@ BOOL ConfigClass::LoadConfig()
   if( EEPROM.length() >= MEM_DEVICE_STATUS_OFFSET + MEM_DEVICE_STATUS_LEN )
   {
 	//load from memory
-	if (//check row values
+	if (0//check row values
 		// ToDo: add error test cases
 		)
 	{
