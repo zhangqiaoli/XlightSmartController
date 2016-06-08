@@ -57,8 +57,11 @@
 #define COMMAND_JSON_SIZE         64
 #define SENSORDATA_JSON_SIZE      196
 
-// Keep this number of rows in all table queues after writing to Flash
-#define WORKING_QUEUE_ROWS         4
+// Keep this number of rows in all tables after writing to Flash
+#define POST_FLASH_TABLE_SIZE		4
+
+// Maximun number of rows for any working memory table implimented using ChainClass
+#define PRE_FLASH_MAX_TABLE_SIZE	8
 
 // Sensor list: maximun 16 sensors
 typedef enum

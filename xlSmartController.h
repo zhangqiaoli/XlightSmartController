@@ -9,7 +9,6 @@
 #include "xlxConfig.h"
 #include "xlxChain.h"
 
-
 //------------------------------------------------------------------
 // Xlight Command Queue Structures
 //------------------------------------------------------------------
@@ -25,6 +24,7 @@ class SmartControllerClass;           // forward reference
 class SmartControllerClass : public CloudObjClass
 {
 private:
+  enum CMD { DELETE, GET, POST, PUT };
   BOOL m_isRF;
   BOOL m_isBLE;
   BOOL m_isLAN;
@@ -70,19 +70,19 @@ public:
   int CldJSONCommand(String jsonData);
 
   // Cloud Interface Action Types
-  bool Change_Alarm();					//ToDo: Params
+  bool Change_Alarm(CMD cmd, uint8_t UID, String weekdays, bool repeat, int hour, int min, uint8_t scenerio_UID);
   bool Change_Scenerio();				//ToDo: Params
   bool Change_PowerColor();				//ToDo: Params
   bool Change_Sensor();					//ToDo: Params
 
   //Alarm Triggered Actions
-  void AlarmTimerTriggered(int SCTindex);
+  void AlarmTimerTriggered();
 
   //LinkedLists (Working memory tables)
   DevStatus_t DevStatus_row;
-  ChainClass<ScheduleRow_t> Schedule_table = ChainClass<ScheduleRow_t>();
-  ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>();
-  ChainClass<ScenarioRow_t> Scenario_table = ChainClass<ScenarioRow_t>();
+  ChainClass<ScheduleRow_t> Schedule_table = ChainClass<ScheduleRow_t>(PRE_FLASH_MAX_TABLE_SIZE);
+  ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>(PRE_FLASH_MAX_TABLE_SIZE);
+  ChainClass<ScenarioRow_t> Scenario_table = ChainClass<ScenarioRow_t>(PRE_FLASH_MAX_TABLE_SIZE);
 
 protected:
   // Communication Interfaces

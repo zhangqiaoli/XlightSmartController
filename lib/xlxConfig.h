@@ -15,6 +15,10 @@
 #define XLA_AUTHORIZATION         "use-token-auth"
 #define XLA_TOKEN                 "your-access-token"       // Can update online
 
+// state_flag values for writing to Flash
+#define ACTIVE 1
+#define EMPTY 0
+
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------

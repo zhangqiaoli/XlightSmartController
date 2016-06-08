@@ -33,15 +33,27 @@
 template <typename T>
 class ChainClass : public LinkedList<T>
 {
-public:
- 	virtual ListNode<T>* search(uint8_t uid);
-
 private:
+  int max_chain_length;
+
+public:
+	ChainClass(int max);
+	virtual ListNode<T>* search(uint8_t uid);
+
+	//overload all "add" functions to first check if linkedlist length is greater than PRE_FLASH_MAX_TABLE_SIZE
+  virtual bool add(int index, T);
+  virtual bool add(T);
+  virtual bool unshift(T);
 };
 
 //------------------------------------------------------------------
 // Member Functions
 //------------------------------------------------------------------
+template<typename T>
+ChainClass<T>::ChainClass(int max)
+{
+  max_chain_length = max;
+}
 
 template<typename T>
 ListNode<T>* ChainClass<T>::search(uint8_t uid)
@@ -55,4 +67,40 @@ ListNode<T>* ChainClass<T>::search(uint8_t uid)
 		tmp=tmp->next;
 	}
   return NULL;
+}
+
+template<typename T>
+bool ChainClass<T>::add(int index, T _t) {
+	if (LinkedList<T>::size() < max_chain_length)
+	{
+		return LinkedList<T>::add(index, _t);
+	}
+	else
+	{
+		return false;
+	}
+}
+
+template<typename T>
+bool ChainClass<T>::add(T _t) {
+	if (LinkedList<T>::size() < max_chain_length)
+	{
+		return LinkedList<T>::add(_t);
+	}
+	else
+	{
+		return false;
+	}
+}
+
+template<typename T>
+bool ChainClass<T>::unshift(T _t){
+  if (LinkedList<T>::size() < max_chain_length)
+	{
+		return LinkedList<T>::add(_t);
+	}
+	else
+	{
+		return false;
+	}
 }
