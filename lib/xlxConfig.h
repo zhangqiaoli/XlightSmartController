@@ -66,19 +66,41 @@ typedef struct //max 64 bytes
 // Xlight Schedule Table Structures
 //------------------------------------------------------------------
 
-	//ToDo: queue?
+typedef struct //Schedule Table 
+{
+	UC uid				: 8;	
+	UC weekdays			: 7;	//values: 1-7
+	BOOL isRepeat		: 1;	//values: 0-1
+	UC hour				: 5;    //values: 0-23
+	UC min				: 6;    //values: 0-59
+	AlarmId alarm_id	: 8;
+} ScheduleTable_t;
 
 //------------------------------------------------------------------
 // Xlight Rule Table Structures
 //------------------------------------------------------------------
 
-	//ToDo: table
+typedef struct
+{
+	UC uid : 8;
+	UC SCT_uid : 8;
+	UC alarm_id : 8;
+	UC SNT_uid : 8;
+	UC notif_uid : 8;
+} RuleRow_t;
 
 //------------------------------------------------------------------
 // Xlight Scenerio Table Structures
 //------------------------------------------------------------------
 
-	//ToDo: queue?
+typedef struct ScenarioRow
+{
+	UC uid			: 8;
+	Hue_t ring1;
+	Hue_t ring2;
+	Hue_t ring3;
+	UC filter		: 8;
+} ScenarioRow_t;
 
 //------------------------------------------------------------------
 // Xlight Configuration Class
