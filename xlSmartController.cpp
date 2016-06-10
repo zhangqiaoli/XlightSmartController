@@ -23,10 +23,9 @@
  * ToDo:
 **/
 #include "xlSmartController.h"
-#include "xliMemoryMap.h"
-#include "xliPinMap.h"
 #include "xlxConfig.h"
 #include "xlxLogger.h"
+#include "xliPinMap.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
@@ -99,7 +98,7 @@ void SmartControllerClass::InitNetwork()
 {
   // Check WAN and LAN
   CheckNetwork();
-  if( IsWANGood() ) 
+  if( IsWANGood() )
   {
     LOGN(LOGTAG_MSG, "WAN is working.");
     SetStatus(STATUS_NWS);
@@ -234,7 +233,7 @@ BOOL SmartControllerClass::CheckRF()
 
 BOOL SmartControllerClass::CheckNetwork()
 {
-  // ToDo: check WAN, change value of m_isWAN 
+  // ToDo: check WAN, change value of m_isWAN
 
   // ToDo: check LAN, change value of m_isLan
 
@@ -455,7 +454,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 	// Alarm, Scenerio, PowerColor, Sensors
 	// ...call the corresponding function, pass in all variables that matter
 
-	
+
   return 0;
 }
 //------------------------------------------------------------------
@@ -465,14 +464,14 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 bool SmartControllerClass::Change_Alarm(CMD cmd, uint8_t UID, String weekdays, bool repeat, int hour, int min, uint8_t scenerio_UID)
 {
 	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
-	
+
 	switch (cmd)
 	{
 		case DELETE:
 			//DELETE
 			//delete rule table using uid, change rule table changed flag to true
 			//search queue for alarm uid, if exist change row state flag
-			//access flash and change row state flag there too 
+			//access flash and change row state flag there too
 			//locate AlarmID using the alarm UID
 			//delete alarm object using the AlarmID
 			break;
@@ -483,7 +482,7 @@ bool SmartControllerClass::Change_Alarm(CMD cmd, uint8_t UID, String weekdays, b
 			//change basic rules changed flag to true
 			//queue new sct table row, change sct table changed flag
 			break;
-		case PUT: 
+		case PUT:
 			//PUT
 			//find AlarmID using Alarm UID
 			//convert time to time_t, update alarm using the AlarmID, new timestamp (call TimeAlarmsClass::write())
@@ -528,7 +527,7 @@ bool SmartControllerClass::Change_Sensor()
 //------------------------------------------------------------------
 // Alarm Triggered Actions
 //------------------------------------------------------------------
-void SmartControllerClass::AlarmTimerTriggered() 
+void SmartControllerClass::AlarmTimerTriggered()
 {
   //ToDo: get corresponding scenerio UID / notif UID
   //ToDo: add action to command queue, send notif UID to cloud (to send to app)
