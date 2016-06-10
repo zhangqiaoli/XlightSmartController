@@ -8,6 +8,7 @@
 #include "xlxInterfaceRF24.h"
 #include "xlxConfig.h"
 #include "xlxChain.h"
+#include "xliMemoryMap.h"
 
 //------------------------------------------------------------------
 // Xlight Command Queue Structures
@@ -82,7 +83,7 @@ public:
   DevStatus_t DevStatus_row;
   ChainClass<ScheduleRow_t> Schedule_table = ChainClass<ScheduleRow_t>(PRE_FLASH_MAX_TABLE_SIZE);
   ChainClass<ScenarioRow_t> Scenario_table = ChainClass<ScenarioRow_t>(PRE_FLASH_MAX_TABLE_SIZE);
-  ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>();
+  ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>((int)( MEM_RULES_LEN / sizeof(RuleRow_t) )); // 65536/5 = 13107
 
 protected:
   // Communication Interfaces

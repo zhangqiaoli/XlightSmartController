@@ -34,7 +34,7 @@ template <typename T>
 class ChainClass : public LinkedList<T>
 {
 private:
-	int max_chain_length;
+	unsigned int max_chain_length;
 	bool toggle_limit;
 
 public:
@@ -68,7 +68,7 @@ template<typename T>
 ListNode<T>* ChainClass<T>::search(uint8_t uid)
 {
 	ListNode<T> *tmp = LinkedList<T>::root;
-	while (tmp != false)
+	while (tmp != NULL)
 	{
 		if (tmp->data.uid == uid) {
 			return tmp;
