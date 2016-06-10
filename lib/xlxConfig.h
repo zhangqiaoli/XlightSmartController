@@ -16,8 +16,10 @@
 #define XLA_TOKEN                 "your-access-token"       // Can update online
 
 // state_flag values for writing to Flash
-#define ACTIVE 1
-#define EMPTY 0
+//#define ACTIVE 1
+//#define EMPTY 0
+
+enum STATE {DELETE, NEW, UPDATE, ACTIVE};
 
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
@@ -70,6 +72,7 @@ typedef struct //max 64 bytes
 
 typedef struct //Schedule Table
 {
+  STATE state   : 8;
 	UC uid				: 8;
 	UC weekdays			: 7;	//values: 1-7
 	BOOL isRepeat		: 1;	//values: 0-1
@@ -84,10 +87,11 @@ typedef struct //Schedule Table
 
 typedef struct
 {
-	UC uid : 8;
-	UC SCT_uid : 8;
-	UC alarm_id : 8;
-	UC SNT_uid : 8;
+  STATE state  : 8;
+	UC uid       : 8;
+	UC SCT_uid   : 8;
+	UC alarm_id  : 8;
+	UC SNT_uid   : 8;
 	UC notif_uid : 8;
 } RuleRow_t;
 
@@ -97,6 +101,7 @@ typedef struct
 
 typedef struct ScenarioRow
 {
+  STATE state;
 	UC uid			: 8;
 	Hue_t ring1;
 	Hue_t ring2;
