@@ -450,10 +450,9 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 	// ToDo: parse JSON string into all variables
 	// etc: UID, temp, light, mic, motion, dayofweek, repeat, hour, min, ScenerioUID, hue1, hue2, hue3, filter, on/off
 
-	// ToDo: Depending on the type of action to be performed:
-	// Alarm, Scenerio, PowerColor, Sensors
-	// ...call the corresponding function, pass in all variables that matter
-
+  //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
+  //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
+  //handle each for each respective Chain until end of incoming string
 
   return 0;
 }
@@ -461,67 +460,58 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 // Cloud Interface Action Types
 //------------------------------------------------------------------
 
-bool SmartControllerClass::Change_Alarm(CMD cmd, uint8_t UID, String weekdays, bool repeat, int hour, int min, uint8_t scenerio_UID)
+bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 {
 	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
 
-	switch (cmd)
+	switch (row.op_flag)
 	{
 		case DELETE:
 			//DELETE
-			//delete rule table using uid, change rule table changed flag to true
-			//search queue for alarm uid, if exist change row state flag
-			//access flash and change row state flag there too
-			//locate AlarmID using the alarm UID
-			//delete alarm object using the AlarmID
+			//traverse through Alarm chain of 8 items, find uid if it exists. state_flag is delete, run_flag is 0, flash_flag is 0
+      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the same flags as above
+      //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
 			break;
 		case POST:
-			//POST
-			//create alarm using repeat + date(s) + timestamp info
-			//get AlarmID, add new row to Basic Rules Table along with Rule UID, SCT UID, Senerio UID, notif UID
-			//change basic rules changed flag to true
-			//queue new sct table row, change sct table changed flag
-			break;
 		case PUT:
-			//PUT
-			//find AlarmID using Alarm UID
-			//convert time to time_t, update alarm using the AlarmID, new timestamp (call TimeAlarmsClass::write())
-			//change queue row if the UID exists already, if not add it to queue and change sct changed flag
-			//update basic rules table with new UIDs corresponding to updated alarm
-			//change basic rules changed flag to true
-			break;
-
+			//PUT and POST
+			//traverse through Alarm chain of 8 items, find uid if it exists, and delete old alarm
+      //overwrite old row, set run_flag to 0, flash_flag to 0, state_flag to put
+      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid; run_flag is 0, flash_flag is 0, run_flag is 0
+      //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
+      break;
 	}
+
+//After these JSON enties are dealt with, every few seconds, an action loop will scope the flags for each of the 8 rows.
+//If the state_flag says 'POST', new alarms will be created and the row's run_flag will be changed to 'EXECUTED'
+//If the flag says 'DELETE', alarm will be deleted, and run_flag will be changed to 'EXECUTED'
+
+//Every 5 seconds, another loop will traverse the working memory chain, and check if m_isChanged == true (this flag gets changed everytime a change is made to the chains)
+//This loop will traverse the chain and write any rows with flash_flag = 0 to flash memory, and it will change those rows' flash_flag to 1
+//sidenote: the process for assigning UIDs to each row will be taken care of by the cloud. Whenever the cloud sends a delete request to working memory through
+//CldJSONCommand, it now knows the UID has been freed, and can be used for subsequent 'new' rows to be sent. In this manner, the flash table will simply update
+//itself using UID, naturally replacing any deleted rows and always having an updated, clean table.
+//any rows with flash_flag = 1 will simply be ignored
 }
 
-bool SmartControllerClass::Change_Scenerio()
+bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 {
-	//Possible subactions: Delete, Put (update)
+	//Possible subactions: DELETE, PUT, POST
 
-	//DELETE
-	//set state_flag = empty in flash
-
-	//PUT
-	//queue scenerio row into scenerio_queue, change scenerio_queue changed flag
-
+  //refer to Change_Alarm comments
 }
 
-bool SmartControllerClass::Change_PowerColor()
+bool SmartControllerClass::Change_PowerColor(DevStatus_t row) //? link with CldPowerSwitch
 {
-	//Possible subactions: Put
+	//Possible subactions: PUT
 
-	//PUT
-	//package action, add action to command queue
-	//update status_row, change the status changed flag
+	//refer to Change_Schedule comments
 }
 
-bool SmartControllerClass::Change_Sensor()
+bool SmartControllerClass::Change_Sensor() // get temperature?
 {
-	//Possible subactions: Get
-
-	//GET
-	//get current sensor values
-	//send response back to cloud
+  	//Possible subactions: GET
+    //ToDo: define later
 }
 
 //------------------------------------------------------------------
@@ -529,12 +519,14 @@ bool SmartControllerClass::Change_Sensor()
 //------------------------------------------------------------------
 void SmartControllerClass::AlarmTimerTriggered()
 {
+
   //ToDo: get corresponding scenerio UID / notif UID
   //ToDo: add action to command queue, send notif UID to cloud (to send to app)
 
-	AlarmId triggered_id = Alarm.getTriggeredAlarmId();
+	//AlarmId triggered_id = Alarm.getTriggeredAlarmId();
 
 	//search through rules table to find alarm id, and the scenerio UID
 
 	//add action to command queue
+
 }

@@ -15,9 +15,10 @@
 #define XLA_AUTHORIZATION         "use-token-auth"
 #define XLA_TOKEN                 "your-access-token"       // Can update online
 
-// state_flag values for writing to Flash
-#define ACTIVE 1
-#define EMPTY 0
+//Row State Flags for Sync between Cloud, Flash, and Working Memory
+enum OP_FLAG {GET, POST, PUT, DELETE};
+enum FLASH_FLAG {UNSAVED, SAVED};
+enum RUN_FLAG {UNEXECUTED, EXCECUTED};
 
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
@@ -70,12 +71,15 @@ typedef struct //max 64 bytes
 
 typedef struct //Schedule Table
 {
-	UC uid				: 8;
-	UC weekdays			: 7;	//values: 1-7
-	BOOL isRepeat		: 1;	//values: 0-1
-	UC hour				: 5;    //values: 0-23
-	UC min				: 6;    //values: 0-59
-	AlarmId alarm_id	: 8;
+  OP_FLAG op_flag         : 2;
+  FLASH_FLAG flash_flag   : 1;
+  RUN_FLAG                : 1;
+	UC uid				          : 8;
+	UC weekdays			        : 7;	  //values: 1-7
+	BOOL isRepeat		        : 1;	  //values: 0-1
+	UC hour				          : 5;    //values: 0-23
+	UC min				          : 6;    //values: 0-59
+	AlarmId alarm_id	      : 8;
 } ScheduleRow_t;
 
 //------------------------------------------------------------------
@@ -84,24 +88,30 @@ typedef struct //Schedule Table
 
 typedef struct
 {
-	UC uid : 8;
-	UC SCT_uid : 8;
-	UC alarm_id : 8;
-	UC SNT_uid : 8;
-	UC notif_uid : 8;
+  OP_FLAG op_flag          : 2;
+  FLASH_FLAG flash_flag    : 1;
+  RUN_FLAG                 : 1;
+	UC uid                   : 8;
+	UC SCT_uid               : 8;
+	UC alarm_id              : 8;
+	UC SNT_uid               : 8;
+	UC notif_uid             : 8;
 } RuleRow_t;
 
 //------------------------------------------------------------------
 // Xlight Scenerio Table Structures
 //------------------------------------------------------------------
 
-typedef struct ScenarioRow
+typedef struct
 {
-	UC uid			: 8;
+  OP_FLAG op_flag         : 2;
+  FLASH_FLAG flash_flag   : 1;
+  RUN_FLAG                : 1;
+	UC uid			            : 8;
 	Hue_t ring1;
 	Hue_t ring2;
 	Hue_t ring3;
-	UC filter		: 8;
+	UC filter		            : 8;
 } ScenarioRow_t;
 
 //------------------------------------------------------------------
@@ -114,8 +124,8 @@ private:
   BOOL m_isChanged;         // Config Change Flag
   BOOL m_isDSTChanged;      // Device Status Table Change Flag
   BOOL m_isSCTChanged;      // Schedule Table Change Flag
-  BOOL m_isRTChanged;		// Rules Table Change Flag
-  BOOL m_isSNTChanged;		// Scenerio Table Change Flag
+  BOOL m_isRTChanged;		    // Rules Table Change Flag
+  BOOL m_isSNTChanged;	 	  // Scenerio Table Change Flag
 
   Config_t m_config;
 
