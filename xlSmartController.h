@@ -70,9 +70,9 @@ public:
   int CldJSONCommand(String jsonData);
 
   // Cloud Interface Action Types
-  bool Change_Alarm(OP_FLAG cmd, uint8_t UID, String weekdays, bool repeat, int hour, int min, uint8_t scenerio_UID);
-  bool Change_Scenerio();				//ToDo: Params
-  bool Change_PowerColor();				//ToDo: Params
+  bool Change_Schedule(ScheduleRow_t row);
+  bool Change_Scenario(ScenarioRow_t row);				//ToDo: Params
+  bool Change_PowerColor(DevStatus_t row);				//ToDo: Params
   bool Change_Sensor();					//ToDo: Params
 
   //Alarm Triggered Actions

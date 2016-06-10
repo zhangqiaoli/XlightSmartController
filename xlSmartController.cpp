@@ -460,11 +460,11 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 // Cloud Interface Action Types
 //------------------------------------------------------------------
 
-bool SmartControllerClass::Change_Alarm(ScheduleRow_t row)
+bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 {
 	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
 
-	switch (cmd)
+	switch (row.op_flag)
 	{
 		case DELETE:
 			//DELETE
@@ -494,7 +494,7 @@ bool SmartControllerClass::Change_Alarm(ScheduleRow_t row)
 //any rows with flash_flag = 1 will simply be ignored
 }
 
-bool SmartControllerClass::Change_Scenerio(ScenarioRow_t row)
+bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 {
 	//Possible subactions: DELETE, PUT, POST
 
@@ -505,7 +505,7 @@ bool SmartControllerClass::Change_PowerColor(DevStatus_t row) //? link with CldP
 {
 	//Possible subactions: PUT
 
-	//refer to Change_Alarm comments
+	//refer to Change_Schedule comments
 }
 
 bool SmartControllerClass::Change_Sensor() // get temperature?
