@@ -463,40 +463,33 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 bool SmartControllerClass::Change_Alarm(CMD cmd, uint8_t UID, String weekdays, bool repeat, int hour, int min, uint8_t scenerio_UID)
 {
 	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
+  //ToDo:? Implement another flag in structs to check if row has been written to flash
 
 	switch (cmd)
 	{
 		case DELETE:
 			//DELETE
-			//traverse through Alarm chain of 8 items, find uid if it exists, and set flag to 'delete'. In theory, this flag change shouldn't need to be hardcoded, and will be a value provided by cloud
+			//traverse through Alarm chain of 8 items, find uid if it exists, and set flag to 'delete'
       //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the state flag set to 'delete'
 			break;
 		case POST:
 			//POST
-			//add new Alarm row to bottom of Chain. Ensure flag is 'new'. Again, flag change shouldn't need to be hardcoded, this flag value will be provided by cloud
+			//add new Alarm row to bottom of Chain. Ensure flag is 'new'.
       //before inserting new item at bottom of chain, top item in chain will need to be deleted.
+        //We will need to ensure that before deleting top item, it has been written to flash. We may need to implement a isWrittenToFlash flag later for this to check easily
 			break;
 		case PUT:
 			//PUT
-			//traverse through Alarm chain of 8 items, find uid if it exists, and set flag to 'update'. In theory, this flag change shouldn't need to be hardcoded, and will be a value provided by cloud
+			//traverse through Alarm chain of 8 items, find uid if it exists, and delete old alarm
+      //set flag to 'update', and overwrite old row
       //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the state flag set to 'update'
 			break;
 	}
-
-  //After these JSON enties are dealt with, every few seconds, an action loop will scope the flags for each of the 8 rows.
-  //If the flag says 'new', new alarms will be created and the row's state flag will be changed to 'active'
-  //If the flag says 'delete', alarms will be deleted.
-  //If the flag says 'update', old alarm will be deleted, and new alarm created. Row's state flag will change to 'active'
-  //If the flag says 'active', the action loop will ignore it
-
-  //Every 5 seconds, another loop will traverse the list, add any rows with the 'new' flag to any position in the chain that has a 'delete' flag (if no delete flags, row is added to bottom of flash chain);
-  // any rows with 'delete' will need the equivalent flash row to be updated with the new flag, 'delete';
-  //Similarly, any rows with 'active' will be updated in flash with new flag, active; For 'update' rows in Chain, the flash equivalent will need to be updated with all new info
 }
 
 bool SmartControllerClass::Change_Scenerio()
 {
-	//Possible subactions: DELETE, PUT
+	//Possible subactions: DELETE, PUT, POST
 
   //refer to Change_Alarm comments
 }
@@ -518,16 +511,14 @@ bool SmartControllerClass::Change_Sensor()
 //------------------------------------------------------------------
 void SmartControllerClass::AlarmTimerTriggered()
 {
-<<<<<<< b50ec7b7415d0b7e7257b9f5e32849325a980aaf
+
   //ToDo: get corresponding scenerio UID / notif UID
   //ToDo: add action to command queue, send notif UID to cloud (to send to app)
 
-	AlarmId triggered_id = Alarm.getTriggeredAlarmId();
+	//AlarmId triggered_id = Alarm.getTriggeredAlarmId();
 
 	//search through rules table to find alarm id, and the scenerio UID
 
 	//add action to command queue
-=======
-//ToDo: define later
->>>>>>> Updated comments for process of inserting JSON input through CldJsonCommand() into the 3 chains
+
 }
