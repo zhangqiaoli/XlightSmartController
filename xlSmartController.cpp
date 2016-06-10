@@ -460,50 +460,58 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 // Cloud Interface Action Types
 //------------------------------------------------------------------
 
-bool SmartControllerClass::Change_Alarm(CMD cmd, uint8_t UID, String weekdays, bool repeat, int hour, int min, uint8_t scenerio_UID)
+bool SmartControllerClass::Change_Alarm(ScheduleRow_t row)
 {
 	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
-  //ToDo:? Implement another flag in structs to check if row has been written to flash
 
 	switch (cmd)
 	{
 		case DELETE:
 			//DELETE
-			//traverse through Alarm chain of 8 items, find uid if it exists, and set flag to 'delete'
-      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the state flag set to 'delete'
+			//traverse through Alarm chain of 8 items, find uid if it exists. state_flag is delete, run_flag is 0, flash_flag is 0
+      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the same flags as above
+      //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
 			break;
 		case POST:
-			//POST
-			//add new Alarm row to bottom of Chain. Ensure flag is 'new'.
-      //before inserting new item at bottom of chain, top item in chain will need to be deleted.
-        //We will need to ensure that before deleting top item, it has been written to flash. We may need to implement a isWrittenToFlash flag later for this to check easily
-			break;
 		case PUT:
-			//PUT
+			//PUT and POST
 			//traverse through Alarm chain of 8 items, find uid if it exists, and delete old alarm
-      //set flag to 'update', and overwrite old row
-      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the state flag set to 'update'
-			break;
+      //overwrite old row, set run_flag to 0, flash_flag to 0, state_flag to put
+      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid; run_flag is 0, flash_flag is 0, run_flag is 0
+      //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
+      break;
 	}
+
+//After these JSON enties are dealt with, every few seconds, an action loop will scope the flags for each of the 8 rows.
+//If the state_flag says 'POST', new alarms will be created and the row's run_flag will be changed to 'EXECUTED'
+//If the flag says 'DELETE', alarm will be deleted, and run_flag will be changed to 'EXECUTED'
+
+//Every 5 seconds, another loop will traverse the working memory chain, and check if m_isChanged == true (this flag gets changed everytime a change is made to the chains)
+//This loop will traverse the chain and write any rows with flash_flag = 0 to flash memory, and it will change those rows' flash_flag to 1
+//sidenote: the process for assigning UIDs to each row will be taken care of by the cloud. Whenever the cloud sends a delete request to working memory through
+//CldJSONCommand, it now knows the UID has been freed, and can be used for subsequent 'new' rows to be sent. In this manner, the flash table will simply update
+//itself using UID, naturally replacing any deleted rows and always having an updated, clean table.
+//any rows with flash_flag = 1 will simply be ignored
 }
 
-bool SmartControllerClass::Change_Scenerio()
+bool SmartControllerClass::Change_Scenerio(ScenarioRow_t row)
 {
 	//Possible subactions: DELETE, PUT, POST
 
   //refer to Change_Alarm comments
 }
 
-bool SmartControllerClass::Change_PowerColor()
+bool SmartControllerClass::Change_PowerColor(DevStatus_t row) //? link with CldPowerSwitch
 {
 	//Possible subactions: PUT
 
 	//refer to Change_Alarm comments
 }
 
-bool SmartControllerClass::Change_Sensor()
+bool SmartControllerClass::Change_Sensor() // get temperature?
 {
-//ToDo: define later
+  	//Possible subactions: GET
+    //ToDo: define later
 }
 
 //------------------------------------------------------------------
