@@ -568,6 +568,7 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 				if (Schedule_table.get(index).run_flag == EXECUTED && Alarm.isAllocated(Schedule_table.get(index).alarm_id))
 				{
 					Alarm.free((Schedule_table.get(index).alarm_id));
+					LOGN(LOGTAG_MSG, "Successfully deleted old alarm");
 				}
 				else
 				{
@@ -615,6 +616,7 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 				if (Schedule_table.get(index).run_flag == EXECUTED && Alarm.isAllocated(Schedule_table.get(index).alarm_id))
 				{
 					Alarm.free((Schedule_table.get(index).alarm_id));
+					LOGN(LOGTAG_MSG, "Successfully deleted old alarm");
 				}
 				else
 				{
