@@ -564,6 +564,16 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 			}
 			else //uid found
 			{
+				//delete old alarm if it was created
+				if (Schedule_table.get(index).run_flag == EXECUTED && Alarm.isAllocated(Schedule_table.get(index).alarm_id))
+				{
+					Alarm.free((Schedule_table.get(index).alarm_id));
+				}
+				else
+				{
+					LOGE(LOGTAG_MSG, "Could not delete previous alarm during Schedule Table change request");
+				}
+
 				//update row
 				if (!Schedule_table.set(index, row))
 				{
