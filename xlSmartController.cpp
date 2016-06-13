@@ -53,246 +53,246 @@ MotionSensor senMotion(PIN_SEN_PIR);
 //------------------------------------------------------------------
 SmartControllerClass::SmartControllerClass()
 {
-  m_isRF = false;
-  m_isBLE = false;
-  m_isLAN = false;
-  m_isWAN = false;
+	m_isRF = false;
+	m_isBLE = false;
+	m_isLAN = false;
+	m_isWAN = false;
 }
 
 // Primitive initialization before loading configuration
 void SmartControllerClass::Init()
 {
-  // Get System ID
-  m_SysID = System.deviceID();
-  m_devStatus = STATUS_INIT;
+	// Get System ID
+	m_SysID = System.deviceID();
+	m_devStatus = STATUS_INIT;
 
-  // Initialize Logger: Serial & Flash
-  theLog.Init(m_SysID);
-  theLog.InitSerial(SERIALPORT_SPEED_DEFAULT);
-  theLog.InitFlash(MEM_OFFLINE_DATA_OFFSET, MEM_OFFLINE_DATA_LEN);
+	// Initialize Logger: Serial & Flash
+	theLog.Init(m_SysID);
+	theLog.InitSerial(SERIALPORT_SPEED_DEFAULT);
+	theLog.InitFlash(MEM_OFFLINE_DATA_OFFSET, MEM_OFFLINE_DATA_LEN);
 }
 
 // Second level initialization after loading configuration
 /// check RF2.4 & BLE
 void SmartControllerClass::InitRadio()
 {
-  // Check RF2.4
-  CheckRF();
-  if( IsRFGood() )
-  {
-    LOGN(LOGTAG_MSG, "RF2.4 is working.");
-    SetStatus(STATUS_BMW);
-  }
+	// Check RF2.4
+	CheckRF();
+	if (IsRFGood())
+	{
+		LOGN(LOGTAG_MSG, "RF2.4 is working.");
+		SetStatus(STATUS_BMW);
+	}
 
-  // Check BLE
-  CheckBLE();
-  if( IsBLEGood() )
-  {
-    LOGN(LOGTAG_MSG, "BLE is working.");
-  }
+	// Check BLE
+	CheckBLE();
+	if (IsBLEGood())
+	{
+		LOGN(LOGTAG_MSG, "BLE is working.");
+	}
 }
 
 // Third level initialization after loading configuration
 /// check LAN & WAN
 void SmartControllerClass::InitNetwork()
 {
-  // Check WAN and LAN
-  CheckNetwork();
-  if( IsWANGood() )
-  {
-    LOGN(LOGTAG_MSG, "WAN is working.");
-    SetStatus(STATUS_NWS);
+	// Check WAN and LAN
+	CheckNetwork();
+	if (IsWANGood())
+	{
+		LOGN(LOGTAG_MSG, "WAN is working.");
+		SetStatus(STATUS_NWS);
 
-    // Initialize Logger: syslog & cloud log
-    // ToDo: substitude network parameters
-    //theLog.InitSysLog();
-    //theLog.InitCloud();
-  }
-  else if( GetStatus() == STATUS_BMW && IsLANGood() )
-  {
-    LOGN(LOGTAG_MSG, "LAN is working.");
-    SetStatus(STATUS_DIS);
-  }
+		// Initialize Logger: syslog & cloud log
+		// ToDo: substitude network parameters
+		//theLog.InitSysLog();
+		//theLog.InitCloud();
+	}
+	else if (GetStatus() == STATUS_BMW && IsLANGood())
+	{
+		LOGN(LOGTAG_MSG, "LAN is working.");
+		SetStatus(STATUS_DIS);
+	}
 }
 
 // Initialize Pins: check the routine with PCB
 void SmartControllerClass::InitPins()
 {
-  // Set Panel pin mode
+	// Set Panel pin mode
 #ifdef MCU_TYPE_P1
-  pinMode(PIN_BTN_SETUP, INPUT);
-  pinMode(PIN_BTN_RESET, INPUT);
-  pinMode(PIN_LED_RED, OUTPUT);
-  pinMode(PIN_LED_GREEN, OUTPUT);
-  pinMode(PIN_LED_BLUE, OUTPUT);
+	pinMode(PIN_BTN_SETUP, INPUT);
+	pinMode(PIN_BTN_RESET, INPUT);
+	pinMode(PIN_LED_RED, OUTPUT);
+	pinMode(PIN_LED_GREEN, OUTPUT);
+	pinMode(PIN_LED_BLUE, OUTPUT);
 #endif
 
-// Workaround for Paricle Analog Pin mode problem
+	// Workaround for Paricle Analog Pin mode problem
 #ifndef MCU_TYPE_Particle
-  pinMode(PIN_BTN_UP, INPUT);
-  pinMode(PIN_BTN_OK, INPUT);
-  pinMode(PIN_BTN_DOWN, INPUT);
-  pinMode(PIN_ANA_WKP, INPUT);
+	pinMode(PIN_BTN_UP, INPUT);
+	pinMode(PIN_BTN_OK, INPUT);
+	pinMode(PIN_BTN_DOWN, INPUT);
+	pinMode(PIN_ANA_WKP, INPUT);
 
-  // Set Sensors pin Mode
-  //pinModes are already defined in the ::begin() method of each sensor library, may need to be ommitted from here
-  pinMode(PIN_SEN_DHT, INPUT);
-  pinMode(PIN_SEN_LIGHT, INPUT);
-  pinMode(PIN_SEN_MIC, INPUT);
-  pinMode(PIN_SEN_PIR, INPUT);
+	// Set Sensors pin Mode
+	//pinModes are already defined in the ::begin() method of each sensor library, may need to be ommitted from here
+	pinMode(PIN_SEN_DHT, INPUT);
+	pinMode(PIN_SEN_LIGHT, INPUT);
+	pinMode(PIN_SEN_MIC, INPUT);
+	pinMode(PIN_SEN_PIR, INPUT);
 #endif
 
-  // Brightness level indicator to LS138
-  pinMode(PIN_LED_LEVEL_B0, OUTPUT);
-  pinMode(PIN_LED_LEVEL_B1, OUTPUT);
-  pinMode(PIN_LED_LEVEL_B2, OUTPUT);
+	// Brightness level indicator to LS138
+	pinMode(PIN_LED_LEVEL_B0, OUTPUT);
+	pinMode(PIN_LED_LEVEL_B1, OUTPUT);
+	pinMode(PIN_LED_LEVEL_B2, OUTPUT);
 
-  // Set communication pin mode
-  pinMode(PIN_BLE_RX, INPUT);
-  pinMode(PIN_BLE_TX, OUTPUT);
-  pinMode(PIN_EXT_SPI_MISO, INPUT);
-  pinMode(PIN_RF_CHIPSELECT, OUTPUT);
-  pinMode(PIN_RF_RESET, OUTPUT);
-  pinMode(PIN_RF_EOFFLAG, INPUT);
+	// Set communication pin mode
+	pinMode(PIN_BLE_RX, INPUT);
+	pinMode(PIN_BLE_TX, OUTPUT);
+	pinMode(PIN_EXT_SPI_MISO, INPUT);
+	pinMode(PIN_RF_CHIPSELECT, OUTPUT);
+	pinMode(PIN_RF_RESET, OUTPUT);
+	pinMode(PIN_RF_EOFFLAG, INPUT);
 }
 
 // Initialize Sensors
 void SmartControllerClass::InitSensors()
 {
-  // DHT
-  if( theConfig.IsSensorEnabled(sensorDHT) ) {
-    senDHT.begin();
-    LOGD(LOGTAG_MSG, "DHT sensor works.");
-  }
+	// DHT
+	if (theConfig.IsSensorEnabled(sensorDHT)) {
+		senDHT.begin();
+		LOGD(LOGTAG_MSG, "DHT sensor works.");
+	}
 
-  // Light
-  if( theConfig.IsSensorEnabled(sensorALS) ) {
-    senLight.begin(SEN_LIGHT_MIN, SEN_LIGHT_MAX);
-    LOGD(LOGTAG_MSG, "Light sensor works.");
-  }
-
-
-  // Brightness indicator
-  indicatorBrightness.configPin(0, PIN_LED_LEVEL_B0);
-  indicatorBrightness.configPin(1, PIN_LED_LEVEL_B1);
-  indicatorBrightness.configPin(2, PIN_LED_LEVEL_B2);
-  indicatorBrightness.setLevel(theConfig.GetBrightIndicator());
-
-  //PIR
-  if( theConfig.IsSensorEnabled(sensorPIR) ) {
-    senMotion.begin();
-    LOGD(LOGTAG_MSG, "Motion sensor works.");
-  }
+	// Light
+	if (theConfig.IsSensorEnabled(sensorALS)) {
+		senLight.begin(SEN_LIGHT_MIN, SEN_LIGHT_MAX);
+		LOGD(LOGTAG_MSG, "Light sensor works.");
+	}
 
 
-  // ToDo:
-  //...
+	// Brightness indicator
+	indicatorBrightness.configPin(0, PIN_LED_LEVEL_B0);
+	indicatorBrightness.configPin(1, PIN_LED_LEVEL_B1);
+	indicatorBrightness.configPin(2, PIN_LED_LEVEL_B2);
+	indicatorBrightness.setLevel(theConfig.GetBrightIndicator());
+
+	//PIR
+	if (theConfig.IsSensorEnabled(sensorPIR)) {
+		senMotion.begin();
+		LOGD(LOGTAG_MSG, "Motion sensor works.");
+	}
+
+
+	// ToDo:
+	//...
 }
 
 void SmartControllerClass::InitCloudObj()
 {
-  // Set cloud variable initial value
-  m_tzString = theConfig.GetTimeZoneJSON();
+	// Set cloud variable initial value
+	m_tzString = theConfig.GetTimeZoneJSON();
 
-  CloudObjClass::InitCloudObj();
-  LOGN(LOGTAG_MSG, "Cloud Objects registered.");
+	CloudObjClass::InitCloudObj();
+	LOGN(LOGTAG_MSG, "Cloud Objects registered.");
 }
 
 // Get the controller started
 BOOL SmartControllerClass::Start()
 {
-  // ToDo:
+	// ToDo:
 
-  LOGI(LOGTAG_MSG, "SmartController started.");
-  return true;
+	LOGI(LOGTAG_MSG, "SmartController started.");
+	return true;
 }
 
 String SmartControllerClass::GetSysID()
 {
-  return m_SysID;
+	return m_SysID;
 }
 
 UC SmartControllerClass::GetStatus()
 {
-  return (UC)m_devStatus;
+	return (UC)m_devStatus;
 }
 
 void SmartControllerClass::SetStatus(UC st)
 {
-  LOGN(LOGTAG_STATUS, "System status changed from %d to %d", m_devStatus, st);
-  if( (UC)m_devStatus != st )
-    m_devStatus = st;
+	LOGN(LOGTAG_STATUS, "System status changed from %d to %d", m_devStatus, st);
+	if ((UC)m_devStatus != st)
+		m_devStatus = st;
 }
 
 BOOL SmartControllerClass::CheckRF()
 {
-  // ToDo: change value of m_isRF
+	// ToDo: change value of m_isRF
 
-  return true;
+	return true;
 }
 
 BOOL SmartControllerClass::CheckNetwork()
 {
-  // ToDo: check WAN, change value of m_isWAN
+	// ToDo: check WAN, change value of m_isWAN
 
-  // ToDo: check LAN, change value of m_isLan
+	// ToDo: check LAN, change value of m_isLan
 
-  return true;
+	return true;
 }
 
 BOOL SmartControllerClass::CheckBLE()
 {
-  // ToDo: change value of m_isBLE
+	// ToDo: change value of m_isBLE
 
-  return true;
+	return true;
 }
 
 BOOL SmartControllerClass::SelfCheck(UL ms)
 {
-  UC tickSaveConfig = 0;
+	UC tickSaveConfig = 0;
 
-  // Check all alarms. This triggers them.
-  Alarm.delay(ms);
+	// Check all alarms. This triggers them.
+	Alarm.delay(ms);
 
-  // Save config if it was changed
-  if( ++tickSaveConfig > 10 ) {
-    tickSaveConfig = 0;
-    theConfig.SaveConfig();
-  }
+	// Save config if it was changed
+	if (++tickSaveConfig > 10) {
+		tickSaveConfig = 0;
+		theConfig.SaveConfig();
+	}
 
-  // ToDo:
-  //...
+	// ToDo:
+	//...
 
-  return true;
+	return true;
 }
 
 BOOL SmartControllerClass::IsRFGood()
 {
-  return m_isRF;
+	return m_isRF;
 }
 
 BOOL SmartControllerClass::IsBLEGood()
 {
-  return m_isBLE;
+	return m_isBLE;
 }
 
 BOOL SmartControllerClass::IsLANGood()
 {
-  return m_isLAN;
+	return m_isLAN;
 }
 
 BOOL SmartControllerClass::IsWANGood()
 {
-  return m_isWAN;
+	return m_isWAN;
 }
 
 // Process all kinds of commands
 void SmartControllerClass::ProcessCommands()
 {
-  // Check and process RF2.4 messages
-  m_cmRF24.CheckMessageBuffer();
+	// Check and process RF2.4 messages
+	m_cmRF24.CheckMessageBuffer();
 
-  // ToDo: process commands from other sources
+	// ToDo: process commands from other sources
 }
 
 // Collect data from all enabled sensors
@@ -300,76 +300,76 @@ void SmartControllerClass::ProcessCommands()
 /// and avoid reading too many data in one loop
 void SmartControllerClass::CollectData(UC tick)
 {
-  BOOL blnReadDHT = false;
-  BOOL blnReadALS = false;
-  BOOL blnReadPIR = false;
+	BOOL blnReadDHT = false;
+	BOOL blnReadALS = false;
+	BOOL blnReadPIR = false;
 
-  switch( GetStatus() ) {
-    case STATUS_DIS:
-    case STATUS_NWS:    // Normal speed
-      if( theConfig.IsSensorEnabled(sensorDHT) ) {
-        if( tick % SEN_DHT_SPEED_NORMAL == 0 )
-          blnReadDHT = true;
-      }
-      if( theConfig.IsSensorEnabled(sensorALS) ) {
-        if( tick % SEN_ALS_SPEED_NORMAL == 0 )
-          blnReadALS = true;
-      }
-      if( theConfig.IsSensorEnabled(sensorPIR) ) {
-        if( tick % SEN_PIR_SPEED_NORMAL == 0 )
-          blnReadPIR = true;
-      }
-      break;
+	switch (GetStatus()) {
+	case STATUS_DIS:
+	case STATUS_NWS:    // Normal speed
+		if (theConfig.IsSensorEnabled(sensorDHT)) {
+			if (tick % SEN_DHT_SPEED_NORMAL == 0)
+				blnReadDHT = true;
+		}
+		if (theConfig.IsSensorEnabled(sensorALS)) {
+			if (tick % SEN_ALS_SPEED_NORMAL == 0)
+				blnReadALS = true;
+		}
+		if (theConfig.IsSensorEnabled(sensorPIR)) {
+			if (tick % SEN_PIR_SPEED_NORMAL == 0)
+				blnReadPIR = true;
+		}
+		break;
 
-    case STATUS_SLP:    // Lower speed in sleep mode
-      if( theConfig.IsSensorEnabled(sensorDHT) ) {
-        if( tick % SEN_DHT_SPEED_LOW == 0 )
-          blnReadDHT = true;
-      }
-      if( theConfig.IsSensorEnabled(sensorALS) ) {
-        if( tick % SEN_ALS_SPEED_LOW == 0 )
-          blnReadALS = true;
-      }
-      if( theConfig.IsSensorEnabled(sensorPIR) ) {
-        if( tick % SEN_PIR_SPEED_LOW == 0 )
-          blnReadPIR = true;
-      }
-      break;
+	case STATUS_SLP:    // Lower speed in sleep mode
+		if (theConfig.IsSensorEnabled(sensorDHT)) {
+			if (tick % SEN_DHT_SPEED_LOW == 0)
+				blnReadDHT = true;
+		}
+		if (theConfig.IsSensorEnabled(sensorALS)) {
+			if (tick % SEN_ALS_SPEED_LOW == 0)
+				blnReadALS = true;
+		}
+		if (theConfig.IsSensorEnabled(sensorPIR)) {
+			if (tick % SEN_PIR_SPEED_LOW == 0)
+				blnReadPIR = true;
+		}
+		break;
 
-    default:
-      return;
-  }
+	default:
+		return;
+	}
 
-  // Read from DHT
-  if( blnReadDHT ) {
-    float t = senDHT.getTempCelcius();
-    float h = senDHT.getHumidity();
+	// Read from DHT
+	if (blnReadDHT) {
+		float t = senDHT.getTempCelcius();
+		float h = senDHT.getHumidity();
 
-    if( !isnan(t) ) {
-      UpdateTemperature(t);
-    }
-    if( !isnan(h) ) {
-      UpdateHumidity(h);
-    }
-  }
+		if (!isnan(t)) {
+			UpdateTemperature(t);
+		}
+		if (!isnan(h)) {
+			UpdateHumidity(h);
+		}
+	}
 
-  // Read from ALS
-  if( blnReadALS ) {
-    UpdateBrightness(senLight.getLevel());
-  }
+	// Read from ALS
+	if (blnReadALS) {
+		UpdateBrightness(senLight.getLevel());
+	}
 
-  // Motion detection
-  if( blnReadPIR ) {
-	  UpdateMotion(senMotion.getMotion());
-  }
+	// Motion detection
+	if (blnReadPIR) {
+		UpdateMotion(senMotion.getMotion());
+	}
 
-  // Update json data and publish on to the cloud
-  if( blnReadDHT || blnReadALS || blnReadPIR ) {
-    UpdateJSONData();
-  }
+	// Update json data and publish on to the cloud
+	if (blnReadDHT || blnReadALS || blnReadPIR) {
+		UpdateJSONData();
+	}
 
-  // Proximity detection
-  // ToDo: Wi-Fi, BLE, etc.
+	// Proximity detection
+	// ToDo: Wi-Fi, BLE, etc.
 }
 
 //------------------------------------------------------------------
@@ -381,10 +381,10 @@ void SmartControllerClass::CollectData(UC tick)
 ///   dev: device id or 0 (all devices under this controller)
 int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 {
-  // ToDo:
-  //SetStatus();
+	// ToDo:
+	//SetStatus();
 
-  return 0;
+	return 0;
 }
 
 int SmartControllerClass::DevChangeColor()
@@ -397,10 +397,10 @@ int SmartControllerClass::DevChangeColor()
 // High speed system timer process
 void SmartControllerClass::FastProcess()
 {
-  // Refresh LED brightness indicator
-  indicatorBrightness.refreshLevelBar();
+	// Refresh LED brightness indicator
+	indicatorBrightness.refreshLevelBar();
 
-  // ToDo:
+	// ToDo:
 }
 
 //------------------------------------------------------------------
@@ -408,41 +408,41 @@ void SmartControllerClass::FastProcess()
 //------------------------------------------------------------------
 int SmartControllerClass::CldSetTimeZone(String tzStr)
 {
-  // Parse JSON string
-  StaticJsonBuffer<COMMAND_JSON_SIZE> jsonBuf;
-  JsonObject& root = jsonBuf.parseObject((char *)tzStr.c_str());
-  if( !root.success() )
-    return -1;
-  if( root.size() != 3 )  // Expected 3 KVPs
-    return -1;
+	// Parse JSON string
+	StaticJsonBuffer<COMMAND_JSON_SIZE> jsonBuf;
+	JsonObject& root = jsonBuf.parseObject((char *)tzStr.c_str());
+	if (!root.success())
+		return -1;
+	if (root.size() != 3)  // Expected 3 KVPs
+		return -1;
 
-  // Set timezone id
-  if( !theConfig.SetTimeZoneID((US)root["id"]) )
-    return 1;
+	// Set timezone id
+	if (!theConfig.SetTimeZoneID((US)root["id"]))
+		return 1;
 
-  // Set timezone offset
-  if( !theConfig.SetTimeZoneOffset((SHORT)root["offset"]) )
-    return 2;
+	// Set timezone offset
+	if (!theConfig.SetTimeZoneOffset((SHORT)root["offset"]))
+		return 2;
 
-  // Set timezone dst
-  if( !theConfig.SetTimeZoneOffset((UC)root["dst"]) )
-    return 3;
+	// Set timezone dst
+	if (!theConfig.SetTimeZoneOffset((UC)root["dst"]))
+		return 3;
 
-  return 0;
+	return 0;
 }
 
 int SmartControllerClass::CldPowerSwitch(String swStr)
 {
-  BOOL blnOn;
+	BOOL blnOn;
 
-  swStr.toLowerCase();
-  blnOn = (swStr == "0" || swStr == "off");
+	swStr.toLowerCase();
+	blnOn = (swStr == "0" || swStr == "off");
 
-  // Turn the switch on or off
-  //ToDo: send this the command queue, have command queue call DevSoftSwitch instead?
-  DevSoftSwitch(blnOn);
+	// Turn the switch on or off
+	//ToDo: send this the command queue, have command queue call DevSoftSwitch instead?
+	DevSoftSwitch(blnOn);
 
-  return 0;
+	return 0;
 }
 
 int SmartControllerClass::CldJSONCommand(String jsonData)
@@ -453,116 +453,116 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
   //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
   //handle each for each respective Chain until end of incoming string
-  StaticJsonBuffer<64> jsonBuffer;
+	StaticJsonBuffer<64> jsonBuffer;
 
-  String jsonDataCopy = jsonData;
-  int i = 0;
-  int pos = 0;
-  String json[10];
+	String jsonDataCopy = jsonData;
+	int i = 0;
+	int pos = 0;
+	String json[10];
 
-  while ((pos = jsonDataCopy.indexOf('}')) != -1) {
-    json[i] = jsonDataCopy.substring(0, pos + 1);
-    jsonDataCopy = jsonDataCopy.substring(pos + 1, jsonDataCopy.length() + 1);
-    i++;
-  }
+	while ((pos = jsonDataCopy.indexOf('}')) != -1) {
+		json[i] = jsonDataCopy.substring(0, pos + 1);
+		jsonDataCopy = jsonDataCopy.substring(pos + 1, jsonDataCopy.length() + 1);
+		i++;
+	}
 
-  int isSuccess;
-  for (int j = 0; j < i; j++) {
-	  isSuccess = 1;
-	  Serial.println(json[j]);
-	  JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(json[j].c_str()));
+	int isSuccess;
+	for (int j = 0; j < i; j++) {
+		isSuccess = 1;
+		Serial.println(json[j]);
+		JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(json[j].c_str()));
 
-	  if (!root.success()) {
-	  Serial.println("Error parsing input.");
-	  isSuccess = 0;
-	  }
+		if (!root.success()) {
+			Serial.println("Error parsing input.");
+			isSuccess = 0;
+		}
 
-	  //TODO: Error check if flags are valid, if not, set isSuccess to 0
+		//TODO: Error check if flags are valid, if not, set isSuccess to 0
 
-	  if (isSuccess == 1) {
-		  //grab first part of uid and store it in uidKey:
-		  float uidWhole = root["uid"];
-		  int uidKey = (int)uidWhole;
+		if (isSuccess == 1) {
+			//grab first part of uid and store it in uidKey:
+			float uidWhole = root["uid"];
+			int uidKey = (int)uidWhole;
 
-		  if (uidKey == 1) //rule
-		  {
-			RuleRow_t row;
-			row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
-			row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
-			row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
-			row.uid = root["uid"];
-			row.SCT_uid = root["SCT_uid"];
-			row.alarm_id = root["alarm_id"];
-			row.SNT_uid = root["SNT_uid"];
-			row.notif_uid = root["notif_uid"];
+			if (uidKey == 1) //rule
+			{
+				RuleRow_t row;
+				row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
+				row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
+				row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
+				row.uid = root["uid"];
+				row.SCT_uid = root["SCT_uid"];
+				row.alarm_id = root["alarm_id"];
+				row.SNT_uid = root["SNT_uid"];
+				row.notif_uid = root["notif_uid"];
 
-			isSuccess = Change_Rule(row);
+				isSuccess = Change_Rule(row);
 
-			if (isSuccess = 0) {
-				LOGE(LOGTAG_MSG, "Unable to write to Rule table.");
+				if (isSuccess = 0) {
+					LOGE(LOGTAG_MSG, "Unable to write to Rule table.");
+				}
+				else {
+					LOGN(LOGTAG_MSG, "Success. Able to write to Rule table.");
+				}
 			}
-			else {
-				LOGN(LOGTAG_MSG, "Success. Able to write to Rule table.");
-			  }
-		  }
-		  else if (uidKey == 2) //schedule
-		  {
-			  ScheduleRow_t row;
-			  row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
-			  row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
-			  row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
-			  row.uid = root["uid"];
+			else if (uidKey == 2) //schedule
+			{
+				ScheduleRow_t row;
+				row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
+				row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
+				row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
+				row.uid = root["uid"];
 
-			  //TODO: extract weekday/repeat info from byte passed in
-			  //row.weekdays = root["weekdays"];
-			  //row.isRepeat = root["isRepeat"];
+				//TODO: extract weekday/repeat info from byte passed in
+				//row.weekdays = root["weekdays"];
+				//row.isRepeat = root["isRepeat"];
 
-			  row.hour = root["hour"];
-			  row.min = root["min"];
+				row.hour = root["hour"];
+				row.min = root["min"];
 
-			  isSuccess = Change_Schedule(row);
+				isSuccess = Change_Schedule(row);
 
-			  if (isSuccess = 0) {
-				  LOGE(LOGTAG_MSG, "Unable to write to Schedule table.");
-			  }
-			  else {
-				  LOGN(LOGTAG_MSG, "Success. Able to write to Schedule table.");
-			  }
-		  }
-		  else if (uidKey == 3) //scenario
-		  {
-			  ScenarioRow_t row;
-			  row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
-			  row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
-			  row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
-			  row.uid = root["uid"];
+				if (isSuccess = 0) {
+					LOGE(LOGTAG_MSG, "Unable to write to Schedule table.");
+				}
+				else {
+					LOGN(LOGTAG_MSG, "Success. Able to write to Schedule table.");
+				}
+			}
+			else if (uidKey == 3) //scenario
+			{
+				ScenarioRow_t row;
+				row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
+				row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
+				row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
+				row.uid = root["uid"];
 
-			  //TODO: Read hue values properly.
-			  // row.ring1 = root["ring1"];
-			  // row.ring2 = root["ring2"];
-			  // row.ring3 = root["ring3"];
+				//TODO: Read hue values properly.
+				// row.ring1 = root["ring1"];
+				// row.ring2 = root["ring2"];
+				// row.ring3 = root["ring3"];
 
-			  row.filter = root["filter"];
+				row.filter = root["filter"];
 
-			  isSuccess = Change_Scenario(row);
+				isSuccess = Change_Scenario(row);
 
-			  if (isSuccess = 0) {
-				  LOGE(LOGTAG_MSG, "Unable to write to Scenario table.");
-			  }
-			  else {
-				  LOGN(LOGTAG_MSG, "Sucess. Able to write to Scenario table.");
-			  }
-		  }
-		  else
-		  {
-			  LOGE(LOGTAG_MSG, "Invalid UID. Could not determine further action.");
-		  }
-	  }
-	  else { //if isSuccess != 1
-		  LOGE(LOGTAG_MSG, "Correct the flag to be able to read the values in.");
-	  }
-  } //end of for loop
-  return 1;
+				if (isSuccess = 0) {
+					LOGE(LOGTAG_MSG, "Unable to write to Scenario table.");
+				}
+				else {
+					LOGN(LOGTAG_MSG, "Sucess. Able to write to Scenario table.");
+				}
+			}
+			else
+			{
+				LOGE(LOGTAG_MSG, "Invalid UID. Could not determine further action.");
+			}
+		}
+		else { //if isSuccess != 1
+			LOGE(LOGTAG_MSG, "Correct the flag to be able to read the values in.");
+		}
+	} //end of for loop
+	return 1;
 }
 //------------------------------------------------------------------
 // Cloud Interface Action Types
@@ -581,7 +581,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 
 bool SmartControllerClass::Change_Rule(RuleRow_t row)
 {
-  return true;
+	return true;
 }
 
 bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
@@ -590,21 +590,21 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 
 	switch (row.op_flag)
 	{
-		case DELETE:
-			//DELETE
+	case DELETE:
+		//DELETE
 
-			//traverse through Alarm chain of 8 items, find uid if it exists. state_flag is delete, run_flag is 0, flash_flag is 0
-      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the same flags as above
-      //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
-			break;
-		case POST:
-		case PUT:
-			//PUT and POST
-			//traverse through Alarm chain of 8 items, find uid if it exists, and delete old alarm
-      //overwrite old row, set run_flag to 0, flash_flag to 0, state_flag to put
-      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid; run_flag is 0, flash_flag is 0, run_flag is 0
-      //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
-      break;
+		//traverse through Alarm chain of 8 items, find uid if it exists. state_flag is delete, run_flag is 0, flash_flag is 0
+  //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the same flags as above
+  //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
+		break;
+	case POST:
+	case PUT:
+		//PUT and POST
+		//traverse through Alarm chain of 8 items, find uid if it exists, and delete old alarm
+  //overwrite old row, set run_flag to 0, flash_flag to 0, state_flag to put
+  //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid; run_flag is 0, flash_flag is 0, run_flag is 0
+  //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
+		break;
 	}
 }
 
@@ -624,8 +624,8 @@ bool SmartControllerClass::Change_PowerColor(DevStatus_t row) //? link with CldP
 
 bool SmartControllerClass::Change_Sensor() // get temperature?
 {
-  	//Possible subactions: GET
-    //ToDo: define later
+	//Possible subactions: GET
+	//ToDo: define later
 }
 
 //------------------------------------------------------------------
@@ -634,13 +634,13 @@ bool SmartControllerClass::Change_Sensor() // get temperature?
 void SmartControllerClass::AlarmTimerTriggered()
 {
 
-  //ToDo: get corresponding scenerio UID / notif UID
-  //ToDo: add action to command queue, send notif UID to cloud (to send to app)
+	//ToDo: get corresponding scenerio UID / notif UID
+	//ToDo: add action to command queue, send notif UID to cloud (to send to app)
 
-	//AlarmId triggered_id = Alarm.getTriggeredAlarmId();
+	  //AlarmId triggered_id = Alarm.getTriggeredAlarmId();
 
-	//search through rules table to find alarm id, and the scenerio UID
+	  //search through rules table to find alarm id, and the scenerio UID
 
-	//add action to command queue
+	  //add action to command queue
 
 }
