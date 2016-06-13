@@ -453,121 +453,116 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
   //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
   //handle each for each respective Chain until end of incoming string
-  StaticJsonBuffer<500> jsonBuffer;
+  StaticJsonBuffer<64> jsonBuffer;
 
   String jsonDataCopy = jsonData;
   int i = 0;
-  int pos = jsonDataCopy.indexOf('}');
+  int pos = 0;
   String json[10];
 
-  while (jsonDataCopy.indexOf('}') != -1) {
+  while ((pos = jsonDataCopy.indexOf('}')) != -1) {
     json[i] = jsonDataCopy.substring(0, pos + 1);
     jsonDataCopy = jsonDataCopy.substring(pos + 1, jsonDataCopy.length() + 1);
-    Serial.println(i);
     i++;
   }
 
+  int isSuccess;
   for (int j = 0; j < i; j++) {
-    JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(json[j].c_str()));
+	  isSuccess = 1;
+	  Serial.println(json[j]);
+	  JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(json[j].c_str()));
 
-    if (!root.success()) {
-      LOGE(LOGTAG_MSG, "Error parsing input.");
-      return 0;
-    }
+	  if (!root.success()) {
+	  Serial.println("Error parsing input.");
+	  isSuccess = 0;
+	  }
 
-    //grab first part of uid and store it in uidKey:
-    float uidWhole = root["uid"];
-    int uidKey = (int) uidWhole;
-    int isSuccess = 0;
+	  //TODO: Error check if flags are valid, if not, set isSuccess to 0
 
-    if (root["op_flag"] != "GET" && root["op_flag"] != "POST" && root["op_flag"] != "PUT" && root["op_flag"] != "DELETE") {
-      LOGE(LOGTAG_MSG, "Invalid HTTP command.");
-      return 0;
-    }
+	  if (isSuccess == 1) {
+		  //grab first part of uid and store it in uidKey:
+		  float uidWhole = root["uid"];
+		  int uidKey = (int)uidWhole;
 
-    if (root["flash_flag"] != "UNSAVED") {
-      LOGE(LOGTAG_MSG, "Invalid FLASH_FLAG. Should be unsaved upon entry.");
-      return 0;
-    }
+		  if (uidKey == 1) //rule
+		  {
+			RuleRow_t row;
+			row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
+			row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
+			row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
+			row.uid = root["uid"];
+			row.SCT_uid = root["SCT_uid"];
+			row.alarm_id = root["alarm_id"];
+			row.SNT_uid = root["SNT_uid"];
+			row.notif_uid = root["notif_uid"];
 
-    if (root["run_flag"] != "UNEXECUTED") {
-      LOGE(LOGTAG_MSG, "Invalid RUN_FLAG. Should be unexecuted upon entry.");
-      return 0;
-    }
+			isSuccess = Change_Rule(row);
 
-    if (uidKey == 1) //rule
-    {
-      RuleRow_t row;
-      row.op_flag = (OP_FLAG) root["op_flag"].as<int>();
-      row.flash_flag = (FLASH_FLAG) root["flash_flag"].as<int>();
-      row.run_flag = (RUN_FLAG) root["run_flag"].as<int>();
-      row.uid = root["uid"];
-      row.SCT_uid = root["SCT_uid"];
-      row.alarm_id = root["alarm_id"];
-      row.SNT_uid = root["SNT_uid"];
-      row.notif_uid = root["notif_uid"];
+			if (isSuccess = 0) {
+				LOGE(LOGTAG_MSG, "Unable to write to Rule table.");
+			}
+			else {
+				LOGN(LOGTAG_MSG, "Success. Able to write to Rule table.");
+			  }
+		  }
+		  else if (uidKey == 2) //schedule
+		  {
+			  ScheduleRow_t row;
+			  row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
+			  row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
+			  row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
+			  row.uid = root["uid"];
 
-      isSuccess = Change_Rule(row);
+			  //TODO: extract weekday/repeat info from byte passed in
+			  //row.weekdays = root["weekdays"];
+			  //row.isRepeat = root["isRepeat"];
 
-      if (isSuccess = 0) {
-        LOGE(LOGTAG_MSG, "Unable to write to Rule table.");
-      } else {
-        LOGN(LOGTAG_MSG, "Success. Able to write to Rule table.");
-      }
+			  row.hour = root["hour"];
+			  row.min = root["min"];
 
-      return isSuccess;
-    }
-    else if (uidKey == 2) //schedule
-    {
-      ScheduleRow_t row;
-      row.op_flag = (OP_FLAG) root["op_flag"].as<int>();
-      row.flash_flag = (FLASH_FLAG) root["flash_flag"].as<int>();
-      row.run_flag = (RUN_FLAG) root["run_flag"].as<int>();
-      row.uid = root["uid"];
-      //row.weekdays = root["weekdays"];
-      //row.isRepeat = root["isRepeat"];
-      row.hour = root["hour"];
-      row.min = root["min"];
-      row.alarm_id = root["alarm_id"];
+			  isSuccess = Change_Schedule(row);
 
-      isSuccess = Change_Schedule(row);
+			  if (isSuccess = 0) {
+				  LOGE(LOGTAG_MSG, "Unable to write to Schedule table.");
+			  }
+			  else {
+				  LOGN(LOGTAG_MSG, "Success. Able to write to Schedule table.");
+			  }
+		  }
+		  else if (uidKey == 3) //scenario
+		  {
+			  ScenarioRow_t row;
+			  row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
+			  row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
+			  row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
+			  row.uid = root["uid"];
 
-      if (isSuccess = 0) {
-        LOGE(LOGTAG_MSG, "Unable to write to Schedule table.");
-      } else {
-        LOGN(LOGTAG_MSG, "Sucess. Able to write to Schedule table.");
-      }
+			  //TODO: Read hue values properly.
+			  // row.ring1 = root["ring1"];
+			  // row.ring2 = root["ring2"];
+			  // row.ring3 = root["ring3"];
 
-      return isSuccess;
-    }
-    else if (uidKey == 3) //scenario
-    {
-      ScenarioRow_t row;
-      row.op_flag = (OP_FLAG) root["op_flag"].as<int>();
-      row.flash_flag = (FLASH_FLAG) root["flash_flag"].as<int>();
-      row.run_flag = (RUN_FLAG) root["run_flag"].as<int>();
-      row.uid = root["uid"];
-      // row.ring1 = root["ring1"];
-      // row.ring2 = root["ring2"];
-      // row.ring3 = root["ring3"];
-      row.filter = root["filter"];
+			  row.filter = root["filter"];
 
-      isSuccess = Change_Scenario(row);
+			  isSuccess = Change_Scenario(row);
 
-      if (isSuccess = 0) {
-        LOGE(LOGTAG_MSG, "Unable to write to Scenario table.");
-      } else {
-        LOGN(LOGTAG_MSG, "Sucess. Able to write to Scenario table.");
-      }
-
-      return true;
-    }
-    else
-    {
-      LOGW(LOGTAG_MSG, "Invalid UID. Could not determine further action.");
-      return false;
-    }
-  }
+			  if (isSuccess = 0) {
+				  LOGE(LOGTAG_MSG, "Unable to write to Scenario table.");
+			  }
+			  else {
+				  LOGN(LOGTAG_MSG, "Sucess. Able to write to Scenario table.");
+			  }
+		  }
+		  else
+		  {
+			  LOGE(LOGTAG_MSG, "Invalid UID. Could not determine further action.");
+		  }
+	  }
+	  else { //if isSuccess != 1
+		  LOGE(LOGTAG_MSG, "Correct the flag to be able to read the values in.");
+	  }
+  } //end of for loop
+  return 1;
 }
 //------------------------------------------------------------------
 // Cloud Interface Action Types
