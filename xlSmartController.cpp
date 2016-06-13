@@ -460,6 +460,17 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 // Cloud Interface Action Types
 //------------------------------------------------------------------
 
+//After these JSON enties are dealt with, every few seconds, an action loop will scope the flags for each of the 8 rows.
+//If the state_flag says 'POST', new alarms will be created and the row's run_flag will be changed to 'EXECUTED'
+//If the flag says 'DELETE', alarm will be deleted, and run_flag will be changed to 'EXECUTED'
+
+//Every 5 seconds, another loop will traverse the working memory chain, and check if m_isChanged == true (this flag gets changed everytime a change is made to the chains)
+//This loop will traverse the chain and write any rows with flash_flag = 0 to flash memory, and it will change those rows' flash_flag to 1
+//sidenote: the process for assigning UIDs to each row will be taken care of by the cloud. Whenever the cloud sends a delete request to working memory through
+//CldJSONCommand, it now knows the UID has been freed, and can be used for subsequent 'new' rows to be sent. In this manner, the flash table will simply update
+//itself using UID, naturally replacing any deleted rows and always having an updated, clean table.
+//any rows with flash_flag = 1 will simply be ignored
+
 bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 {
 	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
@@ -468,6 +479,7 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 	{
 		case DELETE:
 			//DELETE
+
 			//traverse through Alarm chain of 8 items, find uid if it exists. state_flag is delete, run_flag is 0, flash_flag is 0
       //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the same flags as above
       //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
@@ -482,16 +494,6 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
       break;
 	}
 
-//After these JSON enties are dealt with, every few seconds, an action loop will scope the flags for each of the 8 rows.
-//If the state_flag says 'POST', new alarms will be created and the row's run_flag will be changed to 'EXECUTED'
-//If the flag says 'DELETE', alarm will be deleted, and run_flag will be changed to 'EXECUTED'
-
-//Every 5 seconds, another loop will traverse the working memory chain, and check if m_isChanged == true (this flag gets changed everytime a change is made to the chains)
-//This loop will traverse the chain and write any rows with flash_flag = 0 to flash memory, and it will change those rows' flash_flag to 1
-//sidenote: the process for assigning UIDs to each row will be taken care of by the cloud. Whenever the cloud sends a delete request to working memory through
-//CldJSONCommand, it now knows the UID has been freed, and can be used for subsequent 'new' rows to be sent. In this manner, the flash table will simply update
-//itself using UID, naturally replacing any deleted rows and always having an updated, clean table.
-//any rows with flash_flag = 1 will simply be ignored
 }
 
 bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
