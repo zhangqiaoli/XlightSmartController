@@ -210,9 +210,19 @@ BOOL ConfigClass::IsConfigChanged()
   return m_isChanged;
 }
 
+void ConfigClass::SetConfigChanged(BOOL flag)
+{
+	m_isChanged = flag;
+}
+
 BOOL ConfigClass::IsDSTChanged()
 {
   return m_isDSTChanged;
+}
+
+void ConfigClass::SetDSTChanged(BOOL flag)
+{
+	m_isDSTChanged = flag;
 }
 
 BOOL ConfigClass::IsSCTChanged()
@@ -220,14 +230,29 @@ BOOL ConfigClass::IsSCTChanged()
   return m_isSCTChanged;
 }
 
+void ConfigClass::SetSCTChanged(BOOL flag)
+{
+	m_isSCTChanged = flag;
+}
+
 BOOL ConfigClass::IsRTChanged()
 {
 	return m_isRTChanged;
 }
 
+void ConfigClass::SetRTChanged(BOOL flag)
+{
+	m_isRTChanged = flag;
+}
+
 BOOL ConfigClass::IsSNTChanged()
 {
 	return m_isSNTChanged;
+}
+
+void ConfigClass::SetSNTChanged(BOOL flag)
+{
+	m_isSNTChanged = flag;
 }
 
 UC ConfigClass::GetVersion()

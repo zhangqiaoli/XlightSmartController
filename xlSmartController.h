@@ -70,10 +70,10 @@ public:
   int CldJSONCommand(String jsonData);
 
   // Cloud Interface Action Types
-  bool Change_Rules(RuleRow_t row);
+  bool Change_Rule(RuleRow_t row);
   bool Change_Schedule(ScheduleRow_t row);
   bool Change_Scenario(ScenarioRow_t row);				//ToDo: Params
-  bool Change_PowerColor(DevStatus_t row);				//ToDo: Params
+  bool Change_DeviceStatus(DevStatus_t row);				//ToDo: Params
   bool Change_Sensor();					//ToDo: Params
 
   //Alarm Triggered Actions
