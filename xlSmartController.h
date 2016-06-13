@@ -72,8 +72,8 @@ public:
   // Cloud Interface Action Types
   bool Change_Rule(RuleRow_t row);
   bool Change_Schedule(ScheduleRow_t row);
-  bool Change_Scenario(ScenarioRow_t row);				//ToDo: Params
-  bool Change_PowerColor(DevStatus_t row);				//ToDo: Params
+  bool Change_Scenario(ScenarioRow_t row);
+  bool Change_PowerColor(DevStatus_t row);
   bool Change_Sensor();					//ToDo: Params
 
   //Alarm Triggered Actions

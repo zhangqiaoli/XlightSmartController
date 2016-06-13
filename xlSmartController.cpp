@@ -472,7 +472,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 
     if (!root.success()) {
       LOGE(LOGTAG_MSG, "Error parsing input.");
-      return false;
+      return 0;
     }
 
     //grab first part of uid and store it in uidKey:
@@ -480,12 +480,27 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
     int uidKey = (int) uidWhole;
     int isSuccess = 0;
 
+    if (root["op_flag"] != "GET" && root["op_flag"] != "POST" && root["op_flag"] != "PUT" && root["op_flag"] != "DELETE") {
+      LOGE(LOGTAG_MSG, "Invalid HTTP command.");
+      return 0;
+    }
+
+    if (root["flash_flag"] != "UNSAVED") {
+      LOGE(LOGTAG_MSG, "Invalid FLASH_FLAG. Should be unsaved upon entry.");
+      return 0;
+    }
+
+    if (root["run_flag"] != "UNEXECUTED") {
+      LOGE(LOGTAG_MSG, "Invalid RUN_FLAG. Should be unexecuted upon entry.");
+      return 0;
+    }
+
     if (uidKey == 1) //rule
     {
       RuleRow_t row;
-      row.op_flag = root["op_flag"];
-      row.flash_flag = root["flash_flag"];
-      row.run_flag = root["run_flag"];
+      row.op_flag = (OP_FLAG) root["op_flag"].as<int>();
+      row.flash_flag = (FLASH_FLAG) root["flash_flag"].as<int>();
+      row.run_flag = (RUN_FLAG) root["run_flag"].as<int>();
       row.uid = root["uid"];
       row.SCT_uid = root["SCT_uid"];
       row.alarm_id = root["alarm_id"];
@@ -496,20 +511,21 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 
       if (isSuccess = 0) {
         LOGE(LOGTAG_MSG, "Unable to write to Rule table.");
-        return false;
+      } else {
+        LOGN(LOGTAG_MSG, "Success. Able to write to Rule table.");
       }
 
-      return true;
+      return isSuccess;
     }
     else if (uidKey == 2) //schedule
     {
       ScheduleRow_t row;
-      row.op_flag = root["op_flag"];
-      row.flash_flag = root["flash_flag"];
-      row.run_flag = root["run_flag"];
+      row.op_flag = (OP_FLAG) root["op_flag"].as<int>();
+      row.flash_flag = (FLASH_FLAG) root["flash_flag"].as<int>();
+      row.run_flag = (RUN_FLAG) root["run_flag"].as<int>();
       row.uid = root["uid"];
-      row.weekdays = root["weekdays"];
-      row.isRepeat = root["isRepeat"];
+      //row.weekdays = root["weekdays"];
+      //row.isRepeat = root["isRepeat"];
       row.hour = root["hour"];
       row.min = root["min"];
       row.alarm_id = root["alarm_id"];
@@ -518,35 +534,37 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 
       if (isSuccess = 0) {
         LOGE(LOGTAG_MSG, "Unable to write to Schedule table.");
-        return false;
+      } else {
+        LOGN(LOGTAG_MSG, "Sucess. Able to write to Schedule table.");
       }
 
-      return true;
+      return isSuccess;
     }
     else if (uidKey == 3) //scenario
     {
       ScenarioRow_t row;
-      row.op_flag = root["op_flag"];
-      row.flash_flag = root["flash_flag"];
-      row.run_flag = root["run_flag"];
+      row.op_flag = (OP_FLAG) root["op_flag"].as<int>();
+      row.flash_flag = (FLASH_FLAG) root["flash_flag"].as<int>();
+      row.run_flag = (RUN_FLAG) root["run_flag"].as<int>();
       row.uid = root["uid"];
-      row.ring1 = root["ring1"];
-      row.ring2 = root["ring2"];
-      row.ring3 = root["ring3"];
+      // row.ring1 = root["ring1"];
+      // row.ring2 = root["ring2"];
+      // row.ring3 = root["ring3"];
       row.filter = root["filter"];
 
       isSuccess = Change_Scenario(row);
 
       if (isSuccess = 0) {
         LOGE(LOGTAG_MSG, "Unable to write to Scenario table.");
-        return false;
+      } else {
+        LOGN(LOGTAG_MSG, "Sucess. Able to write to Scenario table.");
       }
 
       return true;
     }
     else
     {
-      LOGW(LOGTAG_MSG, "Invalid UID. Could not determine further action.").
+      LOGW(LOGTAG_MSG, "Invalid UID. Could not determine further action.");
       return false;
     }
   }

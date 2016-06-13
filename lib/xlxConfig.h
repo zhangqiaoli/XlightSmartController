@@ -73,7 +73,7 @@ typedef struct //Schedule Table
 {
   OP_FLAG op_flag         : 2;
   FLASH_FLAG flash_flag   : 1;
-  RUN_FLAG                : 1;
+  RUN_FLAG run_flag       : 1;
 	UC uid				          : 8;
 	UC weekdays			        : 7;	  //values: 1-7
 	BOOL isRepeat		        : 1;	  //values: 0-1
@@ -90,7 +90,7 @@ typedef struct
 {
   OP_FLAG op_flag          : 2;
   FLASH_FLAG flash_flag    : 1;
-  RUN_FLAG                 : 1;
+  RUN_FLAG run_flag        : 1;
 	UC uid                   : 8;
 	UC SCT_uid               : 8;
 	UC alarm_id              : 8;
@@ -106,7 +106,7 @@ typedef struct
 {
   OP_FLAG op_flag         : 2;
   FLASH_FLAG flash_flag   : 1;
-  RUN_FLAG                : 1;
+  RUN_FLAG run_flag       : 1;
 	UC uid			            : 8;
 	Hue_t ring1;
 	Hue_t ring2;
