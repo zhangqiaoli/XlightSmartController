@@ -40,7 +40,8 @@ private:
 public:
 	ChainClass();
 	ChainClass(int max);
-	virtual ListNode<T>* search(uint8_t uid);
+	virtual ListNode<T>* search(uint8_t uid); //returns node pointer, given a uid
+	virtual int search_uid(uint8_t uid);
 
 	//overload all "add" functions to first check if linkedlist length is greater than PRE_FLASH_MAX_TABLE_SIZE
 	virtual bool add(int index, T);
@@ -76,6 +77,23 @@ ListNode<T>* ChainClass<T>::search(uint8_t uid)
 		tmp = tmp->next;
 	}
 	return NULL;
+}
+
+template<typename T>
+int ChainClass<T>::search_uid(uint8_t uid)
+{
+  int index = 0;
+	ListNode<T> *tmp = LinkedList<T>::root;
+	while (tmp != NULL)
+	{
+		if (tmp->data.uid == uid)
+		{
+			return index;
+		}
+		index++;
+		tmp = tmp->next;
+	}
+	return -1;
 }
 
 template<typename T>
