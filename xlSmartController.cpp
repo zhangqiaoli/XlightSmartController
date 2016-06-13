@@ -471,6 +471,11 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 //itself using UID, naturally replacing any deleted rows and always having an updated, clean table.
 //any rows with flash_flag = 1 will simply be ignored
 
+bool SmartControllerClass::Change_Rules(RuleRow_t row)
+{
+
+}
+
 bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 {
 	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
