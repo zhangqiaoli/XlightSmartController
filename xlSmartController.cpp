@@ -453,8 +453,103 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
   //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
   //handle each for each respective Chain until end of incoming string
+  StaticJsonBuffer<500> jsonBuffer;
 
-  return 0;
+  String jsonDataCopy = jsonData;
+  int i = 0;
+  int pos = jsonDataCopy.indexOf('}');
+  String json[10];
+
+  while (jsonDataCopy.indexOf('}') != -1) {
+    json[i] = jsonDataCopy.substring(0, pos + 1);
+    jsonDataCopy = jsonDataCopy.substring(pos + 1, jsonDataCopy.length() + 1);
+    Serial.println(i);
+    i++;
+  }
+
+  for (int j = 0; j < i; j++) {
+    JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(json[j].c_str()));
+
+    if (!root.success()) {
+      LOGE(LOGTAG_MSG, "Error parsing input.");
+      return false;
+    }
+
+    //grab first part of uid and store it in uidKey:
+    float uidWhole = root["uid"];
+    int uidKey = (int) uidWhole;
+    int isSuccess = 0;
+
+    if (uidKey == 1) //rule
+    {
+      RuleRow_t row;
+      row.op_flag = root["op_flag"];
+      row.flash_flag = root["flash_flag"];
+      row.run_flag = root["run_flag"];
+      row.uid = root["uid"];
+      row.SCT_uid = root["SCT_uid"];
+      row.alarm_id = root["alarm_id"];
+      row.SNT_uid = root["SNT_uid"];
+      row.notif_uid = root["notif_uid"];
+
+      isSuccess = Change_Rule(row);
+
+      if (isSuccess = 0) {
+        LOGE(LOGTAG_MSG, "Unable to write to Rule table.");
+        return false;
+      }
+
+      return true;
+    }
+    else if (uidKey == 2) //schedule
+    {
+      ScheduleRow_t row;
+      row.op_flag = root["op_flag"];
+      row.flash_flag = root["flash_flag"];
+      row.run_flag = root["run_flag"];
+      row.uid = root["uid"];
+      row.weekdays = root["weekdays"];
+      row.isRepeat = root["isRepeat"];
+      row.hour = root["hour"];
+      row.min = root["min"];
+      row.alarm_id = root["alarm_id"];
+
+      isSuccess = Change_Schedule(row);
+
+      if (isSuccess = 0) {
+        LOGE(LOGTAG_MSG, "Unable to write to Schedule table.");
+        return false;
+      }
+
+      return true;
+    }
+    else if (uidKey == 3) //scenario
+    {
+      ScenarioRow_t row;
+      row.op_flag = root["op_flag"];
+      row.flash_flag = root["flash_flag"];
+      row.run_flag = root["run_flag"];
+      row.uid = root["uid"];
+      row.ring1 = root["ring1"];
+      row.ring2 = root["ring2"];
+      row.ring3 = root["ring3"];
+      row.filter = root["filter"];
+
+      isSuccess = Change_Scenario(row);
+
+      if (isSuccess = 0) {
+        LOGE(LOGTAG_MSG, "Unable to write to Scenario table.");
+        return false;
+      }
+
+      return true;
+    }
+    else
+    {
+      LOGW(LOGTAG_MSG, "Invalid UID. Could not determine further action.").
+      return false;
+    }
+  }
 }
 //------------------------------------------------------------------
 // Cloud Interface Action Types
@@ -471,9 +566,9 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 //itself using UID, naturally replacing any deleted rows and always having an updated, clean table.
 //any rows with flash_flag = 1 will simply be ignored
 
-bool SmartControllerClass::Change_Rules(RuleRow_t row)
+bool SmartControllerClass::Change_Rule(RuleRow_t row)
 {
-
+  return true;
 }
 
 bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
@@ -498,7 +593,6 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
       //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
       break;
 	}
-
 }
 
 bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
