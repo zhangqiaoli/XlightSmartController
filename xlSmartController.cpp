@@ -473,19 +473,22 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
     JsonObject& data = root["data"][j];
     isSuccess = 1;
 
-    if ( (strcmp(data["op_flag"].asString(), "GET") != 0) && (strcmp(data["op_flag"].asString(), "POST") != 0) && (strcmp(data["op_flag"].asString(), "PUT") != 0) && (strcmp(data["op_flag"].asString(), "DELETE") != 0) ) {
+    if ( (stricmp(data["op_flag"].asString(), "GET") != 0) && (stricmp(data["op_flag"].asString(), "POST") != 0) && (stricmp(data["op_flag"].asString(), "PUT") != 0) && (stricmp(data["op_flag"].asString(), "DELETE") != 0) ) {
       LOGE(LOGTAG_MSG, "Invalid HTTP command.");
       isSuccess = 0;
     }
 
-    if (strcmp(data["flash_flag"].asString(), "UNSAVED") != 0) {
-      LOGE(LOGTAG_MSG, "Invalid FLASH_FLAG. Should be unsaved upon entry.");
-      isSuccess = 0;
-    }
+    if (isSuccess == 1 && (stricmp(data["op_flag"].asString(), "GET") != 0))
+    {
+      if (stricmp(data["flash_flag"].asString(), "UNSAVED") != 0) {
+        LOGE(LOGTAG_MSG, "Invalid FLASH_FLAG. Should be unsaved upon entry.");
+        isSuccess = 0;
+      }
 
-    if (strcmp(data["run_flag"].asString(), "UNEXECUTED") != 0) {
-      LOGE(LOGTAG_MSG, "Invalid RUN_FLAG. Should be unexecuted upon entry.");
-      isSuccess = 0;
+      if (stricmp(data["run_flag"].asString(), "UNEXECUTED") != 0) {
+        LOGE(LOGTAG_MSG, "Invalid RUN_FLAG. Should be unexecuted upon entry.");
+        isSuccess = 0;
+      }
     }
 
 		if (isSuccess == 1) {
