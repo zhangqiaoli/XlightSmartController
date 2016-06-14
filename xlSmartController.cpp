@@ -548,14 +548,13 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 			if (index == -1) //uid not found
 			{
 				//make room for new row
-				if ((Schedule_table.size() < PRE_FLASH_MAX_TABLE_SIZE) || (Schedule_table.delete_one_outdated_row()))
+				if (Schedule_table.isFull())
 				{
-					//do nothing
-				}
-				else
-				{
-					LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
-					return false;
+					if (!Schedule_table.delete_one_outdated_row())
+					{
+						LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
+						return false;
+					}
 				}
 
 				//add row
@@ -596,14 +595,13 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 			if (index == -1) //uid not found
 			{			
 				//make room for new row
-				if ((Schedule_table.size() < PRE_FLASH_MAX_TABLE_SIZE) || (Schedule_table.delete_one_outdated_row()))
+				if (Schedule_table.isFull())
 				{
-					//do nothing
-				}
-				else
-				{
-					LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
-					return false;
+					if (!Schedule_table.delete_one_outdated_row())
+					{
+						LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
+						return false;
+					}
 				}
 
 				//add row
@@ -660,14 +658,13 @@ bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 			if (index == -1) //uid not found
 			{
 				//make room for new row
-				if ((Schedule_table.size() < PRE_FLASH_MAX_TABLE_SIZE) || (Schedule_table.delete_one_outdated_row()))
+				if (Scenario_table.isFull())
 				{
-					//do nothing
-				}
-				else
-				{
-					LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
-					return false;
+					if (!Scenario_table.delete_one_outdated_row())
+					{
+						LOGN(LOGTAG_MSG, "Scenario Table full, cannot process command");
+						return false;
+					}
 				}
 
 				//add row
@@ -696,14 +693,13 @@ bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 			if (index == -1) //uid not found
 			{
 				//make room for new row
-				if ((Schedule_table.size() < PRE_FLASH_MAX_TABLE_SIZE) || (Schedule_table.delete_one_outdated_row()))
+				if (Scenario_table.isFull())
 				{
-					//do nothing
-				}
-				else
-				{
-					LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
-					return false;
+					if (!Scenario_table.delete_one_outdated_row())
+					{
+						LOGN(LOGTAG_MSG, "Scenario Table full, cannot process command");
+						return false;
+					}
 				}
 
 				//add row
@@ -754,7 +750,7 @@ bool SmartControllerClass::Change_DeviceStatus(DevStatus_t row)
 		break;
 
 	}
-	theConfig.SetConfigChanged(true);
+	theConfig.SetDSTChanged(true);
 }
 
 bool SmartControllerClass::Change_Sensor()
