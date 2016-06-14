@@ -69,6 +69,9 @@ public:
   int CldPowerSwitch(String swStr);
   int CldJSONCommand(String jsonData);
 
+  // Parsing Functions
+  bool ParseRows(JsonObject& data, int index);
+
   // Cloud Interface Action Types
   bool Change_Rule(RuleRow_t row);
   bool Change_Schedule(ScheduleRow_t row);
