@@ -484,7 +484,7 @@ bool SmartControllerClass::Change_Rule(RuleRow_t row)
 				//add row
 				if (!Rule_table.add(row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while adding new row in Rule Table");
+					LOGE(LOGTAG_MSG, "Error occured while adding new Rule row: %d", row.uid);
 					return false;
 				}
 			}
@@ -493,7 +493,7 @@ bool SmartControllerClass::Change_Rule(RuleRow_t row)
 				//update row
 				if (!Rule_table.set(index, row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while updating new row in Rule Table");
+					LOGE(LOGTAG_MSG, "Error occured while updating new Rule row: %d", row.uid);
 					return false;
 				}
 			}
@@ -508,7 +508,7 @@ bool SmartControllerClass::Change_Rule(RuleRow_t row)
 				//add row
 				if (!Rule_table.add(row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while adding new row in Rule Table");
+					LOGE(LOGTAG_MSG, "Error occured while adding new Rule row: %d", row.uid);
 					return false;
 				}
 
@@ -522,7 +522,7 @@ bool SmartControllerClass::Change_Rule(RuleRow_t row)
 				//update row
 				if (!Rule_table.set(index, row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while updating new row in Rule Table");
+					LOGE(LOGTAG_MSG, "Error occured while updating new Rule row: %d", row.uid);
 					return false;
 				}
 
@@ -548,7 +548,11 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 			if (index == -1) //uid not found
 			{
 				//make room for new row
-				if (!Schedule_table.delete_one_outdated_row())
+				if ((Schedule_table.size() < PRE_FLASH_MAX_TABLE_SIZE) || (Schedule_table.delete_one_outdated_row()))
+				{
+					//do nothing
+				}
+				else
 				{
 					LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
 					return false;
@@ -557,28 +561,28 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 				//add row
 				if (!Schedule_table.add(row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while adding new row to Schedule Table");
+					LOGE(LOGTAG_MSG, "Error occured while adding new Schedule row: %d", row.uid);
 					return false;
 				}
 
 			}
 			else //uid found
 			{
-				//delete old alarm if it was created
+				//bring over old alarm id to new row if it exists
 				if (Schedule_table.get(index).run_flag == EXECUTED && Alarm.isAllocated(Schedule_table.get(index).alarm_id))
 				{
-					Alarm.free((Schedule_table.get(index).alarm_id));
-					LOGN(LOGTAG_MSG, "Successfully deleted old alarm");
+					//copy old alarm id into new row
+					row.alarm_id = Schedule_table.get(index).alarm_id;
 				}
 				else
 				{
-					LOGE(LOGTAG_MSG, "Could not delete previous alarm during Schedule Table change request");
+					LOGN(LOGTAG_MSG, "Previous alarm not set, simply replacing Schedule row: %d", row.uid);
 				}
 
 				//update row
 				if (!Schedule_table.set(index, row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while updating new row in Schedule Table");
+					LOGE(LOGTAG_MSG, "Error occured while updating new Schedule row: %d", row.uid);
 					return false;
 				}
 			}
@@ -592,7 +596,11 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 			if (index == -1) //uid not found
 			{			
 				//make room for new row
-				if (!Schedule_table.delete_one_outdated_row())
+				if ((Schedule_table.size() < PRE_FLASH_MAX_TABLE_SIZE) || (Schedule_table.delete_one_outdated_row()))
+				{
+					//do nothing
+				}
+				else
 				{
 					LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
 					return false;
@@ -601,7 +609,7 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 				//add row
 				if (!Schedule_table.add(row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while adding new row in Schedule Table");
+					LOGE(LOGTAG_MSG, "Error occured while adding new Schedule row: %d", row.uid);
 					return false;
 				}
 
@@ -612,21 +620,21 @@ bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 			}
 			else //uid found
 			{
-				//delete old alarm if it was created
+				//bring over old alarm id to new row if it exists
 				if (Schedule_table.get(index).run_flag == EXECUTED && Alarm.isAllocated(Schedule_table.get(index).alarm_id))
 				{
-					Alarm.free((Schedule_table.get(index).alarm_id));
-					LOGN(LOGTAG_MSG, "Successfully deleted old alarm");
+					//copy old alarm id into new row
+					row.alarm_id = Schedule_table.get(index).alarm_id;
 				}
 				else
 				{
-					LOGE(LOGTAG_MSG, "Could not delete previous alarm during Schedule Table change request");
+					LOGN(LOGTAG_MSG, "Previous alarm not set, simply replacing Schedule row: %d", row.uid);
 				}
 
 				//update row
 				if (!Schedule_table.set(index, row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while updating new row in Schedule Table");
+					LOGE(LOGTAG_MSG, "Error occured while updating new Schedule row: %d", row.uid);
 					return false;
 				}
 
@@ -652,16 +660,20 @@ bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 			if (index == -1) //uid not found
 			{
 				//make room for new row
-				if (!Scenario_table.delete_one_outdated_row())
+				if ((Schedule_table.size() < PRE_FLASH_MAX_TABLE_SIZE) || (Schedule_table.delete_one_outdated_row()))
 				{
-					LOGN(LOGTAG_MSG, "Scenerio Table full, cannot process command");
+					//do nothing
+				}
+				else
+				{
+					LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
 					return false;
 				}
 
 				//add row
 				if (!Scenario_table.add(row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while adding new row in Scenario Table");
+					LOGE(LOGTAG_MSG, "Error occured while adding new Scenario row %d", row.uid);
 					return false;
 				}
 			}
@@ -670,7 +682,7 @@ bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 				//update row
 				if (!Scenario_table.set(index, row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while updating new row in Scenario Table");
+					LOGE(LOGTAG_MSG, "Error occured while updating new Scenario row %d", row.uid);
 					return false;
 				}
 			}
@@ -684,16 +696,20 @@ bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 			if (index == -1) //uid not found
 			{
 				//make room for new row
-				if (!Scenario_table.delete_one_outdated_row())
+				if ((Schedule_table.size() < PRE_FLASH_MAX_TABLE_SIZE) || (Schedule_table.delete_one_outdated_row()))
 				{
-					LOGN(LOGTAG_MSG, "Scenerio Table full, cannot process command");
+					//do nothing
+				}
+				else
+				{
+					LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
 					return false;
 				}
 
 				//add row
 				if (!Scenario_table.add(row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while adding new row in Scenerio Table");
+					LOGE(LOGTAG_MSG, "Error occured while adding new Scenario row %d", row.uid);
 					return false;
 				}
 
@@ -707,7 +723,7 @@ bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 				//update row
 				if (!Scenario_table.set(index, row))
 				{
-					LOGE(LOGTAG_MSG, "Error occured while updating new row in Scenerio Table");
+					LOGE(LOGTAG_MSG, "Error occured while updating new Scenario row %d", row.uid);
 					return false;
 				}
 
