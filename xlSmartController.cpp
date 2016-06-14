@@ -490,11 +490,10 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 
 		if (isSuccess == 1) {
 			//grab first part of uid and store it in uidKey:
-      String uidWhole = data["uid"].asString();
-      int pos = uidWhole.indexOf(".");
-      String uidKey = uidWhole.substring(0, pos);
+      const char* uidWhole = data["uid"];
+      char uidKey = uidWhole[0];
 
-			if (strcmp(uidKey,"1") == 0) //rule
+			if (uidKey == '1') //rule
 			{
 				RuleRow_t row;
 				row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
@@ -515,7 +514,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 					LOGN(LOGTAG_MSG, "Success. Able to write to Rule table.");
 				}
 			}
-			else if (strcmp(uidKey,"2") == 0) //schedule
+			else if (uidKey == '2') //schedule
 			{
 				ScheduleRow_t row;
 				row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
@@ -539,7 +538,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 					LOGN(LOGTAG_MSG, "Success. Able to write to Schedule table.");
 				}
 			}
-			else if (strcmp(uidKey,"3") == 0) //scenario
+			else if (uidKey == '3') //scenario
 			{
 				ScenarioRow_t row;
 				row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
