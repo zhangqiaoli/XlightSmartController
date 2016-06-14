@@ -453,48 +453,58 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
   //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
   //handle each for each respective Chain until end of incoming string
-	StaticJsonBuffer<64> jsonBuffer;
+  int counter = 0;
+  StaticJsonBuffer<500> jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(jsonData.c_str()));
 
-	String jsonDataCopy = jsonData;
-	int i = 0;
-	int pos = 0;
-	String json[10];
+  if (!root.success()) {
+    LOGE(LOGTAG_MSG, "Error parsing input.");
+    counter = 0;
+  }
 
-	while ((pos = jsonDataCopy.indexOf('}')) != -1) {
-		json[i] = jsonDataCopy.substring(0, pos + 1);
-		jsonDataCopy = jsonDataCopy.substring(pos + 1, jsonDataCopy.length() + 1);
-		i++;
-	}
+  if (!root.containsKey("rows")) {
+    counter = 1;
+  } else {
+    counter = root["rows"].as<int>();
+  }
 
-	int isSuccess;
-	for (int j = 0; j < i; j++) {
-		isSuccess = 1;
-		Serial.println(json[j]);
-		JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(json[j].c_str()));
+  int isSuccess;
+	for (int j = 0; j < counter; j++) {
+    JsonObject& data = root["data"][j];
+    isSuccess = 1;
 
-		if (!root.success()) {
-			Serial.println("Error parsing input.");
-			isSuccess = 0;
-		}
+    if ( (strcmp(data["op_flag"].asString(), "GET") != 0) && (strcmp(data["op_flag"].asString(), "POST") != 0) && (strcmp(data["op_flag"].asString(), "PUT") != 0) && (strcmp(data["op_flag"].asString(), "DELETE") != 0) ) {
+      LOGE(LOGTAG_MSG, "Invalid HTTP command.");
+      isSuccess = 0;
+    }
 
-		//TODO: Error check if flags are valid, if not, set isSuccess to 0
+    if (strcmp(data["flash_flag"].asString(), "UNSAVED") != 0) {
+      LOGE(LOGTAG_MSG, "Invalid FLASH_FLAG. Should be unsaved upon entry.");
+      isSuccess = 0;
+    }
+
+    if (strcmp(data["run_flag"].asString(), "UNEXECUTED") != 0) {
+      LOGE(LOGTAG_MSG, "Invalid RUN_FLAG. Should be unexecuted upon entry.");
+      isSuccess = 0;
+    }
 
 		if (isSuccess == 1) {
 			//grab first part of uid and store it in uidKey:
-			float uidWhole = root["uid"];
-			int uidKey = (int)uidWhole;
+      String uidWhole = data["uid"].asString();
+      int pos = uidWhole.indexOf(".");
+      String uidKey = uidWhole.substring(0, pos);
 
-			if (uidKey == 1) //rule
+			if (strcmp(uidKey,"1") == 0) //rule
 			{
 				RuleRow_t row;
-				row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
-				row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
-				row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
-				row.uid = root["uid"];
-				row.SCT_uid = root["SCT_uid"];
-				row.alarm_id = root["alarm_id"];
-				row.SNT_uid = root["SNT_uid"];
-				row.notif_uid = root["notif_uid"];
+				row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
+				row.flash_flag = (FLASH_FLAG)data["flash_flag"].as<int>();
+				row.run_flag = (RUN_FLAG)data["run_flag"].as<int>();
+				row.uid = data["uid"];
+				row.SCT_uid = data["SCT_uid"];
+				row.alarm_id = data["alarm_id"];
+				row.SNT_uid = data["SNT_uid"];
+				row.notif_uid = data["notif_uid"];
 
 				isSuccess = Change_Rule(row);
 
@@ -505,20 +515,20 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 					LOGN(LOGTAG_MSG, "Success. Able to write to Rule table.");
 				}
 			}
-			else if (uidKey == 2) //schedule
+			else if (strcmp(uidKey,"2") == 0) //schedule
 			{
 				ScheduleRow_t row;
-				row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
-				row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
-				row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
-				row.uid = root["uid"];
+				row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
+				row.flash_flag = (FLASH_FLAG)data["flash_flag"].as<int>();
+				row.run_flag = (RUN_FLAG)data["run_flag"].as<int>();
+				row.uid = data["uid"];
 
 				//TODO: extract weekday/repeat info from byte passed in
-				//row.weekdays = root["weekdays"];
-				//row.isRepeat = root["isRepeat"];
+				//row.weekdays = data["weekdays"];
+				//row.isRepeat = data["isRepeat"];
 
-				row.hour = root["hour"];
-				row.min = root["min"];
+				row.hour = data["hour"];
+				row.min = data["min"];
 
 				isSuccess = Change_Schedule(row);
 
@@ -529,20 +539,36 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 					LOGN(LOGTAG_MSG, "Success. Able to write to Schedule table.");
 				}
 			}
-			else if (uidKey == 3) //scenario
+			else if (strcmp(uidKey,"3") == 0) //scenario
 			{
 				ScenarioRow_t row;
-				row.op_flag = (OP_FLAG)root["op_flag"].as<int>();
-				row.flash_flag = (FLASH_FLAG)root["flash_flag"].as<int>();
-				row.run_flag = (RUN_FLAG)root["run_flag"].as<int>();
-				row.uid = root["uid"];
+				row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
+				row.flash_flag = (FLASH_FLAG)data["flash_flag"].as<int>();
+				row.run_flag = (RUN_FLAG)data["run_flag"].as<int>();
+				row.uid = data["uid"];
 
-				//TODO: Read hue values properly.
-				// row.ring1 = root["ring1"];
-				// row.ring2 = root["ring2"];
-				// row.ring3 = root["ring3"];
+				row.ring1.State = data["ring1"][0];
+        row.ring1.CW = data["ring1"][1];
+        row.ring1.WW = data["ring1"][2];
+        row.ring1.R = data["ring1"][3];
+        row.ring1.G = data["ring1"][4];
+        row.ring1.B = data["ring1"][5];
 
-				row.filter = root["filter"];
+        row.ring2.State = data["ring1"][0];
+        row.ring2.CW = data["ring1"][1];
+        row.ring2.WW = data["ring1"][2];
+        row.ring2.R = data["ring1"][3];
+        row.ring2.G = data["ring1"][4];
+        row.ring2.B = data["ring1"][5];
+
+        row.ring3.State = data["ring1"][0];
+        row.ring3.CW = data["ring1"][1];
+        row.ring3.WW = data["ring1"][2];
+        row.ring3.R = data["ring1"][3];
+        row.ring3.G = data["ring1"][4];
+        row.ring3.B = data["ring1"][5];
+
+				row.filter = data["filter"];
 
 				isSuccess = Change_Scenario(row);
 
@@ -559,7 +585,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 			}
 		}
 		else { //if isSuccess != 1
-			LOGE(LOGTAG_MSG, "Correct the flag to be able to read the values in.");
+			LOGE(LOGTAG_MSG, "Incorrect flag values: Unable to read the values in.");
 		}
 	} //end of for loop
 	return 1;
