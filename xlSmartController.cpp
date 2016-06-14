@@ -471,54 +471,294 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 //itself using UID, naturally replacing any deleted rows and always having an updated, clean table.
 //any rows with flash_flag = 1 will simply be ignored
 
-bool SmartControllerClass::Change_Rules(RuleRow_t row)
+bool SmartControllerClass::Change_Rule(RuleRow_t row)
 {
+	int index;
+	switch (row.op_flag)
+	{
+		case DELETE:
+			//search rules table for uid
+			index = Rule_table.search_uid(row.uid);
+			if (index == -1) //uid not found
+			{
+				//add row
+				if (!Rule_table.add(row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while adding new Rule row: %d", row.uid);
+					return false;
+				}
+			}
+			else //uid found
+			{
+				//update row
+				if (!Rule_table.set(index, row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while updating new Rule row: %d", row.uid);
+					return false;
+				}
+			}
+			break;
 
+		case POST:
+		case PUT:
+			//search rule table for uid
+			index = Rule_table.search_uid(row.uid);
+			if (index == -1) //uid not found
+			{
+				//add row
+				if (!Rule_table.add(row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while adding new Rule row: %d", row.uid);
+					return false;
+				}
+
+				if (row.op_flag == PUT)
+				{
+					LOGN(LOGTAG_MSG, "PUT request found no updatable Rule row, new Rule row added instead");
+				}
+			}
+			else //uid found
+			{			
+				//update row
+				if (!Rule_table.set(index, row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while updating new Rule row: %d", row.uid);
+					return false;
+				}
+
+				if (row.op_flag == POST)
+				{
+					LOGN(LOGTAG_MSG, "POST request found duplicate row entry in Rules Table, overwriting old row");
+				}
+			}
+			break;
+	}
+	theConfig.SetRTChanged(true);
+	return true;
 }
 
 bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
 {
-	//Params: UID, weekdays(7), bool repeat, int hour, int min, scenerio_UID
-
+	int index;
 	switch (row.op_flag)
 	{
 		case DELETE:
-			//DELETE
+			//search schedule table for uid
+			index = Schedule_table.search_uid(row.uid);
+			if (index == -1) //uid not found
+			{
+				//make room for new row
+				if (Schedule_table.isFull())
+				{
+					if (!Schedule_table.delete_one_outdated_row())
+					{
+						LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
+						return false;
+					}
+				}
 
-			//traverse through Alarm chain of 8 items, find uid if it exists. state_flag is delete, run_flag is 0, flash_flag is 0
-      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid, with the same flags as above
-      //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
+				//add row
+				if (!Schedule_table.add(row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while adding new Schedule row: %d", row.uid);
+					return false;
+				}
+
+			}
+			else //uid found
+			{
+				//bring over old alarm id to new row if it exists
+				if (Schedule_table.get(index).run_flag == EXECUTED && Alarm.isAllocated(Schedule_table.get(index).alarm_id))
+				{
+					//copy old alarm id into new row
+					row.alarm_id = Schedule_table.get(index).alarm_id;
+				}
+				else
+				{
+					LOGN(LOGTAG_MSG, "Previous alarm not set, simply replacing Schedule row: %d", row.uid);
+				}
+
+				//update row
+				if (!Schedule_table.set(index, row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while updating new Schedule row: %d", row.uid);
+					return false;
+				}
+			}
 			break;
+		
 		case POST:
+		
 		case PUT:
-			//PUT and POST
-			//traverse through Alarm chain of 8 items, find uid if it exists, and delete old alarm
-      //overwrite old row, set run_flag to 0, flash_flag to 0, state_flag to put
-      //if uid doesn't exist in Alarm chain, create new row at bottom of chain, with the same uid; run_flag is 0, flash_flag is 0, run_flag is 0
-      //before inserting to bottom of chain, topmost item which has flash_flag = 1 will be deleted to keep length of chain to 8
-      break;
-	}
+			//search schedule table for uid
+			index = Schedule_table.search_uid(row.uid);
+			if (index == -1) //uid not found
+			{			
+				//make room for new row
+				if (Schedule_table.isFull())
+				{
+					if (!Schedule_table.delete_one_outdated_row())
+					{
+						LOGN(LOGTAG_MSG, "Schedule Table full, cannot process command");
+						return false;
+					}
+				}
 
+				//add row
+				if (!Schedule_table.add(row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while adding new Schedule row: %d", row.uid);
+					return false;
+				}
+
+				if (row.op_flag == PUT)
+				{
+					LOGN(LOGTAG_MSG, "PUT request found no updatable Schedule row, new Schedule row added instead");
+				}
+			}
+			else //uid found
+			{
+				//bring over old alarm id to new row if it exists
+				if (Schedule_table.get(index).run_flag == EXECUTED && Alarm.isAllocated(Schedule_table.get(index).alarm_id))
+				{
+					//copy old alarm id into new row
+					row.alarm_id = Schedule_table.get(index).alarm_id;
+				}
+				else
+				{
+					LOGN(LOGTAG_MSG, "Previous alarm not set, simply replacing Schedule row: %d", row.uid);
+				}
+
+				//update row
+				if (!Schedule_table.set(index, row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while updating new Schedule row: %d", row.uid);
+					return false;
+				}
+
+				if (row.op_flag == POST)
+				{
+					LOGN(LOGTAG_MSG, "POST request found duplicate row entry in Schedule Table, overwriting old row");
+				}
+			}
+			break;
+	}
+	theConfig.SetSCTChanged(true);
+	return true;
 }
 
 bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 {
-	//Possible subactions: DELETE, PUT, POST
+	int index;
+	switch (row.op_flag)
+	{
+		case DELETE:
+			//search scenario table for uid
+			index = Scenario_table.search_uid(row.uid);
+			if (index == -1) //uid not found
+			{
+				//make room for new row
+				if (Scenario_table.isFull())
+				{
+					if (!Scenario_table.delete_one_outdated_row())
+					{
+						LOGN(LOGTAG_MSG, "Scenario Table full, cannot process command");
+						return false;
+					}
+				}
 
-  //refer to Change_Alarm comments
+				//add row
+				if (!Scenario_table.add(row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while adding new Scenario row %d", row.uid);
+					return false;
+				}
+			}
+			else //uid found
+			{
+				//update row
+				if (!Scenario_table.set(index, row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while updating new Scenario row %d", row.uid);
+					return false;
+				}
+			}
+			break;
+
+		case POST:
+
+		case PUT:
+			//search scenario table for uid
+			index = Scenario_table.search_uid(row.uid);
+			if (index == -1) //uid not found
+			{
+				//make room for new row
+				if (Scenario_table.isFull())
+				{
+					if (!Scenario_table.delete_one_outdated_row())
+					{
+						LOGN(LOGTAG_MSG, "Scenario Table full, cannot process command");
+						return false;
+					}
+				}
+
+				//add row
+				if (!Scenario_table.add(row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while adding new Scenario row %d", row.uid);
+					return false;
+				}
+
+				if (row.op_flag == PUT)
+				{
+					LOGN(LOGTAG_MSG, "PUT request found no updatable Scenario row, new Scenario row added instead");
+				}
+			}
+			else //uid found
+			{
+				//update row
+				if (!Scenario_table.set(index, row))
+				{
+					LOGE(LOGTAG_MSG, "Error occured while updating new Scenario row %d", row.uid);
+					return false;
+				}
+
+				if (row.op_flag == POST)
+				{
+					LOGN(LOGTAG_MSG, "POST request found duplicate row entry in Scenario Table, overwriting old row");
+				}
+			}
+			break;
+	}
+	theConfig.SetSNTChanged(true);
+	return true;
 }
 
-bool SmartControllerClass::Change_PowerColor(DevStatus_t row) //? link with CldPowerSwitch
+bool SmartControllerClass::Change_DeviceStatus(DevStatus_t row)
 {
-	//Possible subactions: PUT
+	//ToDo: link with CldPowerSwitch?
 
-	//refer to Change_Schedule comments
+	switch (row.op_flag)
+	{
+	case PUT:
+		//replace old row
+		DevStatus_row = row;
+		break;
+
+	case GET:
+		//ToDo: return DevStatus_row to cloud
+		break;
+
+	}
+	theConfig.SetDSTChanged(true);
 }
 
-bool SmartControllerClass::Change_Sensor() // get temperature?
+bool SmartControllerClass::Change_Sensor()
 {
   	//Possible subactions: GET
     //ToDo: define later
+
+	return 1;
 }
 
 //------------------------------------------------------------------
