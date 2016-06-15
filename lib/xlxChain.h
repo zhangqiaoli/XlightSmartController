@@ -40,8 +40,12 @@ private:
 public:
 	ChainClass();
 	ChainClass(int max);
-	virtual ListNode<T>* search(uint8_t uid); //returns node pointer, given a uid
-	virtual int search_uid(uint8_t uid);
+
+	//child functions
+	virtual ListNode<T>* search(uint8_t uid); //returns node pointer, given the uid
+	virtual int search_uid(uint8_t uid); //returns index, given the uid
+	virtual bool delete_one_outdated_row(); //deletes the single most outdated row from the chain passed in, returns false if no such row exists
+	virtual bool isFull(); //checks if the max chain length has been reached (return true), and if a row can be deleted (return false)
 
 	//overload all "add" functions to first check if linkedlist length is greater than PRE_FLASH_MAX_TABLE_SIZE
 	virtual bool add(int index, T);
@@ -97,61 +101,57 @@ int ChainClass<T>::search_uid(uint8_t uid)
 }
 
 template<typename T>
+bool ChainClass<T>::delete_one_outdated_row()
+{
+	int index = 0;
+	ListNode<T> *tmp = LinkedList<T>::root;
+	while(tmp != NULL)
+	{
+		if (tmp->data.flash_flag == SAVED && tmp->data.run_flag == EXECUTED)
+		{
+			LinkedList<T>::remove(index);
+			return true;
+		}
+		index++;
+		tmp = tmp->next;
+	}
+	return false;
+}
+
+template<typename T>
+bool ChainClass<T>::isFull()
+{
+	bool retVal = false;
+
+	if (toggle_limit && LinkedList<T>::size() >= max_chain_length)
+		retVal = true;
+
+	return retVal;
+}
+
+template<typename T>
 bool ChainClass<T>::add(int index, T _t)
 {
-	if (toggle_limit)
-	{
-		if (LinkedList<T>::size() < max_chain_length)
-		{
-			return LinkedList<T>::add(index, _t);
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return LinkedList<T>::add(index, _t);
-	}
+	if(isFull())
+		return false;
+
+	return LinkedList<T>::add(index, _t);
 }
 
 template<typename T>
 bool ChainClass<T>::add(T _t)
 {
-	if (toggle_limit)
-	{
-		if (LinkedList<T>::size() < max_chain_length)
-		{
-			return LinkedList<T>::add(_t);
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return LinkedList<T>::add(_t);
-	}
+	if (isFull())
+		return false;
+
+	return LinkedList<T>::add(_t);
 }
 
 template<typename T>
 bool ChainClass<T>::unshift(T _t)
 {
-	if (toggle_limit)
-	{
-		if (LinkedList<T>::size() < max_chain_length)
-		{
-			return LinkedList<T>::add(_t);
-		}
-		else
-		{
-			return false;
-		}
-	}
-	else
-	{
-		return LinkedList<T>::add(_t);
-	}
+	if (isFull())
+		return false;
+
+	return LinkedList<T>::add(_t);
 }
