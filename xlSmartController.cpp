@@ -919,8 +919,14 @@ bool SmartControllerClass::Change_Sensor()
 }
 
 //------------------------------------------------------------------
-// Alarm Triggered Actions
+// Acting on new rows in working memory Chains
 //------------------------------------------------------------------
+
+void SmartControllerClass::CreateRules(UL ms) {
+  delay(ms);
+}
+
+
 void SmartControllerClass::AlarmTimerTriggered()
 {
 

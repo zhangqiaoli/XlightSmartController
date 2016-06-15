@@ -64,6 +64,9 @@ public:
   // High speed system timer process
   void FastProcess();
 
+  // Action loop to create alarms from rules
+  void CreateRules(UL ms); 
+
   // Cloud interface implementation
   int CldSetTimeZone(String tzStr);
   int CldPowerSwitch(String swStr);

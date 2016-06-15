@@ -42,6 +42,7 @@
 #define RTE_DELAY_PUBLISH         500
 #define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
 #define RTE_DELAY_SELFCHECK       1000        // Self-check interval
+#define RTE_DELAY_CREATERULES			5000				// Creation of alarms based on rule chain interval
 
 #ifdef UNIT_TEST_ENABLE
 	#include "test.ino"
@@ -119,6 +120,9 @@ void loop()
 
   // Collect data
   theSys.CollectData(tick++);
+
+	// Act on new Rules in Rules chain
+	theSys.CreateRules(RTE_DELAY_CREATERULES);
 
   // ToDo: transfer data
 
