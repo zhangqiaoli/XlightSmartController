@@ -16,7 +16,7 @@
 #define XLA_TOKEN                 "your-access-token"       // Can update online
 
 //Row State Flags for Sync between Cloud, Flash, and Working Memory
-enum OP_FLAG {DELETE, POST, PUT, GET};
+enum OP_FLAG {GET, POST, PUT, DELETE};
 enum FLASH_FLAG {UNSAVED, SAVED};
 enum RUN_FLAG {UNEXECUTED, EXECUTED};
 

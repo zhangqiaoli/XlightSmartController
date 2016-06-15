@@ -70,7 +70,7 @@ public:
   int CldJSONCommand(String jsonData);
 
   // Parsing Functions
-  bool ParseRows(JsonObject& data, int index);
+  bool ParseRows(JsonObject& data);
 
   // Cloud Interface Action Types
   bool Change_Rule(RuleRow_t row);
