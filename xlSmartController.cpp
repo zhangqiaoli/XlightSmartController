@@ -629,7 +629,6 @@ bool SmartControllerClass::ParseRows(JsonObject& data, int index) {
 
 bool SmartControllerClass::Change_Rule(RuleRow_t row)
 {
-	return true;
 }
 
 bool SmartControllerClass::Change_Schedule(ScheduleRow_t row)
