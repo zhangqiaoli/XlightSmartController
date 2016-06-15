@@ -160,20 +160,30 @@ BOOL ConfigClass::SaveConfig()
   if( m_isDSTChanged )
   {
 	  DevStatus_t tmpRow = theSys.DevStatus_row; //copy of data to write to flash
+	  
+	  //change flags to 111 to indicate flash row is occupied
 	  tmpRow.op_flag = (OP_FLAG)1;
 	  tmpRow.flash_flag = (FLASH_FLAG)1;
 	  tmpRow.run_flag = (RUN_FLAG)1;
 
-	  EEPROM.put(MEM_DEVICE_STATUS_OFFSET, tmpRow); //write to flash
+	  if (sizeof(tmpRow) <= MEM_DEVICE_STATUS_LEN)
+	  {
+		  EEPROM.put(MEM_DEVICE_STATUS_OFFSET, tmpRow); //write to flash
+		  theSys.DevStatus_row.flash_flag = SAVED; //toggle flash flag
 
-	  theSys.DevStatus_row.flash_flag = SAVED; //toggle flash flag
-
-    m_isDSTChanged = false;
-    LOGD(LOGTAG_MSG, "Device status table saved.");
+		  m_isDSTChanged = false;
+		  LOGD(LOGTAG_MSG, "Device status table saved.");
+	  }
+	  else 
+	  {
+		  LOGE(LOGTAG_MSG, "Unable to write Device Status to flash, out of memory bounds");
+	  }
   }
 
   if( m_isSCTChanged )
   {
+	  bool success_flag = true;
+
 	  ListNode<ScheduleRow_t> *rowptr = theSys.Schedule_table.getRoot();
 	  while (rowptr != NULL)
 	  {
@@ -184,6 +194,7 @@ BOOL ConfigClass::SaveConfig()
 			  switch (rowptr->data.op_flag)
 			  {
 				case DELETE:
+					//change flags to 000 to indicate flash row is empty
 					tmpRow.op_flag = (OP_FLAG)0;
 					tmpRow.flash_flag = (FLASH_FLAG)0;
 					tmpRow.run_flag = (RUN_FLAG)0;
@@ -191,6 +202,7 @@ BOOL ConfigClass::SaveConfig()
 
 				case PUT:
 				case POST:
+					//change flags to 111 to indicate flash row is occupied
 					tmpRow.op_flag = (OP_FLAG)1;
 					tmpRow.flash_flag = (FLASH_FLAG)1;
 					tmpRow.run_flag = (RUN_FLAG)1;
@@ -199,7 +211,7 @@ BOOL ConfigClass::SaveConfig()
 
 			  //write tmpRow to flash
 			  int row_index = rowptr->data.uid;
-			  if (row_index < MAX_SCT_ROWS)
+			  if (row_index < MAX_SCT_ROWS && sizeof(tmpRow) <= SCT_ROW_SIZE)
 			  {
 				  EEPROM.put(MEM_SCHEDULE_OFFSET + row_index*SCT_ROW_SIZE, tmpRow); //write to flash
 
@@ -208,13 +220,21 @@ BOOL ConfigClass::SaveConfig()
 			  else
 			  {
 				  LOGE(LOGTAG_MSG, "Error, cannot write Schedule row %d to flash, out of memory bounds", row_index);
+				  success_flag = false;
 			  }
 		  }
 		  rowptr = rowptr->next;
 	  }
-
-    m_isSCTChanged = false;
-    LOGD(LOGTAG_MSG, "Schedule table saved.");
+	  
+	  if (success_flag)
+	  {
+		  m_isSCTChanged = false;
+		  LOGD(LOGTAG_MSG, "Schedule table saved.");
+	  }
+	  else
+	  {
+		  LOGE(LOGTAG_MSG, "Unable to write 1 or more Schedule table rows to flash");
+	  }
   }
 
   if ( m_isRTChanged )
