@@ -496,19 +496,19 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 bool SmartControllerClass::ParseRows(JsonObject& data) {
   int isSuccess = 1;
 
-  if (data["op_flag"].as<int>() < 0 && data["op_flag"].as<int>() > 3) {
+  if (data["op_flag"].as<int>() < GET && data["op_flag"].as<int>() > DELETE) {
     LOGE(LOGTAG_MSG, "UID %s: Invalid HTTP command.", data["uid"]);
     return 0;
   }
 
-  if (data["op_flag"].as<int>() != 0) //if op_flag is not GET
+  if (data["op_flag"].as<int>() != GET)
   {
-    if (data["flash_flag"].as<int>() != 0) { //if_flash flag is not UNSAVED
+    if (data["flash_flag"].as<int>() != UNSAVED) {
       LOGE(LOGTAG_MSG, "UID %s: Invalid FLASH_FLAG. Should be 'UNSAVED' upon entry.", data["uid"]);
       return 0;
     }
 
-    if (data["run_flag"].as<int>() != 0) { //if run_flag is not UNEXECUTED
+    if (data["run_flag"].as<int>() != UNEXECUTED) {
       LOGE(LOGTAG_MSG, "UID %s: Invalid RUN_FLAG. Should be 'UNEXECUTED' upon entry.", data["uid"]);
       return 0;
     }
@@ -516,13 +516,13 @@ bool SmartControllerClass::ParseRows(JsonObject& data) {
 
   //grab first part of uid and store it in uidKey, and convert rest of uid string into int uidNum:
   const char* uidWhole = data["uid"];
-  char uidKey = uidWhole[0];
+  char uidKey = tolower(uidWhole[0]);
   char uidChar[3];
   memcpy(uidChar, &uidWhole[1], 2);
   uidChar[3] = '\0';
   uint8_t uidNum = atoi(uidChar);
 
-  if (uidKey == 'r') //rule
+  if (uidKey == CLS_RULE) //rule
   {
     RuleRow_t row;
     row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
@@ -545,7 +545,7 @@ bool SmartControllerClass::ParseRows(JsonObject& data) {
       return 1;
     }
   }
-  else if (uidKey == 'a') //schedule
+  else if (uidKey == CLS_SCHEDULE) //schedule
   {
     ScheduleRow_t row;
     row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
@@ -568,7 +568,7 @@ bool SmartControllerClass::ParseRows(JsonObject& data) {
       return 1;
     }
   }
-  else if (uidKey == 's') //scenario
+  else if (uidKey == CLS_SCENARIO) //scenario
   {
     ScenarioRow_t row;
     row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
