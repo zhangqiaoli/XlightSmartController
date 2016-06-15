@@ -1,26 +1,26 @@
 /**
- * xlxChain.h - Xlight Chain Object Library - This library creates the linkedlists in working memory (Rules, Schedule, Scenerio etc)
- *
- * Created by Baoshi Sun <bs.sun@datatellit.com>
- * Copyright (C) 2015-2016 DTIT
- * Full contributor list:
- *
- * Documentation:
- * Support Forum:
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
- *
- *******************************
- *
- * REVISION HISTORY
- * Version 1.0 - Created by Baoshi Sun <bs.sun@datatellit.com>
- *
- * DESCRIPTION
- *
- * ToDo:
- * 1.
+* xlxChain.h - Xlight Chain Object Library - This library creates the linkedlists in working memory (Rules, Schedule, Scenerio etc)
+*
+* Created by Baoshi Sun <bs.sun@datatellit.com>
+* Copyright (C) 2015-2016 DTIT
+* Full contributor list:
+*
+* Documentation:
+* Support Forum:
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License
+* version 2 as published by the Free Software Foundation.
+*
+*******************************
+*
+* REVISION HISTORY
+* Version 1.0 - Created by Baoshi Sun <bs.sun@datatellit.com>
+*
+* DESCRIPTION
+*
+* ToDo:
+* 1.
 **/
 
 #include "xliCommon.h"
@@ -47,6 +47,9 @@ public:
 	virtual bool delete_one_outdated_row(); //deletes the single most outdated row from the chain passed in, returns false if no such row exists
 	virtual bool isFull(); //checks if the max chain length has been reached (return true), and if a row can be deleted (return false)
 
+						   //accessor functions
+	virtual ListNode<T>* getRoot();
+
 	//overload all "add" functions to first check if linkedlist length is greater than PRE_FLASH_MAX_TABLE_SIZE
 	virtual bool add(int index, T);
 	virtual bool add(T);
@@ -54,7 +57,7 @@ public:
 };
 
 //------------------------------------------------------------------
-// Member Functions
+// Constructors
 //------------------------------------------------------------------
 template<typename T>
 ChainClass<T>::ChainClass()
@@ -69,6 +72,9 @@ ChainClass<T>::ChainClass(int max)
 	toggle_limit = true;
 }
 
+//------------------------------------------------------------------
+// Child Functions
+//------------------------------------------------------------------
 template<typename T>
 ListNode<T>* ChainClass<T>::search(uint8_t uid)
 {
@@ -86,7 +92,7 @@ ListNode<T>* ChainClass<T>::search(uint8_t uid)
 template<typename T>
 int ChainClass<T>::search_uid(uint8_t uid)
 {
-  int index = 0;
+	int index = 0;
 	ListNode<T> *tmp = LinkedList<T>::root;
 	while (tmp != NULL)
 	{
@@ -105,7 +111,7 @@ bool ChainClass<T>::delete_one_outdated_row()
 {
 	int index = 0;
 	ListNode<T> *tmp = LinkedList<T>::root;
-	while(tmp != NULL)
+	while (tmp != NULL)
 	{
 		if (tmp->data.flash_flag == SAVED && tmp->data.run_flag == EXECUTED)
 		{
@@ -132,12 +138,24 @@ bool ChainClass<T>::isFull()
 template<typename T>
 bool ChainClass<T>::add(int index, T _t)
 {
-	if(isFull())
+	if (isFull())
 		return false;
 
 	return LinkedList<T>::add(index, _t);
 }
 
+//------------------------------------------------------------------
+// Accessor Functions
+//------------------------------------------------------------------
+template<typename T>
+ListNode<T>* ChainClass<T>::getRoot()
+{
+	return LinkedList<T>::root;
+}
+
+//------------------------------------------------------------------
+// Overloaded Functions
+//------------------------------------------------------------------
 template<typename T>
 bool ChainClass<T>::add(T _t)
 {

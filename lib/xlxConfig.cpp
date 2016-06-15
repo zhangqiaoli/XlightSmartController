@@ -159,29 +159,93 @@ BOOL ConfigClass::SaveConfig()
 
   if( m_isDSTChanged )
   {
-    //ToDo:
-	//read devStatusRow, add/update the device status table in memory
-	//MEM_DEVICE_STATUS_OFFSET
+	  DevStatus_t tmpRow = theSys.DevStatus_row; //copy of data to write to flash
+	  
+	  //change flags to 111 to indicate flash row is occupied
+	  tmpRow.op_flag = (OP_FLAG)1;
+	  tmpRow.flash_flag = (FLASH_FLAG)1;
+	  tmpRow.run_flag = (RUN_FLAG)1;
 
-    m_isDSTChanged = false;
-    LOGD(LOGTAG_MSG, "Device status table saved.");
+	  if (sizeof(tmpRow) <= MEM_DEVICE_STATUS_LEN)
+	  {
+		  EEPROM.put(MEM_DEVICE_STATUS_OFFSET, tmpRow); //write to flash
+		  theSys.DevStatus_row.flash_flag = SAVED; //toggle flash flag
+
+		  m_isDSTChanged = false;
+		  LOGD(LOGTAG_MSG, "Device status table saved.");
+	  }
+	  else 
+	  {
+		  LOGE(LOGTAG_MSG, "Unable to write Device Status to flash, out of memory bounds");
+	  }
   }
 
   if( m_isSCTChanged )
   {
-	//ToDo: Write ScheduleTable_queue to memory (indexs are taken care of by cloud input)
-	// MEM_SCHEDULE_OFFSET
-	//ToDo: Clear ScheduleTable_queue except for last MAX_WORKINGQUEUE_ROWS rows
+	  bool success_flag = true;
 
-    m_isSCTChanged = false;
-    LOGD(LOGTAG_MSG, "Schedule table saved.");
+	  ListNode<ScheduleRow_t> *rowptr = theSys.Schedule_table.getRoot();
+	  while (rowptr != NULL)
+	  {
+		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
+		  {
+			  ScheduleRow_t tmpRow = rowptr->data; //copy of data to write to flash
+			  
+			  switch (rowptr->data.op_flag)
+			  {
+				case DELETE:
+					//change flags to 000 to indicate flash row is empty
+					tmpRow.op_flag = (OP_FLAG)0;
+					tmpRow.flash_flag = (FLASH_FLAG)0;
+					tmpRow.run_flag = (RUN_FLAG)0;
+					break;
+
+				case PUT:
+				case POST:
+					//change flags to 111 to indicate flash row is occupied
+					tmpRow.op_flag = (OP_FLAG)1;
+					tmpRow.flash_flag = (FLASH_FLAG)1;
+					tmpRow.run_flag = (RUN_FLAG)1;
+					break;
+			  }
+
+			  //write tmpRow to flash
+			  int row_index = rowptr->data.uid;
+			  if (row_index < MAX_SCT_ROWS && sizeof(tmpRow) <= SCT_ROW_SIZE)
+			  {
+				  EEPROM.put(MEM_SCHEDULE_OFFSET + row_index*SCT_ROW_SIZE, tmpRow); //write to flash
+
+				  rowptr->data.flash_flag = SAVED; //toggle flash flag
+			  }
+			  else
+			  {
+				  LOGE(LOGTAG_MSG, "Error, cannot write Schedule row %d to flash, out of memory bounds", row_index);
+				  success_flag = false;
+			  }
+		  }
+		  rowptr = rowptr->next;
+	  }
+	  
+	  if (success_flag)
+	  {
+		  m_isSCTChanged = false;
+		  LOGD(LOGTAG_MSG, "Schedule table saved.");
+	  }
+	  else
+	  {
+		  LOGE(LOGTAG_MSG, "Unable to write 1 or more Schedule table rows to flash");
+	  }
   }
 
   if ( m_isRTChanged )
   {
 	  //ToDo: Write RuleTable_queue to memory
+	  // iterate through table, find flag= EXECUTED rows
+	  // change all 3 flags in the row to 1 if its add/update, change flash flags to 0 if its delete
+	  // Write row to flash if add/update
+	  // change original row flag to SAVED
 	  // MEM_RULES_OFFSET
-	  //Do not clear queue! Keep all of Rule Table in working memory
+	  // Keep all of Rule Table in working memory
 
 	  m_isRTChanged = false;
 	  LOGD(LOGTAG_MSG, "Rule table saved.");
@@ -190,8 +254,11 @@ BOOL ConfigClass::SaveConfig()
   if (m_isSNTChanged)
   {
 	  //ToDo: Write ScenerioTable_queue to memory (indexs are taken care of by cloud input)
+	  // iterate through table, find flag= EXECUTED rows
+	  // change all 3 flags in the row to 1 if its add/update, change flash flags to 0 if its delete
+	  // Write row to flash if add/update
+	  // change original row flag to SAVED
 	  // MEM_RULES_OFFSET
-	  //ToDo: Clear ScenerioTable_queue except for last MAX_WORKINGQUEUE_ROWS rows
 
 	  m_isRTChanged = false;
 	  LOGD(LOGTAG_MSG, "Scenerio table saved.");
