@@ -64,9 +64,6 @@ public:
   // High speed system timer process
   void FastProcess();
 
-  // Action loop to create alarms from rules
-  void CreateRules(UL ms); 
-
   // Cloud interface implementation
   int CldSetTimeZone(String tzStr);
   int CldPowerSwitch(String swStr);
@@ -82,6 +79,12 @@ public:
   bool Change_Scenario(ScenarioRow_t row);				//ToDo: Params
   bool Change_DeviceStatus(DevStatus_t row);				//ToDo: Params
   bool Change_Sensor();					//ToDo: Params
+
+  // Action loop to create alarms from rules
+  void ReadNewRules(UL ms);
+
+  //Creation of alarms
+  bool CreateAlarm(ScheduleRow_t row);
 
   //Alarm Triggered Actions
   void AlarmTimerTriggered();

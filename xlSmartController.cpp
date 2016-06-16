@@ -922,21 +922,60 @@ bool SmartControllerClass::Change_Sensor()
 // Acting on new rows in working memory Chains
 //------------------------------------------------------------------
 
-void SmartControllerClass::CreateRules(UL ms) {
-  delay(ms);
+void SmartControllerClass::ReadNewRules(UL ms)
+{
+	for (int i = 0; i < Rule_table.size(); i++)
+	{
+		RuleRow_t ruleRow = Rule_table.get(i);
+
+		if (ruleRow.run_flag == UNEXECUTED)
+		{
+			//get SCT_uid from rule rows
+			UC SCT_uid = ruleRow.SCT_uid;
+
+			//find SCT_uid in SCT LinkedList
+			int SCT_uid_index = Schedule_table.search_uid(SCT_uid);
+
+			ScheduleRow_t scheduleRow;
+			if (SCT_uid_index == -1) {
+				//TODO: search for SCT_uid in flash and create scheduleRow that way; if can't be found, return error and go to next item in for loop
+			} else {
+				scheduleRow = Schedule_table.get(SCT_uid_index);
+			}
+
+			//check if alarm with ruleRow.alarm_id already exists; delete if true
+			if (Alarm.isAllocated(ruleRow.alarm_id)) {
+				Alarm.disable(ruleRow.alarm_id); //prevent alarm from triggering
+				Alarm.free(ruleRow.alarm_id); //free alarm_id to allow its reuse
+			}
+
+			//create new alarm
+			BOOL bIsAlarmCreated = CreateAlarm(scheduleRow);
+
+			//change flag to executed
+			if (bIsAlarmCreated) {
+				ruleRow.run_flag = EXECUTED;
+			} else {
+				LOGE(LOGTAG_MSG, "The alarm referenced via Rule UID %s was not created successfully.", ruleRow.uid);
+			}
+		}
+	} //end of for loop
 }
 
+bool SmartControllerClass::CreateAlarm(ScheduleRow_t row)
+{
+	//TODO:
+	//Use weekday, isRepeat, hour, min information to create appropriate alarm
+	//The created alarm obj must have a field for rule_id so it has a reference to what created it
+	//Update that rule row's alarm_id field with the newly created alarm's alarm_id
+}
 
 void SmartControllerClass::AlarmTimerTriggered()
 {
+	//When alarm goes off, alarm obj that triggered this function has a reference to rule_id from which alarm was created;
 
-	//ToDo: get corresponding scenerio UID / notif UID
-	//ToDo: add action to command queue, send notif UID to cloud (to send to app)
-
-	  //AlarmId triggered_id = Alarm.getTriggeredAlarmId();
-
-	  //search through rules table to find alarm id, and the scenerio UID
-
-	  //add action to command queue
-
+	//TODO:
+	//Use this rule_id to go to appropriate rule row, get scenario_id, find that scenario row in linkedlist or flash
+	//Create alarm output based on found scenario
+	//Add action to command queue, send notif UID to cloud (to send to app)
 }
