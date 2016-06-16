@@ -457,6 +457,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
   //TODO: define correct buffer number when own cloud is implemented
 
   int numRows = 0;
+  bool bRowsKey = true;
   StaticJsonBuffer<1000> jsonBuffer;
   JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(jsonData.c_str()));
 
@@ -467,6 +468,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 
   if (!root.containsKey("rows")) {
     numRows = 1;
+    bRowsKey = false;
   } else {
     numRows = root["rows"].as<int>();
   }
@@ -476,55 +478,54 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
     //if numRows = 1, pass in root
     //if numRows > 1, pass in data
 
-    if (numRows == 1) {
-      if (ParseRows(root, j)) {
-        successCount++;
-      }
-    } else if (numRows > 1 && numRows < 16) {
-      JsonObject& data = root["data"][j];
-      if (ParseRows(data, j)) {
+    if (!bRowsKey) {
+      if (ParseRows(root)) {
         successCount++;
       }
     } else {
-      LOGE(LOGTAG_MSG, "The JSON passed in must include between 1 and 16 rows.");
+      JsonObject& data = root["data"][j];
+      if (ParseRows(data)) {
+        successCount++;
+      }
     }
 	}
   LOGN(LOGTAG_MSG, "%d of %d rows were parsed correctly.", successCount, numRows);
 	return successCount;
 }
 
-bool SmartControllerClass::ParseRows(JsonObject& data, int index) {
+bool SmartControllerClass::ParseRows(JsonObject& data) {
   int isSuccess = 1;
 
-  if (data["op_flag"].as<int>() < 0 && data["op_flag"].as<int>() > 3) {
-    LOGE(LOGTAG_MSG, "Index %d: Invalid HTTP command.", index);
+  if (data["op_flag"].as<int>() < GET && data["op_flag"].as<int>() > DELETE) {
+    LOGE(LOGTAG_MSG, "UID %s: Invalid HTTP command.", data["uid"]);
     return 0;
   }
 
-  if (data["op_flag"].as<int>() != 3)
+  if (data["op_flag"].as<int>() != GET)
   {
-    if (data["flash_flag"].as<int>() != 0) {
-      LOGE(LOGTAG_MSG, "Index %d: Invalid FLASH_FLAG. Should be 'UNSAVED' upon entry.", index);
+    if (data["flash_flag"].as<int>() != UNSAVED) {
+      LOGE(LOGTAG_MSG, "UID %s: Invalid FLASH_FLAG. Should be 'UNSAVED' upon entry.", data["uid"]);
       return 0;
     }
 
-    if (data["run_flag"].as<int>() != 0) {
-      LOGE(LOGTAG_MSG, "Index %d: Invalid RUN_FLAG. Should be 'UNEXECUTED' upon entry.", index);
+    if (data["run_flag"].as<int>() != UNEXECUTED) {
+      LOGE(LOGTAG_MSG, "UID %s: Invalid RUN_FLAG. Should be 'UNEXECUTED' upon entry.", data["uid"]);
       return 0;
     }
   }
 
-  //grab first part of uid and store it in uidKey:
+  //grab first part of uid and store it in uidKey, and convert rest of uid string into int uidNum:
   const char* uidWhole = data["uid"];
-  char uidKey = uidWhole[0];
+  char uidKey = tolower(uidWhole[0]);
+	uint8_t uidNum = atoi(&uidWhole[1]);
 
-  if (uidKey == '1') //rule
+  if (uidKey == CLS_RULE) //rule
   {
     RuleRow_t row;
     row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
     row.flash_flag = (FLASH_FLAG)data["flash_flag"].as<int>();
     row.run_flag = (RUN_FLAG)data["run_flag"].as<int>();
-    row.uid = data["uid"];
+    row.uid = uidNum;
     row.SCT_uid = data["SCT_uid"];
     row.alarm_id = data["alarm_id"];
     row.SNT_uid = data["SNT_uid"];
@@ -533,21 +534,21 @@ bool SmartControllerClass::ParseRows(JsonObject& data, int index) {
     isSuccess = Change_Rule(row);
 
     if (isSuccess = 0) {
-      LOGE(LOGTAG_MSG, "Index %d: Unable to write row to Rule table.", index);
+      LOGE(LOGTAG_MSG, "UID %s: Unable to write row to Rule table.", data["uid"]);
       return 0;
     }
     else {
-      LOGN(LOGTAG_MSG, "Index %d: Success - able to write row to Rule table.", index);
+      LOGN(LOGTAG_MSG, "UID %s: Success - able to write row to Rule table.", data["uid"]);
       return 1;
     }
   }
-  else if (uidKey == '2') //schedule
+  else if (uidKey == CLS_SCHEDULE) //schedule
   {
     ScheduleRow_t row;
     row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
     row.flash_flag = (FLASH_FLAG)data["flash_flag"].as<int>();
     row.run_flag = (RUN_FLAG)data["run_flag"].as<int>();
-    row.uid = data["uid"];
+    row.uid = uidNum;
     row.weekdays = data["weekdays"];
     row.isRepeat = data["isRepeat"];
     row.hour = data["hour"];
@@ -556,21 +557,21 @@ bool SmartControllerClass::ParseRows(JsonObject& data, int index) {
     isSuccess = Change_Schedule(row);
 
     if (isSuccess = 0) {
-      LOGE(LOGTAG_MSG, "Index %d: Unable to write row to Schedule table.", index);
+      LOGE(LOGTAG_MSG, "UID %s: Unable to write row to Schedule table.", data["uid"]);
       return 0;
     }
     else {
-      LOGN(LOGTAG_MSG, "Index %d: Success - able to write row %d to Schedule table.", index);
+      LOGN(LOGTAG_MSG, "UID %s: Success - able to write row to Schedule table.", data["uid"]);
       return 1;
     }
   }
-  else if (uidKey == '3') //scenario
+  else if (uidKey == CLS_SCENARIO) //scenario
   {
     ScenarioRow_t row;
     row.op_flag = (OP_FLAG)data["op_flag"].as<int>();
     row.flash_flag = (FLASH_FLAG)data["flash_flag"].as<int>();
     row.run_flag = (RUN_FLAG)data["run_flag"].as<int>();
-    row.uid = data["uid"];
+    row.uid = uidNum;
 
     row.ring1.State = data["ring1"][0];
     row.ring1.CW = data["ring1"][1];
@@ -598,17 +599,17 @@ bool SmartControllerClass::ParseRows(JsonObject& data, int index) {
     isSuccess = Change_Scenario(row);
 
     if (isSuccess = 0) {
-      LOGE(LOGTAG_MSG, "Index %d: Unable to write row to Scenario table.", index);
+      LOGE(LOGTAG_MSG, "UID %s: Unable to write row to Scenario table.", data["uid"]);
       return 0;
     }
     else {
-      LOGN(LOGTAG_MSG, "Index %d: Sucess - able to write row %d to Scenario table.", index);
+      LOGN(LOGTAG_MSG, "UID %s: Sucess - able to write row to Scenario table.", data["uid"]);
       return 1;
     }
   }
   else
   {
-    LOGE(LOGTAG_MSG, "Index %d: Invalid UID. Could not determine further action.", index);
+    LOGE(LOGTAG_MSG, "UID %s: Invalid UID. Could not determine further action.", data["uid"]);
     return 0;
   }
 }
