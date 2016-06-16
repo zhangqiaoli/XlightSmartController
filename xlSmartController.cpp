@@ -517,18 +517,7 @@ bool SmartControllerClass::ParseRows(JsonObject& data) {
   //grab first part of uid and store it in uidKey, and convert rest of uid string into int uidNum:
   const char* uidWhole = data["uid"];
   char uidKey = tolower(uidWhole[0]);
-  char uidChar[3];
-
-	//if uid size in JSON is 2, store second char in uidChar, and convert to int
- 	//if uid size in JSON is 3, store second and third chars in uidChar and convert them to int
-	if (strlen(uidWhole) == 2) {
-		memcpy(uidChar, &uidWhole[1], 1); //copy uidWhole starting at index 1, for length 1, into uidChar
-		uidChar[2] = '\0';
-	} else if (strlen(uidWhole) == 3) {
-		memcpy(uidChar, &uidWhole[1], 2); //copy uidWhole starting at index 1, for length 2, into uidChar
-		uidChar[3] = '\0';
-	}
-	uint8_t uidNum = atoi(uidChar);
+	uint8_t uidNum = atoi(&uidWhole[1]);
 
   if (uidKey == CLS_RULE) //rule
   {
