@@ -100,7 +100,6 @@ typedef struct
 	RUN_FLAG run_flag : 1;
 	UC uid                   : 8;
 	UC SCT_uid               : 8;
-	UC alarm_id              : 8;
 	UC SNT_uid               : 8;
 	UC notif_uid             : 8;
 } RuleRow_t;
