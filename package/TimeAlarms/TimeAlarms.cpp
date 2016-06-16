@@ -1,3 +1,5 @@
+//TODO: Change licensing statement
+
 /*
   TimeAlarms.cpp - Arduino Time alarms for use with Time library
   Copyright (c) 208-2011 Michael Margolis.
@@ -39,6 +41,7 @@ AlarmClass::AlarmClass()
   Mode.alarmType = dtNotAllocated;
   value = nextTrigger = 0;
   onTickHandler = NULL;  // prevent a callback until this pointer is explicitly set
+  tag = NULL;
 }
 
 //**************************************************************
@@ -295,6 +298,15 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
       return retval;
     }
 
+    bool TimeAlarmsClass::setAlarmTag(AlarmID_t ID, uint32_t tag)
+    {
+      if(isAllocated(ID)) {
+        Alarm[ID].tag = tag;
+        return true;
+      }
+      return false;
+    }
+
     //***********************************************************
     //* Private Methods
 
@@ -308,12 +320,13 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
           if( Alarm[servicedAlarmId].Mode.isEnabled && (now() >= Alarm[servicedAlarmId].nextTrigger)  )
           {
             OnTick_t TickHandler = Alarm[servicedAlarmId].onTickHandler;
+            uint32_t tag = Alarm[servicedAlarmId].tag;
             if(Alarm[servicedAlarmId].Mode.isOneShot)
                free(servicedAlarmId);  // free the ID if mode is OnShot
             else
                Alarm[servicedAlarmId].updateNextTrigger();
             if( TickHandler != NULL) {
-              (*TickHandler)();     // call the handler
+              (*TickHandler)(tag);     // call the handler
             }
           }
         }

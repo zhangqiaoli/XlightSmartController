@@ -86,7 +86,7 @@ typedef AlarmID_t AlarmId;  // Arduino friendly name
 #define dtINVALID_TIME     0L
 
 class AlarmClass;  // forward reference
-typedef void (*OnTick_t)();  // alarm callback function typedef
+typedef void (*OnTick_t)(uint32_t);  // alarm callback function typedef
 
 // class defining an alarm instance, only used by dtAlarmsClass
 class AlarmClass
@@ -100,6 +100,7 @@ public:
   time_t value;
   time_t nextTrigger;
   AlarmMode_t Mode;
+	uint32_t tag;
 };
 
 // class containing the collection of alarms
@@ -149,6 +150,9 @@ public:
   void write(AlarmID_t ID, time_t value);   // write the value (and enable) the alarm with the given ID
   time_t read(AlarmID_t ID);                // return the value for the given timer
   dtAlarmPeriod_t readType(AlarmID_t ID);   // return the alarm type for the given alarm ID
+
+	//Rule uid methods
+	bool setAlarmTag(AlarmID_t ID, uint32_t tag);
 
 #ifndef USE_SPECIALIST_METHODS
 private:  // the following methods are for testing and are not documented as part of the standard library
