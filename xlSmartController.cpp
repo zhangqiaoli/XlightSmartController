@@ -922,7 +922,7 @@ bool SmartControllerClass::Change_Sensor()
 // Acting on new rows in working memory Chains
 //------------------------------------------------------------------
 
-void SmartControllerClass::ReadNewRules(UL ms)
+void SmartControllerClass::ReadNewRules()
 {
 	for (int i = 0; i < Rule_table.size(); i++)
 	{
@@ -930,44 +930,78 @@ void SmartControllerClass::ReadNewRules(UL ms)
 
 		if (ruleRow.run_flag == UNEXECUTED)
 		{
-			//get SCT_uid from rule rows
-			UC SCT_uid = ruleRow.SCT_uid;
-
-			//find SCT_uid in SCT LinkedList
-			int SCT_uid_index = Schedule_table.search_uid(SCT_uid);
+			//get SCT_uid from rule rows and find SCT_uid in SCT LinkedList
+			int SCT_uid_index = Schedule_table.search_uid(ruleRow.SCT_uid);
 
 			ScheduleRow_t scheduleRow;
-			if (SCT_uid_index == -1) {
-				//TODO: search for SCT_uid in flash and create scheduleRow that way; if can't be found, return error and go to next item in for loop
+			bool isSCTRowFound = true;
+			if (SCT_uid_index == -1) { //SCT uid was not found in working memory
+				//search for SCT_uid in flash and populate scheduleRow that way; if can't be found, return error and go to next item in for loop
+				EEPROM.get(MEM_SCHEDULE_OFFSET + SCT_uid_index*SCT_ROW_SIZE, scheduleRow);
+				//check to see if scheduleRow is populated by garbage
+				char firstByte;
+				memcpy(&firstByte, &scheduleRow, 1);
+				if (firstByte == 0XFF) {
+					LOGE(LOGTAG_MSG, "A schedule row by UID %s was not found. Garbage returned.", ruleRow.SCT_uid);
+					isSCTRowFound = false;
+				} else { //not Garbage
+					//check to see if flags are set to 000 (delete)
+					if (scheduleRow.op_flag == (OP_FLAG)0 && scheduleRow.flash_flag == (FLASH_FLAG)0 && scheduleRow.run_flag == (RUN_FLAG)0) {
+						isSCTRowFound = false;
+					}
+				}
 			} else {
 				scheduleRow = Schedule_table.get(SCT_uid_index);
 			}
 
-			//check if alarm with ruleRow.alarm_id already exists; delete if true
-			if (Alarm.isAllocated(ruleRow.alarm_id)) {
-				Alarm.disable(ruleRow.alarm_id); //prevent alarm from triggering
-				Alarm.free(ruleRow.alarm_id); //free alarm_id to allow its reuse
-			}
+			if (isSCTRowFound) {
+				//check if alarm with ruleRow.alarm_id already exists; delete if true
+				if (Alarm.isAllocated(scheduleRow.alarm_id)) {
+					Alarm.disable(scheduleRow.alarm_id); //prevent alarm from triggering
+					Alarm.free(scheduleRow.alarm_id); //free alarm_id to allow its reuse
+				}
 
-			//create new alarm
-			BOOL bIsAlarmCreated = CreateAlarm(scheduleRow);
+				//create new alarm
+				BOOL bIsAlarmCreated = CreateAlarm(scheduleRow, ruleRow);
 
-			//change flag to executed
-			if (bIsAlarmCreated) {
-				ruleRow.run_flag = EXECUTED;
-			} else {
-				LOGE(LOGTAG_MSG, "The alarm referenced via Rule UID %s was not created successfully.", ruleRow.uid);
+				//change flag to executed
+				if (bIsAlarmCreated) {
+					ruleRow.run_flag = EXECUTED;
+				}
 			}
 		}
 	} //end of for loop
 }
 
-bool SmartControllerClass::CreateAlarm(ScheduleRow_t row)
+bool SmartControllerClass::CreateAlarm(ScheduleRow_t& scheduleRow, RuleRow_t& ruleRow)
 {
-	//TODO:
 	//Use weekday, isRepeat, hour, min information to create appropriate alarm
 	//The created alarm obj must have a field for rule_id so it has a reference to what created it
-	//Update that rule row's alarm_id field with the newly created alarm's alarm_id
+	AlarmId alarm_id;
+	if (scheduleRow.isRepeat == 1) { //weekdays == 0 refers to daily repeat
+    if (scheduleRow.weekdays > 0 && scheduleRow.weekdays <= 7) {
+			//repeat weekly on given weekday
+      alarm_id = Alarm.alarmRepeat(scheduleRow.weekdays, scheduleRow.hour, scheduleRow.min, 0, AlarmTimerTriggered);
+			//setAlarmRuleUID(alarm_id, ruleRow.uid);
+    } else if (scheduleRow.weekdays == 0) {
+			//repeat daily
+      alarm_id = Alarm.alarmRepeat(scheduleRow.hour, scheduleRow.min, 0, AlarmTimerTriggered);
+			//setAlarmRuleUID(alarm_id, ruleRow.uid);
+    } else {
+			LOGE(LOGTAG_MSG, "The alarm referenced via Rule UID %s was not created successfully. Incorrect weekday value.", ruleRow.uid);
+			return false;
+		}
+  } else if (scheduleRow.isRepeat == 0) {
+    alarm_id = Alarm.alarmOnce(scheduleRow.weekdays, scheduleRow.hour, scheduleRow.min, 0, AlarmTimerTriggered);
+		//setAlarmRuleUID(alarm_id, ruleRow.uid);
+  } else {
+		LOGE(LOGTAG_MSG, "The alarm referenced via Rule UID %s was not created successfully. Incorrect isRepeat value.", ruleRow.uid);
+		return false;
+	}
+	//Update that schedule row's alarm_id field with the newly created alarm's alarm_id
+	scheduleRow.alarm_id = alarm_id;
+	LOGN(LOGTAG_MSG, "The alarm referenced via Rule UID %s was created successfully.", ruleRow.uid);
+	return true;
 }
 
 void SmartControllerClass::AlarmTimerTriggered()

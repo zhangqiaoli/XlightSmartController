@@ -81,10 +81,10 @@ public:
   bool Change_Sensor();					//ToDo: Params
 
   // Action loop to create alarms from rules
-  void ReadNewRules(UL ms);
+  void ReadNewRules();
 
   //Creation of alarms
-  bool CreateAlarm(ScheduleRow_t row);
+  bool CreateAlarm(ScheduleRow_t& row, RuleRow_t& ruleRow);
 
   //Alarm Triggered Actions
   void AlarmTimerTriggered();

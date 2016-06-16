@@ -122,7 +122,7 @@ void loop()
   theSys.CollectData(tick++);
 
 	// Act on new Rules in Rules chain
-	theSys.ReadNewRules(RTE_DELAY_READNEWRULES);
+	theSys.ReadNewRules();
 
   // ToDo: transfer data
 
