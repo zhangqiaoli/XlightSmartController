@@ -57,6 +57,16 @@
 #define COMMAND_JSON_SIZE         64
 #define SENSORDATA_JSON_SIZE      196
 
+// Macros for UID identifiers
+#define CLS_RULE                  'r'
+#define CLS_SCHEDULE              'a'
+#define CLS_SCENARIO              's'
+#define CLS_NOTIFICATION          'n'
+#define CLS_SENSOR                'e'
+#define CLS_LIGHT_STATUS          'h'
+#define CLS_TOPOLOGY              't'
+#define CLS_CONFIGURATION         'c'
+
 // Keep this number of rows in all tables after writing to Flash
 #define POST_FLASH_TABLE_SIZE		4
 
