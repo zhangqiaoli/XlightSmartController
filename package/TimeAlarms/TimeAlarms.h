@@ -100,6 +100,7 @@ public:
   time_t value;
   time_t nextTrigger;
   AlarmMode_t Mode;
+	uint8_t rule_uid;
 };
 
 // class containing the collection of alarms
@@ -150,6 +151,10 @@ public:
   time_t read(AlarmID_t ID);                // return the value for the given timer
   dtAlarmPeriod_t readType(AlarmID_t ID);   // return the alarm type for the given alarm ID
 
+	//Rule uid methods
+	bool setAlarmRuleUID(AlarmID_t ID, uint8_t rule_uid);
+	uint8_t getTriggedRuleUID();
+	
 #ifndef USE_SPECIALIST_METHODS
 private:  // the following methods are for testing and are not documented as part of the standard library
 #endif

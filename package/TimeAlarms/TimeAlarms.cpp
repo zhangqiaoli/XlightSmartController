@@ -1,3 +1,5 @@
+//TODO: Change licensing statement
+
 /*
   TimeAlarms.cpp - Arduino Time alarms for use with Time library
   Copyright (c) 208-2011 Michael Margolis.
@@ -39,6 +41,7 @@ AlarmClass::AlarmClass()
   Mode.alarmType = dtNotAllocated;
   value = nextTrigger = 0;
   onTickHandler = NULL;  // prevent a callback until this pointer is explicitly set
+  rule_uid = NULL;
 }
 
 //**************************************************************
@@ -293,6 +296,27 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
       }
 
       return retval;
+    }
+
+    bool TimeAlarmsClass::setAlarmRuleUID(AlarmID_t ID, uint8_t rule_uid)
+    {
+      if(isAllocated(ID)) {
+        Alarm[ID].rule_uid = rule_uid;
+        return true;
+      }
+      return false;
+    }
+
+    uint8_t TimeAlarmsClass::getTriggedRuleUID()
+    {
+      if (isServicing)
+      {
+        return Alarm[servicedAlarmId].rule_uid;
+      }
+      else
+      {
+        return NULL;
+      }
     }
 
     //***********************************************************
