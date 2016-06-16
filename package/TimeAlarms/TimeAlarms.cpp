@@ -41,7 +41,7 @@ AlarmClass::AlarmClass()
   Mode.alarmType = dtNotAllocated;
   value = nextTrigger = 0;
   onTickHandler = NULL;  // prevent a callback until this pointer is explicitly set
-  rule_uid = NULL;
+  tag = NULL;
 }
 
 //**************************************************************
@@ -298,25 +298,13 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
       return retval;
     }
 
-    bool TimeAlarmsClass::setAlarmRuleUID(AlarmID_t ID, uint8_t rule_uid)
+    bool TimeAlarmsClass::setAlarmTag(AlarmID_t ID, uint32_t tag)
     {
       if(isAllocated(ID)) {
-        Alarm[ID].rule_uid = rule_uid;
+        Alarm[ID].tag = tag;
         return true;
       }
       return false;
-    }
-
-    uint8_t TimeAlarmsClass::getTriggedRuleUID()
-    {
-      if (isServicing)
-      {
-        return Alarm[servicedAlarmId].rule_uid;
-      }
-      else
-      {
-        return NULL;
-      }
     }
 
     //***********************************************************
@@ -332,12 +320,13 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
           if( Alarm[servicedAlarmId].Mode.isEnabled && (now() >= Alarm[servicedAlarmId].nextTrigger)  )
           {
             OnTick_t TickHandler = Alarm[servicedAlarmId].onTickHandler;
+            uint32_t tag = Alarm[servicedAlarmId].tag;
             if(Alarm[servicedAlarmId].Mode.isOneShot)
                free(servicedAlarmId);  // free the ID if mode is OnShot
             else
                Alarm[servicedAlarmId].updateNextTrigger();
             if( TickHandler != NULL) {
-              (*TickHandler)();     // call the handler
+              (*TickHandler)(tag);     // call the handler
             }
           }
         }
