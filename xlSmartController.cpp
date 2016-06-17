@@ -52,12 +52,46 @@ MotionSensor senMotion(PIN_SEN_PIR);
 //------------------------------------------------------------------
 void AlarmTimerTriggered(uint32_t tag)
 {
-	//When alarm goes off, alarm obj that triggered this function has a reference to rule_id from which alarm was created;
+	uint8_t rule_uid = (uint8_t)tag;
 
-	//TODO:
-	//Use this rule_id to go to appropriate rule row, get scenario_id, find that scenario row in linkedlist or flash
-	//Create alarm output based on found scenario
-	//Add action to command queue, send notif UID to cloud (to send to app)
+	//search Rule table for matching UID
+	ListNode<RuleRow_t> *RuleRowptr = theSys.Rule_table.search(rule_uid);
+
+	if (RuleRowptr == NULL)
+	{
+		LOGE(LOGTAG_MSG, "Error, could not locate Rule Row corresponding to triggered Alarm ID");
+		return;
+	}
+
+	// read UIDs from Rule row 
+	uint8_t SNT_uid = RuleRowptr->data.SNT_uid;
+	uint8_t notif_uid = RuleRowptr->data.notif_uid;
+
+	//search chain and flash for scenerio table data
+	ListNode<ScenarioRow_t> *ScenarioRowptr = theSys.Scenario_table.search(SNT_uid);
+
+	ScenarioRow_t tmpSNTrow;
+	if (ScenarioRowptr != NULL) //found in chain
+	{
+		tmpSNTrow = ScenarioRowptr->data;
+	}
+	else //check flash
+	{
+		int row_index = (int)SNT_uid;
+		EEPROM.get(MEM_SCENARIOS_OFFSET + row_index*SNT_ROW_SIZE, tmpSNTrow); //read from flash
+
+		if (!(tmpSNTrow.op_flag == (OP_FLAG)1 &&
+			tmpSNTrow.flash_flag == (FLASH_FLAG)1 &&
+			tmpSNTrow.run_flag == (RUN_FLAG)1))
+		{
+			//not found in flash
+			LOGD(LOGTAG_MSG, "Error, corresponding scenario not found for rule row %d", rule_uid);
+		}
+	}
+
+	//Todo: search for notification table data
+
+	//ToDo: add action to command queue, send notif UID to cloud (to send to app)
 }
 
 //------------------------------------------------------------------
@@ -972,7 +1006,6 @@ bool SmartControllerClass::Change_Sensor()
     //ToDo: define later
 
 	return 1;
-
 }
 
 //------------------------------------------------------------------
@@ -1154,13 +1187,13 @@ ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
 				// Copy data entry to Working Memory and get the pointer
 		    row.run_flag = UNEXECUTED;		// need to create Alarm later
 		    if (Change_Schedule(row))
-				{
+			{
 					//pObj = Schedule_table.search(uid);
 					pObj = Schedule_table.getLast();		// Faster
 					LOGN(LOGTAG_MSG, "UID:%c%d copy Flash to Schedule_t OK", CLS_SCHEDULE, uid);
 		    }
 		    else
-				{
+			{
 					LOGE(LOGTAG_MSG, "UID:%c%d Unable to copy Flash to Schedule_t", CLS_SCHEDULE, uid);
 		    }
 			}

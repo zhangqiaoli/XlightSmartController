@@ -42,10 +42,10 @@ public:
 	ChainClass(int max);
 
 	//child functions
-	virtual ListNode<T>* search(uint8_t uid); //returns node pointer, given the uid
-	virtual int search_uid(uint8_t uid); //returns index, given the uid
-	virtual bool delete_one_outdated_row(); //deletes the single most outdated row from the chain passed in, returns false if no such row exists
-	virtual bool isFull(); //checks if the max chain length has been reached (return true), and if a row can be deleted (return false)
+	virtual ListNode<T>* search(uint8_t uid);	//returns node pointer, given the uid
+	virtual int search_uid(uint8_t uid);		//returns index, given the uid
+	virtual bool delete_one_outdated_row();		//deletes the single most outdated row from the chain passed in, returns false if no such row exists
+	virtual bool isFull();						//checks if the max chain length has been reached (return true), and if a row can be deleted (return false)
 
 	//accessor functions
 	virtual ListNode<T>* getRoot();
