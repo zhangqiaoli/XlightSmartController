@@ -540,7 +540,6 @@ bool SmartControllerClass::ParseRows(JsonObject& data)
     row.run_flag = (RUN_FLAG)data["run_flag"].as<int>();
     row.uid = uidNum;
     row.SCT_uid = data["SCT_uid"];
-    row.alarm_id = data["alarm_id"];
     row.SNT_uid = data["SNT_uid"];
     row.notif_uid = data["notif_uid"];
 
