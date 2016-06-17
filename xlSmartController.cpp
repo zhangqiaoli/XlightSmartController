@@ -527,7 +527,6 @@ bool SmartControllerClass::ParseRows(JsonObject& data) {
     row.run_flag = (RUN_FLAG)data["run_flag"].as<int>();
     row.uid = uidNum;
     row.SCT_uid = data["SCT_uid"];
-    row.alarm_id = data["alarm_id"];
     row.SNT_uid = data["SNT_uid"];
     row.notif_uid = data["notif_uid"];
 
@@ -920,18 +919,103 @@ bool SmartControllerClass::Change_Sensor()
 }
 
 //------------------------------------------------------------------
+// Acting on new rows in working memory Chains
+//------------------------------------------------------------------
+
+void SmartControllerClass::ReadNewRules()
+{
+	ListNode<RuleRow_t> *ruleRowPtr = Rule_table.getRoot();
+	while (ruleRowPtr != NULL)
+	{
+		if (ruleRowPtr->data.run_flag == UNEXECUTED)
+		{
+			//get SCT_uid from rule rows and find SCT_uid in SCT LinkedList
+			ListNode<ScheduleRow_t> *scheduleRow = Schedule_table.search(ruleRowPtr->data.SCT_uid);
+			//todo search for SNT
+
+			if (scheduleRow != NULL) //found schedule row in chain
+			{
+				if (scheduleRow->data.run_flag != EXECUTED)
+				{
+					//row must be ether new or updated, delete old alarm if is update (PUT)
+					if (scheduleRow->data.op_flag == PUT && Alarm.isAllocated(scheduleRow->data.alarm_id))
+					{
+						Alarm.disable(scheduleRow->data.alarm_id); //prevent alarm from triggering
+						Alarm.free(scheduleRow->data.alarm_id); //free alarm_id to allow its reuse
+					}
+
+					//create alarm and check if successful
+					if (CreateAlarm(scheduleRow, ruleRowPtr))
+					{
+						ruleRowPtr->data.run_flag = EXECUTED;
+						scheduleRow->data.run_flag = EXECUTED;
+					}
+				}
+			}
+			else //schedule row not found in chain
+			{
+				//log error as scheduleRow was not found
+				LOGE(LOGTAG_MSG, "The schedule row with UID was not found in working memory.", scheduleRow->data.uid);
+			}
+		}
+		ruleRowPtr = ruleRowPtr->next;
+	} //end of loop
+}
+
+bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, ListNode<RuleRow_t>* ruleRow)
+{
+	//Use weekday, isRepeat, hour, min information to create appropriate alarm
+	//The created alarm obj must have a field for rule_id so it has a reference to what created it
+
+	//If isRepeat is 1 AND:
+		//if weekdays value is between 1 and 7, the alarm is to be repeated weekly on the specified weekday
+		//if weekdays value is 0, alarm is to be repeated daily
+	//if isRepeat is 0:
+		//alarm is to to be triggered on specified weekday; weekday cannot be 0.
+
+	AlarmId alarm_id;
+	if (scheduleRow->data.isRepeat == 1)
+	{
+		if (scheduleRow->data.weekdays > 0 && scheduleRow->data.weekdays <= 7) {
+			//repeat weekly on given weekday
+			alarm_id = Alarm.alarmRepeat(scheduleRow->data.weekdays, scheduleRow->data.hour, scheduleRow->data.min, 0, AlarmTimerTriggered);
+			Alarm.setAlarmTag(alarm_id, ruleRow->data.uid);
+		}
+		else if (scheduleRow->data.weekdays == 0)
+		{
+			//weekdays == 0 refers to daily repeat
+			alarm_id = Alarm.alarmRepeat(scheduleRow->data.hour, scheduleRow->data.min, 0, AlarmTimerTriggered);
+			Alarm.setAlarmTag(alarm_id, ruleRow->data.uid);
+		}
+		else
+		{
+			LOGE(LOGTAG_MSG, "The alarm referenced via Rule UID %s was not created successfully. Incorrect weekday value.", ruleRow->data.uid);
+			return false;
+		}
+	}
+	else if (scheduleRow->data.isRepeat == 0) {
+		alarm_id = Alarm.alarmOnce(scheduleRow->data.weekdays, scheduleRow->data.hour, scheduleRow->data.min, 0, AlarmTimerTriggered);
+		Alarm.setAlarmTag(alarm_id, ruleRow->data.uid);
+	}
+	else {
+		LOGE(LOGTAG_MSG, "The alarm referenced via Rule UID %s was not created successfully. Incorrect isRepeat value.", ruleRow->data.uid);
+		return false;
+	}
+	//Update that schedule row's alarm_id field with the newly created alarm's alarm_id
+	scheduleRow->data.alarm_id = alarm_id;
+	LOGN(LOGTAG_MSG, "The alarm referenced via Rule UID %s was created successfully.", ruleRow->data.uid);
+	return true;
+}
+
+//------------------------------------------------------------------
 // Alarm Triggered Actions
 //------------------------------------------------------------------
 void SmartControllerClass::AlarmTimerTriggered()
 {
+	//When alarm goes off, alarm obj that triggered this function has a reference to rule_id from which alarm was created;
 
-	//ToDo: get corresponding scenerio UID / notif UID
-	//ToDo: add action to command queue, send notif UID to cloud (to send to app)
-
-	  //AlarmId triggered_id = Alarm.getTriggeredAlarmId();
-
-	  //search through rules table to find alarm id, and the scenerio UID
-
-	  //add action to command queue
-
+	//TODO:
+	//Use this rule_id to go to appropriate rule row, get scenario_id, find that scenario row in linkedlist or flash
+	//Create alarm output based on found scenario
+	//Add action to command queue, send notif UID to cloud (to send to app)
 }

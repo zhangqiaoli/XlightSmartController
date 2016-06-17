@@ -75,10 +75,14 @@ public:
   // Cloud Interface Action Types
   bool Change_Rule(RuleRow_t row);
   bool Change_Schedule(ScheduleRow_t row);
+  bool Change_Scenario(ScenarioRow_t row);
+  bool Change_DeviceStatus(DevStatus_t row); //ToDo: action
+  
+  bool Change_Sensor();	//ToDo
 
-  bool Change_Scenario(ScenarioRow_t row);				//ToDo: Params
-  bool Change_DeviceStatus(DevStatus_t row);				//ToDo: Params
-  bool Change_Sensor();					//ToDo: Params
+  // Action Loop & Helper Methods
+  void ReadNewRules();
+  bool CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, ListNode<RuleRow_t>* ruleRow);
 
   //Alarm Triggered Actions
   void AlarmTimerTriggered();
