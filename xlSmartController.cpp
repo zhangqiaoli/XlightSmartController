@@ -971,23 +971,23 @@ bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, Lis
 		//if weekdays value is between 1 and 7, the alarm is to be repeated weekly on the specified weekday
 		//if weekdays value is 0, alarm is to be repeated daily
 	//if isRepeat is 0:
-		//alarm is to to be triggered on specified weekday; weekday cannot be 0. 
+		//alarm is to to be triggered on specified weekday; weekday cannot be 0.
 
 	AlarmId alarm_id;
-	if (scheduleRow->data.isRepeat == 1) 
+	if (scheduleRow->data.isRepeat == 1)
 	{
 		if (scheduleRow->data.weekdays > 0 && scheduleRow->data.weekdays <= 7) {
 			//repeat weekly on given weekday
 			alarm_id = Alarm.alarmRepeat(scheduleRow->data.weekdays, scheduleRow->data.hour, scheduleRow->data.min, 0, AlarmTimerTriggered);
-			//setAlarmTag(alarm_id, ruleRow.uid);
+			Alarm.setAlarmTag(alarm_id, ruleRow->data.uid);
 		}
-		else if (scheduleRow->data.weekdays == 0) 
+		else if (scheduleRow->data.weekdays == 0)
 		{
 			//weekdays == 0 refers to daily repeat
 			alarm_id = Alarm.alarmRepeat(scheduleRow->data.hour, scheduleRow->data.min, 0, AlarmTimerTriggered);
-			//setAlarmTag(alarm_id, ruleRow.uid);
+			Alarm.setAlarmTag(alarm_id, ruleRow->data.uid);
 		}
-		else 
+		else
 		{
 			LOGE(LOGTAG_MSG, "The alarm referenced via Rule UID %s was not created successfully. Incorrect weekday value.", ruleRow->data.uid);
 			return false;
@@ -995,7 +995,7 @@ bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, Lis
 	}
 	else if (scheduleRow->data.isRepeat == 0) {
 		alarm_id = Alarm.alarmOnce(scheduleRow->data.weekdays, scheduleRow->data.hour, scheduleRow->data.min, 0, AlarmTimerTriggered);
-		//setAlarmTag(alarm_id, ruleRow.uid);
+		Alarm.setAlarmTag(alarm_id, ruleRow->data.uid);
 	}
 	else {
 		LOGE(LOGTAG_MSG, "The alarm referenced via Rule UID %s was not created successfully. Incorrect isRepeat value.", ruleRow->data.uid);
