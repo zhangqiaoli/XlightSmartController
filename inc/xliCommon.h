@@ -57,6 +57,11 @@
 #define COMMAND_JSON_SIZE         64
 #define SENSORDATA_JSON_SIZE      196
 
+// Row State Flags for Sync between Cloud, Flash, and Working Memory
+enum OP_FLAG {GET, POST, PUT, DELETE};
+enum FLASH_FLAG {UNSAVED, SAVED};
+enum RUN_FLAG {UNEXECUTED, EXECUTED};
+
 // Macros for UID identifiers
 #define CLS_RULE                  'r'
 #define CLS_SCHEDULE              'a'

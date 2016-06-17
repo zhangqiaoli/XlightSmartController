@@ -16,11 +16,6 @@
 #define XLA_AUTHORIZATION         "use-token-auth"
 #define XLA_TOKEN                 "your-access-token"       // Can update online
 
-//Row State Flags for Sync between Cloud, Flash, and Working Memory
-enum OP_FLAG {GET, POST, PUT, DELETE};
-enum FLASH_FLAG {UNSAVED, SAVED};
-enum RUN_FLAG {UNEXECUTED, EXECUTED};
-
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------
@@ -43,7 +38,7 @@ typedef struct
 
 typedef struct
 {
-  UC version                  :4;           // Data version, other than 0xFF
+  UC version                  :8;           // Data version, other than 0xFF
   US sensorBitmap             :16;          // Sensor enable bitmap
   UC indBrightness            :4;           // Indicator of brightness
   UC typeMainDevice           :8;           // Type of the main lamp
@@ -79,7 +74,7 @@ typedef struct //Schedule Table
   FLASH_FLAG flash_flag		: 1;
   RUN_FLAG run_flag			: 1;
 	UC uid				          : 8;
-	UC weekdays			        : 7;	  //values: 1-7
+	UC weekdays			        : 7;	  //values: 0-7
 	BOOL isRepeat		        : 1;	  //values: 0-1
 	UC hour				          : 5;    //values: 0-23
 	UC min				          : 6;    //values: 0-59

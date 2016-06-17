@@ -70,28 +70,28 @@ public:
   int CldJSONCommand(String jsonData);
 
   // Parsing Functions
-  bool ParseRows(JsonObject& data);
+  bool ParseCmdRow(JsonObject& data);
 
   // Cloud Interface Action Types
   bool Change_Rule(RuleRow_t row);
   bool Change_Schedule(ScheduleRow_t row);
   bool Change_Scenario(ScenarioRow_t row);
   bool Change_DeviceStatus(DevStatus_t row); //ToDo: action
-  
+
   bool Change_Sensor();	//ToDo
 
   // Action Loop & Helper Methods
   void ReadNewRules();
-  bool CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, ListNode<RuleRow_t>* ruleRow);
-
-  //Alarm Triggered Actions
-  void AlarmTimerTriggered();
+  bool CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uint32_t tag = 0);
 
   //LinkedLists (Working memory tables)
   DevStatus_t DevStatus_row;
   ChainClass<ScheduleRow_t> Schedule_table = ChainClass<ScheduleRow_t>(PRE_FLASH_MAX_TABLE_SIZE);
   ChainClass<ScenarioRow_t> Scenario_table = ChainClass<ScenarioRow_t>(PRE_FLASH_MAX_TABLE_SIZE);
   ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>((int)( MEM_RULES_LEN / sizeof(RuleRow_t) )); // 65536/5 = 13107
+
+  // Utils
+  void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure
 
 protected:
   // Communication Interfaces
