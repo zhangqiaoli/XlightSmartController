@@ -97,7 +97,6 @@ typedef struct
 	UC SCT_uid               : 8;
 	UC SNT_uid               : 8;
 	UC notif_uid             : 8;
-  // ToDo: add other trigger conditions, e.g. sensor data
 } RuleRow_t;
 
 #define RT_ROW_SIZE 	sizeof(RuleRow_t)
