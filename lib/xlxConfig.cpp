@@ -160,7 +160,7 @@ BOOL ConfigClass::SaveConfig()
   if( m_isDSTChanged )
   {
 	  DevStatus_t tmpRow = theSys.DevStatus_row; //copy of data to write to flash
-	  
+
 	  //change flags to 111 to indicate flash row is occupied
 	  tmpRow.op_flag = (OP_FLAG)1;
 	  tmpRow.flash_flag = (FLASH_FLAG)1;
@@ -174,7 +174,7 @@ BOOL ConfigClass::SaveConfig()
 		  m_isDSTChanged = false;
 		  LOGD(LOGTAG_MSG, "Device status table saved.");
 	  }
-	  else 
+	  else
 	  {
 		  LOGE(LOGTAG_MSG, "Unable to write Device Status to flash, out of memory bounds");
 	  }
@@ -190,7 +190,7 @@ BOOL ConfigClass::SaveConfig()
 		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
 		  {
 			  ScheduleRow_t tmpRow = rowptr->data; //copy of data to write to flash
-			  
+
 			  switch (rowptr->data.op_flag)
 			  {
 				case DELETE:
@@ -202,6 +202,7 @@ BOOL ConfigClass::SaveConfig()
 
 				case PUT:
 				case POST:
+        case GET:
 					//change flags to 111 to indicate flash row is occupied
 					tmpRow.op_flag = (OP_FLAG)1;
 					tmpRow.flash_flag = (FLASH_FLAG)1;
@@ -211,7 +212,7 @@ BOOL ConfigClass::SaveConfig()
 
 			  //write tmpRow to flash
 			  int row_index = rowptr->data.uid;
-			  if (row_index < MAX_SCT_ROWS && sizeof(tmpRow) <= SCT_ROW_SIZE)
+			  if (row_index < MAX_SCT_ROWS)
 			  {
 				  EEPROM.put(MEM_SCHEDULE_OFFSET + row_index*SCT_ROW_SIZE, tmpRow); //write to flash
 
@@ -225,7 +226,7 @@ BOOL ConfigClass::SaveConfig()
 		  }
 		  rowptr = rowptr->next;
 	  }
-	  
+
 	  if (success_flag)
 	  {
 		  m_isSCTChanged = false;

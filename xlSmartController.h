@@ -77,12 +77,18 @@ public:
   bool Change_Schedule(ScheduleRow_t row);
   bool Change_Scenario(ScenarioRow_t row);
   bool Change_DeviceStatus(DevStatus_t row); //ToDo: action
+  bool Action_Rule(ListNode<RuleRow_t> *rulePtr);
+  bool Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_id);
 
   bool Change_Sensor();	//ToDo
 
   // Action Loop & Helper Methods
   void ReadNewRules();
   bool CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uint32_t tag = 0);
+  bool DestoryAlarm(AlarmId alarmID, UC uid);
+
+  // Object search function
+  ListNode<ScheduleRow_t> *SearchSchedule(UC uid);
 
   //LinkedLists (Working memory tables)
   DevStatus_t DevStatus_row;

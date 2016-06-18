@@ -47,8 +47,9 @@ public:
 	virtual bool delete_one_outdated_row(); //deletes the single most outdated row from the chain passed in, returns false if no such row exists
 	virtual bool isFull(); //checks if the max chain length has been reached (return true), and if a row can be deleted (return false)
 
-						   //accessor functions
+	//accessor functions
 	virtual ListNode<T>* getRoot();
+	virtual ListNode<T>* getLast();
 
 	//overload all "add" functions to first check if linkedlist length is greater than PRE_FLASH_MAX_TABLE_SIZE
 	virtual bool add(int index, T);
@@ -151,6 +152,12 @@ template<typename T>
 ListNode<T>* ChainClass<T>::getRoot()
 {
 	return LinkedList<T>::root;
+}
+
+template<typename T>
+ListNode<T>* ChainClass<T>::getLast()
+{
+	return LinkedList<T>::last;
 }
 
 //------------------------------------------------------------------

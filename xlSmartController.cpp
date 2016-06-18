@@ -620,6 +620,7 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 	    row.isRepeat = data["isRepeat"];
 	    row.hour = data["hour"];
 	    row.min = data["min"];
+			row.alarm_id = dtINVALID_ALARM_ID;
 
 	    isSuccess = Change_Schedule(row);
 	    if (!isSuccess)
@@ -983,44 +984,7 @@ void SmartControllerClass::ReadNewRules()
 	ListNode<RuleRow_t> *ruleRowPtr = Rule_table.getRoot();
 	while (ruleRowPtr != NULL)
 	{
-		if (ruleRowPtr->data.run_flag == UNEXECUTED)
-		{
-			//get SCT_uid from rule rows and find SCT_uid in SCT LinkedList
-			ListNode<ScheduleRow_t> *scheduleRow = Schedule_table.search(ruleRowPtr->data.SCT_uid);
-			//todo search for SNT
-
-			if (scheduleRow) //found schedule row in chain
-			{
-				if (scheduleRow->data.run_flag == UNEXECUTED)
-				{
-					// row flag should not be DELETE
-					if (scheduleRow->data.op_flag != DELETE)
-					{
-						if (Alarm.isAllocated(scheduleRow->data.alarm_id))
-						{
-							Alarm.disable(scheduleRow->data.alarm_id); 	//prevent alarm from triggering
-							Alarm.free(scheduleRow->data.alarm_id); 		//free alarm_id to allow its reuse
-						}
-
-						//create alarm and check if successful
-						if (CreateAlarm(scheduleRow, ruleRowPtr->data.uid))
-						{
-							ruleRowPtr->data.run_flag = EXECUTED;
-							scheduleRow->data.run_flag = EXECUTED;
-						}
-					}
-					else
-					{
-						LOGN(LOGTAG_MSG, "Found to be deleted object UID:%c%d", CLS_SCHEDULE, ruleRowPtr->data.SCT_uid);
-					}
-				}
-			}
-			else //schedule row not found in chain
-			{
-				//log error as scheduleRow was not found
-				LOGW(LOGTAG_MSG, "Cannot find object with UID:%c%d", CLS_SCHEDULE, ruleRowPtr->data.SCT_uid);
-			}
-		}
+		Action_Rule(ruleRowPtr);
 		ruleRowPtr = ruleRowPtr->next;
 	} //end of loop
 }
@@ -1069,6 +1033,141 @@ bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uin
 	scheduleRow->data.alarm_id = alarm_id;
 	LOGI(LOGTAG_MSG, "Alarm created via UID:%c%s", CLS_RULE, tag);
 	return true;
+}
+
+bool SmartControllerClass::DestoryAlarm(AlarmId alarmID, UC uid)
+{
+	if(!Alarm.isAllocated(alarmID))
+		return false;
+
+	Alarm.disable(alarmID);
+	Alarm.free(alarmID);
+	LOGN(LOGTAG_MSG, "Destory alarm via UID:%c%d", CLS_SCHEDULE, uid);
+
+	return true;
+}
+
+bool SmartControllerClass::Action_Rule(ListNode<RuleRow_t> *rulePtr)
+{
+	if(!rulePtr)
+		return false;
+
+	if (rulePtr->data.run_flag == UNEXECUTED)
+	{
+		// Process Schedule
+		Action_Schedule(rulePtr->data.op_flag, rulePtr->data.SCT_uid, rulePtr->data.uid);
+
+		//todo search for SNT
+		//...
+
+		// ToDo: search and set other trigger conditions
+		//...
+
+		rulePtr->data.run_flag = EXECUTED;
+	}
+
+	return true;
+}
+
+bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_id)
+{
+	bool retVal = true;
+
+	//get SCT_uid from rule rows and find SCT_uid in SCT LinkedList
+	ListNode<ScheduleRow_t> *scheduleRow = SearchSchedule(uid);
+	if (scheduleRow) //found schedule row in chain or Flash
+	{
+		if (scheduleRow->data.run_flag == UNEXECUTED)
+		{
+			switch(scheduleRow->data.op_flag)
+			{
+			case POST:
+			case PUT:
+				if(parentFlag == POST || parentFlag == PUT)
+				{
+					// Recreate Alarm
+					DestoryAlarm(scheduleRow->data.alarm_id, uid);
+					scheduleRow->data.alarm_id = dtINVALID_ALARM_ID;
+					CreateAlarm(scheduleRow, rule_id);
+				}
+				break;
+
+			case DELETE:
+				// Delete Alarm
+				LOGI(LOGTAG_MSG, "Found to be deleted object UID:%c%d", CLS_SCHEDULE, uid);
+				DestoryAlarm(scheduleRow->data.alarm_id, uid);
+				scheduleRow->data.alarm_id = dtINVALID_ALARM_ID;
+				break;
+
+			case GET:			// ToDo:...
+					break;
+			}
+		}
+		else	// EXECUTED, double check
+		{
+			if(parentFlag != DELETE && parentFlag != GET && scheduleRow->data.op_flag != DELETE)
+			{
+				// The alarm is supposed to exist, otherwise create it
+				if (!Alarm.isAllocated(scheduleRow->data.alarm_id))
+				{
+					CreateAlarm(scheduleRow, rule_id);
+				}
+			}
+		}
+
+		// Parent Flag Special Check
+		if( parentFlag == DELETE ) {
+			// Destory Alarm if exists
+			DestoryAlarm(scheduleRow->data.alarm_id, uid);
+			scheduleRow->data.alarm_id = dtINVALID_ALARM_ID;
+		}
+
+		// Set flag anyway
+		scheduleRow->data.run_flag = EXECUTED;
+	}
+	else //schedule row not found in chain or Flash
+	{
+		LOGW(LOGTAG_MSG, "Cannot find object with UID:%c%d", CLS_SCHEDULE, uid);
+		retVal = false;
+	}
+
+	return retVal;
+}
+
+ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
+{
+	ListNode<ScheduleRow_t> *pObj = Schedule_table.search(uid);
+
+	if(!pObj)
+	{
+		// Search Flash and validate data entry
+		ScheduleRow_t row;
+		if (uid < MAX_SCT_ROWS)
+		{
+			// Find it
+			EEPROM.get(MEM_SCHEDULE_OFFSET + uid*SCT_ROW_SIZE, row);
+
+			// flags should be 111
+			if(row.uid == uid && row.op_flag == POST &&
+				row.op_flag == SAVED && row.op_flag == EXECUTED )
+			{
+				// Copy data entry to Working Memory and get the pointer
+		    row.run_flag = UNEXECUTED;		// need to create Alarm later
+		    if (Change_Schedule(row))
+				{
+					//pObj = Schedule_table.search(uid);
+					pObj = Schedule_table.getLast();		// Faster
+					LOGN(LOGTAG_MSG, "UID:%c%d copy Flash to Schedule_t OK", CLS_SCHEDULE, uid);
+		    }
+		    else
+				{
+					LOGE(LOGTAG_MSG, "UID:%c%d Unable to copy Flash to Schedule_t", CLS_SCHEDULE, uid);
+		    }
+			}
+		}
+	}
+
+	return pObj;
 }
 
 //------------------------------------------------------------------
