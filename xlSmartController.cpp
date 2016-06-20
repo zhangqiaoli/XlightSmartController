@@ -92,7 +92,7 @@ void SmartControllerClass::InitRadio()
 	CheckRF();
 	if (IsRFGood())
 	{
-		LOGN(LOGTAG_MSG, "RF2.4 is working.");
+		LOGN(LOGTAG_MSG, F("RF2.4 is working."));
 		SetStatus(STATUS_BMW);
 	}
 
@@ -100,7 +100,7 @@ void SmartControllerClass::InitRadio()
 	CheckBLE();
 	if (IsBLEGood())
 	{
-		LOGN(LOGTAG_MSG, "BLE is working.");
+		LOGN(LOGTAG_MSG, F("BLE is working."));
 	}
 }
 
@@ -112,7 +112,7 @@ void SmartControllerClass::InitNetwork()
 	CheckNetwork();
 	if (IsWANGood())
 	{
-		LOGN(LOGTAG_MSG, "WAN is working.");
+		LOGN(LOGTAG_MSG, F("WAN is working."));
 		SetStatus(STATUS_NWS);
 
 		// Initialize Logger: syslog & cloud log
@@ -122,7 +122,7 @@ void SmartControllerClass::InitNetwork()
 	}
 	else if (GetStatus() == STATUS_BMW && IsLANGood())
 	{
-		LOGN(LOGTAG_MSG, "LAN is working.");
+		LOGN(LOGTAG_MSG, F("LAN is working."));
 		SetStatus(STATUS_DIS);
 	}
 }
@@ -174,13 +174,13 @@ void SmartControllerClass::InitSensors()
 	// DHT
 	if (theConfig.IsSensorEnabled(sensorDHT)) {
 		senDHT.begin();
-		LOGD(LOGTAG_MSG, "DHT sensor works.");
+		LOGD(LOGTAG_MSG, F("DHT sensor works."));
 	}
 
 	// Light
 	if (theConfig.IsSensorEnabled(sensorALS)) {
 		senLight.begin(SEN_LIGHT_MIN, SEN_LIGHT_MAX);
-		LOGD(LOGTAG_MSG, "Light sensor works.");
+		LOGD(LOGTAG_MSG, F("Light sensor works."));
 	}
 
 
@@ -193,7 +193,7 @@ void SmartControllerClass::InitSensors()
 	//PIR
 	if (theConfig.IsSensorEnabled(sensorPIR)) {
 		senMotion.begin();
-		LOGD(LOGTAG_MSG, "Motion sensor works.");
+		LOGD(LOGTAG_MSG, F("Motion sensor works."));
 	}
 
 
@@ -207,7 +207,7 @@ void SmartControllerClass::InitCloudObj()
 	m_tzString = theConfig.GetTimeZoneJSON();
 
 	CloudObjClass::InitCloudObj();
-	LOGN(LOGTAG_MSG, "Cloud Objects registered.");
+	LOGN(LOGTAG_MSG, F("Cloud Objects registered."));
 }
 
 // Get the controller started
@@ -215,7 +215,7 @@ BOOL SmartControllerClass::Start()
 {
 	// ToDo:
 
-	LOGI(LOGTAG_MSG, "SmartController started.");
+	LOGI(LOGTAG_MSG, F("SmartController started."));
 	return true;
 }
 

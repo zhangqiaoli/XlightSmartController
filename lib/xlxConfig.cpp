@@ -89,17 +89,17 @@ BOOL ConfigClass::LoadConfig()
     {
       InitConfig();
       m_isChanged = true;
-      LOGW(LOGTAG_MSG, "Sysconfig is empty, use default settings.");
+      LOGW(LOGTAG_MSG, F("Sysconfig is empty, use default settings."));
       SaveConfig();
     }
     else
     {
-      LOGI(LOGTAG_MSG, "Sysconfig loaded.");
+      LOGI(LOGTAG_MSG, F("Sysconfig loaded."));
     }
     m_isLoaded = true;
     m_isChanged = false;
   } else {
-    LOGE(LOGTAG_MSG, "Failed to load Sysconfig.");
+    LOGE(LOGTAG_MSG, F("Failed to load Sysconfig."));
   }
 
   // ToDo: load device status
@@ -117,11 +117,11 @@ BOOL ConfigClass::LoadConfig()
 	}
 	else
 	{
-		LOGD(LOGTAG_MSG, "Device status table loaded.");
+		LOGD(LOGTAG_MSG, F("Device status table loaded."));
 	}
     m_isDSTChanged = false;
   } else {
-    LOGW(LOGTAG_MSG, "Failed to load device status table.");
+    LOGW(LOGTAG_MSG, F("Failed to load device status table."));
   }
 
   // ToDo: load Schedule
@@ -132,9 +132,9 @@ BOOL ConfigClass::LoadConfig()
 	//ToDo: load schedule, create alarms for all state_flag = full rows
 
     m_isSCTChanged = false;
-    LOGD(LOGTAG_MSG, "Schedule table loaded.");
+    LOGD(LOGTAG_MSG, F("Schedule table loaded."));
   } else {
-    LOGW(LOGTAG_MSG, "Failed to load schedule table.");
+    LOGW(LOGTAG_MSG, F("Failed to load schedule table."));
   }
 
   // ToDo: load Rules from P1 Flash, change m_isRTChanged to false
@@ -154,7 +154,7 @@ BOOL ConfigClass::SaveConfig()
   {
     EEPROM.put(MEM_CONFIG_OFFSET, m_config);
     m_isChanged = false;
-    LOGI(LOGTAG_MSG, "Sysconfig saved.");
+    LOGI(LOGTAG_MSG, F("Sysconfig saved."));
   }
 
   if( m_isDSTChanged )
@@ -172,11 +172,11 @@ BOOL ConfigClass::SaveConfig()
 		  theSys.DevStatus_row.flash_flag = SAVED; //toggle flash flag
 
 		  m_isDSTChanged = false;
-		  LOGD(LOGTAG_MSG, "Device status table saved.");
+		  LOGD(LOGTAG_MSG, F("Device status table saved."));
 	  }
 	  else
 	  {
-		  LOGE(LOGTAG_MSG, "Unable to write Device Status to flash, out of memory bounds");
+		  LOGE(LOGTAG_MSG, F("Unable to write Device Status to flash, out of memory bounds"));
 	  }
   }
 
@@ -220,7 +220,7 @@ BOOL ConfigClass::SaveConfig()
 			  }
 			  else
 			  {
-				  LOGE(LOGTAG_MSG, "Error, cannot write Schedule row %d to flash, out of memory bounds", row_index);
+				  LOGE(LOGTAG_MSG, F("Error, cannot write Schedule row %d to flash, out of memory bounds"), row_index);
 				  success_flag = false;
 			  }
 		  }
@@ -230,11 +230,11 @@ BOOL ConfigClass::SaveConfig()
 	  if (success_flag)
 	  {
 		  m_isSCTChanged = false;
-		  LOGD(LOGTAG_MSG, "Schedule table saved.");
+		  LOGD(LOGTAG_MSG, F("Schedule table saved."));
 	  }
 	  else
 	  {
-		  LOGE(LOGTAG_MSG, "Unable to write 1 or more Schedule table rows to flash");
+		  LOGE(LOGTAG_MSG, F("Unable to write 1 or more Schedule table rows to flash"));
 	  }
   }
 
@@ -249,7 +249,7 @@ BOOL ConfigClass::SaveConfig()
 	  // Keep all of Rule Table in working memory
 
 	  m_isRTChanged = false;
-	  LOGD(LOGTAG_MSG, "Rule table saved.");
+	  LOGD(LOGTAG_MSG, F("Rule table saved."));
   }
 
   if (m_isSNTChanged)
@@ -262,7 +262,7 @@ BOOL ConfigClass::SaveConfig()
 	  // MEM_RULES_OFFSET
 
 	  m_isRTChanged = false;
-	  LOGD(LOGTAG_MSG, "Scenerio table saved.");
+	  LOGD(LOGTAG_MSG, F("Scenerio table saved."));
   }
 
   return true;
