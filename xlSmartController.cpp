@@ -1185,17 +1185,17 @@ ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
 				row.op_flag == SAVED && row.op_flag == EXECUTED )
 			{
 				// Copy data entry to Working Memory and get the pointer
-		    row.run_flag = UNEXECUTED;		// need to create Alarm later
-		    if (Change_Schedule(row))
-			{
+				row.run_flag = UNEXECUTED;		// need to create Alarm later
+				if (Change_Schedule(row))
+				{
 					//pObj = Schedule_table.search(uid);
 					pObj = Schedule_table.getLast();		// Faster
 					LOGN(LOGTAG_MSG, "UID:%c%d copy Flash to Schedule_t OK", CLS_SCHEDULE, uid);
-		    }
-		    else
-			{
+				}
+				else
+				{
 					LOGE(LOGTAG_MSG, "UID:%c%d Unable to copy Flash to Schedule_t", CLS_SCHEDULE, uid);
-		    }
+				}
 			}
 		}
 	}
