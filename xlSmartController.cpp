@@ -52,12 +52,26 @@ MotionSensor senMotion(PIN_SEN_PIR);
 //------------------------------------------------------------------
 void AlarmTimerTriggered(uint32_t tag)
 {
-	//When alarm goes off, alarm obj that triggered this function has a reference to rule_id from which alarm was created;
+	uint8_t rule_uid = (uint8_t)tag;
 
-	//TODO:
-	//Use this rule_id to go to appropriate rule row, get scenario_id, find that scenario row in linkedlist or flash
-	//Create alarm output based on found scenario
-	//Add action to command queue, send notif UID to cloud (to send to app)
+	//search Rule table for matching UID
+	ListNode<RuleRow_t> *RuleRowptr = theSys.Rule_table.search(rule_uid);
+	if (RuleRowptr == NULL)
+	{
+		LOGE(LOGTAG_MSG, "Error, could not locate Rule Row corresponding to triggered Alarm ID");
+		return;
+	}
+
+	// read UIDs from Rule row 
+	uint8_t SNT_uid = RuleRowptr->data.SNT_uid;
+	uint8_t notif_uid = RuleRowptr->data.notif_uid;
+
+	//get SNT_uid from rule rows and find 
+	ListNode<ScenarioRow_t> *ScenarioRowptr = theSys.SearchScenario(SNT_uid);
+	
+	//Todo: search for notification table data
+
+	//ToDo: add action to command queue, send notif UID to cloud (to send to app)
 }
 
 //------------------------------------------------------------------
@@ -474,113 +488,112 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
   JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(jsonData.c_str()));
 
   if (!root.success())
-	{
+  {
     LOGE(LOGTAG_MSG, "Error parsing input: %s", jsonData.c_str());
     numRows = 0;
   }
 
   if (!root.containsKey("rows"))
-	{
+  {
     numRows = 1;
     bRowsKey = false;
   }
-	else
-	{
+  else
+  {
     numRows = root["rows"].as<int>();
   }
 
   int successCount = 0;
-	for (int j = 0; j < numRows; j++)
-	{
-    //if numRows = 1, pass in root
-    //if numRows > 1, pass in data
-    if (!bRowsKey)
-		{
-      if (ParseCmdRow(root))
-			{
-        successCount++;
-      }
-    }
-		else
-		{
-      JsonObject& data = root["data"][j];
-      if (ParseCmdRow(data))
-			{
-        successCount++;
-      }
-    }
-	}
+  for (int j = 0; j < numRows; j++)
+  {
+  //if numRows = 1, pass in root
+  //if numRows > 1, pass in data
+	  if (!bRowsKey)
+	  {
+		  if (ParseCmdRow(root))
+		  {
+			  successCount++;
+		  }
+	  }
+	  else
+	  {
+		  JsonObject& data = root["data"][j];
+		  if (ParseCmdRow(data))
+		  {
+			  successCount++;
+		  }
+	  }
+  }
   LOGI(LOGTAG_MSG, "%d of %d rows were parsed correctly", successCount, numRows);
-	return successCount;
+  return successCount;
 }
 
 bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 {
-  bool isSuccess = true;
+	bool isSuccess = true;
 	OP_FLAG op_flag = (OP_FLAG)data["op_flag"].as<int>();
 	FLASH_FLAG flash_flag = (FLASH_FLAG)data["flash_flag"].as<int>();
 	RUN_FLAG run_flag = (RUN_FLAG)data["run_flag"].as<int>();
 
-  if (op_flag < GET || op_flag > DELETE)
+	if (op_flag < GET || op_flag > DELETE)
 	{
-    LOGE(LOGTAG_MSG, "UID:%s Invalid HTTP command: %d", data["uid"], op_flag);
-    return 0;
-  }
+		LOGE(LOGTAG_MSG, "UID:%s Invalid HTTP command: %d", data["uid"], op_flag);
+		return 0;
+	}
 
-  if (op_flag != GET)
-  {
-    if (flash_flag != UNSAVED)
+	if (op_flag != GET)
+	{
+		if (flash_flag != UNSAVED)
 		{
-      LOGE(LOGTAG_MSG, "UID:%s Invalid FLASH_FLAG", data["uid"]);
-      return 0;
-    }
+			LOGE(LOGTAG_MSG, "UID:%s Invalid FLASH_FLAG", data["uid"]);
+			return 0;
+		}
 
-    if (run_flag != UNEXECUTED)
+		if (run_flag != UNEXECUTED)
 		{
-      LOGE(LOGTAG_MSG, "UID:%s Invalid RUN_FLAG", data["uid"]);
-      return 0;
-    }
-  }
+			LOGE(LOGTAG_MSG, "UID:%s Invalid RUN_FLAG", data["uid"]);
+			return 0;
+		}
+	}
 
-  //grab first part of uid and store it in uidKey, and convert rest of uid string into int uidNum:
-  const char* uidWhole = data["uid"];
-  char uidKey = tolower(uidWhole[0]);
+	//grab first part of uid and store it in uidKey, and convert rest of uid string into int uidNum:
+	const char* uidWhole = data["uid"];
+	char uidKey = tolower(uidWhole[0]);
 	uint8_t uidNum = atoi(&uidWhole[1]);
 
 	switch(uidKey)
 	{
 		case CLS_RULE:				//rule
-	  {
-	    RuleRow_t row;
-	    row.op_flag = op_flag;
-	    row.flash_flag = flash_flag;
-	    row.run_flag = run_flag;
-	    row.uid = uidNum;
-	    row.SCT_uid = data["SCT_uid"];
-	    row.SNT_uid = data["SNT_uid"];
-	    row.notif_uid = data["notif_uid"];
+		{
+			RuleRow_t row;
+			row.op_flag = op_flag;
+			row.flash_flag = flash_flag;
+			row.run_flag = run_flag;
+			row.uid = uidNum;
+			row.SCT_uid = data["SCT_uid"];
+			row.SNT_uid = data["SNT_uid"];
+			row.notif_uid = data["notif_uid"];
 
-	    isSuccess = Change_Rule(row);
-	    if (!isSuccess)
+			isSuccess = Change_Rule(row);
+			if (!isSuccess)
 			{
-	      LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Rule_t", data["uid"]);
-	      return 0;
-	    }
-	    else
+				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Rule_t", data["uid"]);
+				return 0;
+			}
+			else
 			{
-	      LOGI(LOGTAG_MSG, "UID:%s write row to Rule_t OK", data["uid"]);
-	      return 1;
-	    }
-	  }
-		break;
-
-  case CLS_SCHEDULE: 		//schedule
-	  {
-	    ScheduleRow_t row;
-	    row.op_flag = op_flag;
-	    row.flash_flag = flash_flag;
-	    row.run_flag = run_flag;
-	    row.uid = uidNum;
+				LOGI(LOGTAG_MSG, "UID:%s write row to Rule_t OK", data["uid"]);
+				return 1;
+			}
+			break;
+		}
+		case CLS_SCHEDULE: 		//schedule
+		{
+			ScheduleRow_t row;
+			row.op_flag = op_flag;
+			row.flash_flag = flash_flag;
+			row.run_flag = run_flag;
+			row.uid = uidNum;
 
 			if (data["isRepeat"] == 1)
 			{
@@ -616,57 +629,57 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 				return 0;
 			}
 
-	    row.weekdays = data["weekdays"];
-	    row.isRepeat = data["isRepeat"];
-	    row.hour = data["hour"];
-	    row.min = data["min"];
+			row.weekdays = data["weekdays"];
+			row.isRepeat = data["isRepeat"];
+			row.hour = data["hour"];
+			row.min = data["min"];
 			row.alarm_id = dtINVALID_ALARM_ID;
 
-	    isSuccess = Change_Schedule(row);
-	    if (!isSuccess)
+			isSuccess = Change_Schedule(row);
+			if (!isSuccess)
 			{
-	      LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Schedule_t", data["uid"]);
-	      return 0;
-	    }
-	    else
+				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Schedule_t", data["uid"]);
+				return 0;
+			}
+			else
 			{
-	      LOGI(LOGTAG_MSG, "UID:%s write row to Schedule_t OK", data["uid"]);
-	      return 1;
-	    }
-	  }
-		break;
-
-  case CLS_SCENARIO: 	//scenario
-	  {
-	    ScenarioRow_t row;
-	    row.op_flag = op_flag;
-	    row.flash_flag = flash_flag;
-	    row.run_flag = run_flag;
-	    row.uid = uidNum;
+				LOGI(LOGTAG_MSG, "UID:%s write row to Schedule_t OK", data["uid"]);
+				return 1;
+			}
+			break;
+		}
+		case CLS_SCENARIO: 	//scenario
+		{
+			ScenarioRow_t row;
+			row.op_flag = op_flag;
+			row.flash_flag = flash_flag;
+			row.run_flag = run_flag;
+			row.uid = uidNum;
 
 			// Copy JSON array to Hue
 			Array2Hue(data["ring1"], row.ring1);
 			Array2Hue(data["ring2"], row.ring2);
 			Array2Hue(data["ring3"], row.ring3);
 
-	    row.filter = data["filter"];
+			row.filter = data["filter"];
 
-	    isSuccess = Change_Scenario(row);
-	    if (!isSuccess)
+			isSuccess = Change_Scenario(row);
+			if (!isSuccess)
 			{
-	      LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Scenario_t", data["uid"]);
-	      return 0;
-	    }
-	    else
+				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Scenario_t", data["uid"]);
+				return 0;
+			}
+			else
 			{
-	      LOGI(LOGTAG_MSG, "UID:%s write row to Scenario_t OK", data["uid"]);
-	      return 1;
-	    }
-	  }
-		break;
-
-	default:
-    LOGE(LOGTAG_MSG, "UID:%s Invalid", data["uid"]);
+				LOGI(LOGTAG_MSG, "UID:%s write row to Scenario_t OK", data["uid"]);
+				return 1;
+			}
+			break;
+		}
+		default:
+		{
+			LOGE(LOGTAG_MSG, "UID:%s Invalid", data["uid"]);
+		}
 	}
 
 	return 0;
@@ -972,7 +985,6 @@ bool SmartControllerClass::Change_Sensor()
     //ToDo: define later
 
 	return 1;
-
 }
 
 //------------------------------------------------------------------
@@ -981,12 +993,15 @@ bool SmartControllerClass::Change_Sensor()
 
 void SmartControllerClass::ReadNewRules()
 {
-	ListNode<RuleRow_t> *ruleRowPtr = Rule_table.getRoot();
-	while (ruleRowPtr != NULL)
+	if (theConfig.IsRTChanged())
 	{
-		Action_Rule(ruleRowPtr);
-		ruleRowPtr = ruleRowPtr->next;
-	} //end of loop
+		ListNode<RuleRow_t> *ruleRowPtr = Rule_table.getRoot();
+		while (ruleRowPtr != NULL)
+		{
+			Action_Rule(ruleRowPtr);
+			ruleRowPtr = ruleRowPtr->next;
+		} //end of loop
+	}
 }
 
 bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uint32_t tag)
@@ -1035,16 +1050,17 @@ bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uin
 	return true;
 }
 
-bool SmartControllerClass::DestoryAlarm(AlarmId alarmID, UC uid)
+bool SmartControllerClass::DestoryAlarm(AlarmId alarmID, UC SCT_uid)
 {
 	if(!Alarm.isAllocated(alarmID))
 		return false;
 
 	Alarm.disable(alarmID);
 	Alarm.free(alarmID);
-	LOGN(LOGTAG_MSG, "Destory alarm via UID:%c%d", CLS_SCHEDULE, uid);
-
+	LOGN(LOGTAG_MSG, "Destory alarm via UID:%c%d", CLS_SCHEDULE, SCT_uid);
+	
 	return true;
+	//Note: Remember to always follow up this function call with setting the AlarmID to dtINVALID_ALARM_ID
 }
 
 bool SmartControllerClass::Action_Rule(ListNode<RuleRow_t> *rulePtr)
@@ -1057,19 +1073,20 @@ bool SmartControllerClass::Action_Rule(ListNode<RuleRow_t> *rulePtr)
 		// Process Schedule
 		Action_Schedule(rulePtr->data.op_flag, rulePtr->data.SCT_uid, rulePtr->data.uid);
 
-		//todo search for SNT
-		//...
+		//Search for SNT data
+		ListNode<ScenarioRow_t> *scenarioPtr = SearchScenario(rulePtr->data.SNT_uid);
 
 		// ToDo: search and set other trigger conditions
 		//...
 
 		rulePtr->data.run_flag = EXECUTED;
+		scenarioPtr->data.run_flag = EXECUTED;
 	}
 
 	return true;
 }
 
-bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_id)
+bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_uid)
 {
 	bool retVal = true;
 
@@ -1088,7 +1105,7 @@ bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_i
 					// Recreate Alarm
 					DestoryAlarm(scheduleRow->data.alarm_id, uid);
 					scheduleRow->data.alarm_id = dtINVALID_ALARM_ID;
-					CreateAlarm(scheduleRow, rule_id);
+					CreateAlarm(scheduleRow, rule_uid);
 				}
 				break;
 
@@ -1110,7 +1127,7 @@ bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_i
 				// The alarm is supposed to exist, otherwise create it
 				if (!Alarm.isAllocated(scheduleRow->data.alarm_id))
 				{
-					CreateAlarm(scheduleRow, rule_id);
+					CreateAlarm(scheduleRow, rule_uid);
 				}
 			}
 		}
@@ -1134,6 +1151,9 @@ bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_i
 	return retVal;
 }
 
+//------------------------------------------------------------------
+// UID Search Functions (Search chain, then Flash)
+//------------------------------------------------------------------
 ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
 {
 	ListNode<ScheduleRow_t> *pObj = Schedule_table.search(uid);
@@ -1148,21 +1168,60 @@ ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
 			EEPROM.get(MEM_SCHEDULE_OFFSET + uid*SCT_ROW_SIZE, row);
 
 			// flags should be 111
-			if(row.uid == uid && row.op_flag == POST &&
-				row.op_flag == SAVED && row.op_flag == EXECUTED )
+			if(row.uid == uid && row.op_flag == (OP_FLAG)1 
+							  && row.flash_flag == (FLASH_FLAG)1
+							  && row.run_flag == (RUN_FLAG)1)
 			{
 				// Copy data entry to Working Memory and get the pointer
-		    row.run_flag = UNEXECUTED;		// need to create Alarm later
-		    if (Change_Schedule(row))
+				row.run_flag = UNEXECUTED;		// need to create Alarm later
+				row.op_flag = POST;				// op_flag should already be POST==(OP_FLAG)1
+				if (Change_Schedule(row))
 				{
 					//pObj = Schedule_table.search(uid);
 					pObj = Schedule_table.getLast();		// Faster
 					LOGN(LOGTAG_MSG, "UID:%c%d copy Flash to Schedule_t OK", CLS_SCHEDULE, uid);
-		    }
-		    else
+				}
+				else
 				{
 					LOGE(LOGTAG_MSG, "UID:%c%d Unable to copy Flash to Schedule_t", CLS_SCHEDULE, uid);
-		    }
+				}
+			}
+		}
+	}
+
+	return pObj;
+}
+
+ListNode<ScenarioRow_t>* SmartControllerClass::SearchScenario(UC uid)
+{
+	ListNode<ScenarioRow_t> *pObj = Scenario_table.search(uid); //search chain
+
+	if (!pObj) //not found in working memory
+	{
+		//search Flash and validate data entry
+		ScenarioRow_t row;
+		if (uid < MAX_SNT_ROWS)
+		{
+			//find it 
+			//ToDo: access P1 memory to populate "row"
+
+			//flags should be 111
+			if (row.uid == uid && row.op_flag == (OP_FLAG)1
+							   && row.flash_flag == (FLASH_FLAG)1
+							   && row.run_flag == (RUN_FLAG)1)
+			{
+				// Copy data entry into working memory and get the pointer
+				row.run_flag = UNEXECUTED;
+				row.op_flag = POST;
+				if (Change_Scenario(row))
+				{
+					pObj = Scenario_table.getLast();
+					LOGN(LOGTAG_MSG, "UID:%c%d copy Flash to Scenario_t OK", CLS_SCENARIO, uid);
+				}
+				else
+				{
+					LOGE(LOGTAG_MSG, "UID:%c%d Unable to copy Flash to Scenario_t", CLS_SCENARIO, uid);
+				}
 			}
 		}
 	}
