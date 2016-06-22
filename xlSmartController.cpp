@@ -227,7 +227,7 @@ void SmartControllerClass::InitCloudObj()
 // Get the controller started
 BOOL SmartControllerClass::Start()
 {
-	// ToDo:
+	// ToDo:bring controller up along with all modules (RF, wifi, BLE)
 
 	LOGI(LOGTAG_MSG, F("SmartController started."));
 	return true;
@@ -286,7 +286,7 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 		theConfig.SaveConfig();
 	}
 
-	// ToDo:
+	// ToDo:add any other potential problems to check
 	//...
 
 	return true;
@@ -318,7 +318,8 @@ void SmartControllerClass::ProcessCommands()
 	// Check and process RF2.4 messages
 	m_cmRF24.CheckMessageBuffer();
 
-	// ToDo: process commands from other sources
+	// ToDo: process commands from other sources (Wifi, BLE)
+	// ToDo: Potentially move ReadNewRules here
 }
 
 // Collect data from all enabled sensors
@@ -394,8 +395,8 @@ void SmartControllerClass::CollectData(UC tick)
 		UpdateJSONData();
 	}
 
-	// Proximity detection
-	// ToDo: Wi-Fi, BLE, etc.
+	// ToDo: Proximity detection
+	// from all channels including Wi-Fi, BLE, etc. for MAC addresses and distance to device 
 }
 
 //------------------------------------------------------------------
@@ -458,14 +459,16 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
 }
 
 int SmartControllerClass::CldPowerSwitch(String swStr)
-{
+{	
+	//ToDo: this sends data from cloud to appropriate function to change lamp color/on-off
+	//ToDo: implement function to receive JSON, parse JSON, populate DevStatus_t row
+
 	BOOL blnOn;
 
 	swStr.toLowerCase();
 	blnOn = (swStr == "0" || swStr == "off");
 
 	// Turn the switch on or off
-	//ToDo: send this the command queue, have command queue call DevSoftSwitch instead?
 	DevSoftSwitch(blnOn);
 
 	return 0;
@@ -473,14 +476,9 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 
 int SmartControllerClass::CldJSONCommand(String jsonData)
 {
-	// ToDo: parse JSON string into all variables
-	// etc: UID, temp, light, mic, motion, dayofweek, repeat, hour, min, ScenerioUID, hue1, hue2, hue3, filter, on/off
-
   //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
   //handle each for each respective Chain until end of incoming string
-
-  //TODO: define correct buffer number when own cloud is implemented
 
   int numRows = 0;
   bool bRowsKey = true;
@@ -506,8 +504,6 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
   int successCount = 0;
   for (int j = 0; j < numRows; j++)
   {
-  //if numRows = 1, pass in root
-  //if numRows > 1, pass in data
 	  if (!bRowsKey)
 	  {
 		  if (ParseCmdRow(root))
@@ -687,17 +683,6 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 //------------------------------------------------------------------
 // Cloud Interface Action Types
 //------------------------------------------------------------------
-
-//After these JSON enties are dealt with, every few seconds, an action loop will scope the flags for each of the 8 rows.
-//If the state_flag says 'POST', new alarms will be created and the row's run_flag will be changed to 'EXECUTED'
-//If the flag says 'DELETE', alarm will be deleted, and run_flag will be changed to 'EXECUTED'
-
-//Every 5 seconds, another loop will traverse the working memory chain, and check if m_isChanged == true (this flag gets changed everytime a change is made to the chains)
-//This loop will traverse the chain and write any rows with flash_flag = 0 to flash memory, and it will change those rows' flash_flag to 1
-//sidenote: the process for assigning UIDs to each row will be taken care of by the cloud. Whenever the cloud sends a delete request to working memory through
-//CldJSONCommand, it now knows the UID has been freed, and can be used for subsequent 'new' rows to be sent. In this manner, the flash table will simply update
-//itself using UID, naturally replacing any deleted rows and always having an updated, clean table.
-//any rows with flash_flag = 1 will simply be ignored
 
 bool SmartControllerClass::Change_Rule(RuleRow_t row)
 {
@@ -958,25 +943,6 @@ bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 	}
 	theConfig.SetSNTChanged(true);
 	return true;
-}
-
-bool SmartControllerClass::Change_DeviceStatus(DevStatus_t row)
-{
-	//ToDo: link with CldPowerSwitch?
-
-	switch (row.op_flag)
-	{
-	case PUT:
-		//replace old row
-		DevStatus_row = row;
-		break;
-
-	case GET:
-		//ToDo: return DevStatus_row to cloud
-		break;
-
-	}
-	theConfig.SetDSTChanged(true);
 }
 
 bool SmartControllerClass::Change_Sensor()
