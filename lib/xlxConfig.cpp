@@ -240,13 +240,7 @@ BOOL ConfigClass::SaveConfig()
 
   if ( m_isRTChanged )
   {
-	  //ToDo: Write RuleTable_queue to memory
-	  // iterate through table, find flag= EXECUTED rows
-	  // change all 3 flags in the row to 1 if its add/update, change flash flags to 0 if its delete
-	  // Write row to flash if add/update
-	  // change original row flag to SAVED
-	  // MEM_RULES_OFFSET
-	  // Keep all of Rule Table in working memory
+	  //ToDo: ...
 
 	  m_isRTChanged = false;
 	  LOGD(LOGTAG_MSG, F("Rule table saved."));
@@ -254,12 +248,7 @@ BOOL ConfigClass::SaveConfig()
 
   if (m_isSNTChanged)
   {
-	  //ToDo: Write ScenerioTable_queue to memory (indexs are taken care of by cloud input)
-	  // iterate through table, find flag= EXECUTED rows
-	  // change all 3 flags in the row to 1 if its add/update, change flash flags to 0 if its delete
-	  // Write row to flash if add/update
-	  // change original row flag to SAVED
-	  // MEM_RULES_OFFSET
+	//ToDo: ...
 
 	  m_isRTChanged = false;
 	  LOGD(LOGTAG_MSG, F("Scenerio table saved."));

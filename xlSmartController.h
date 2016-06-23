@@ -75,7 +75,6 @@ public:
   bool Change_Rule(RuleRow_t row);
   bool Change_Schedule(ScheduleRow_t row);
   bool Change_Scenario(ScenarioRow_t row);
-  bool Change_DeviceStatus(DevStatus_t row); //ToDo: action
   bool Action_Rule(ListNode<RuleRow_t> *rulePtr);
   bool Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_uid);
 
