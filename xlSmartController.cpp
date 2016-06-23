@@ -62,13 +62,13 @@ void AlarmTimerTriggered(uint32_t tag)
 		return;
 	}
 
-	// read UIDs from Rule row 
+	// read UIDs from Rule row
 	uint8_t SNT_uid = RuleRowptr->data.SNT_uid;
 	uint8_t notif_uid = RuleRowptr->data.notif_uid;
 
-	//get SNT_uid from rule rows and find 
+	//get SNT_uid from rule rows and find
 	ListNode<ScenarioRow_t> *ScenarioRowptr = theSys.SearchScenario(SNT_uid);
-	
+
 	//Todo: search for notification table data
 
 	//ToDo: add action to command queue, send notif UID to cloud (to send to app)
@@ -90,6 +90,7 @@ void SmartControllerClass::Init()
 {
 	// Get System ID
 	m_SysID = System.deviceID();
+	m_SysVersion = System.version();
 	m_devStatus = STATUS_INIT;
 
 	// Initialize Logger: Serial & Flash
@@ -197,7 +198,6 @@ void SmartControllerClass::InitSensors()
 		LOGD(LOGTAG_MSG, F("Light sensor works."));
 	}
 
-
 	// Brightness indicator
 	indicatorBrightness.configPin(0, PIN_LED_LEVEL_B0);
 	indicatorBrightness.configPin(1, PIN_LED_LEVEL_B1);
@@ -230,12 +230,11 @@ BOOL SmartControllerClass::Start()
 	// ToDo:
 
 	LOGI(LOGTAG_MSG, F("SmartController started."));
+	LOGI(LOGTAG_MSG, "Product Info: %s-%s-%d",
+			theConfig.GetOrganization().c_str(), theConfig.GetProductName().c_str(), theConfig.GetVersion());
+	LOGI(LOGTAG_MSG, "System Info: %s-%s",
+			GetSysID().c_str(), GetSysVersion().c_str());
 	return true;
-}
-
-String SmartControllerClass::GetSysID()
-{
-	return m_SysID;
 }
 
 UC SmartControllerClass::GetStatus()
@@ -1058,7 +1057,7 @@ bool SmartControllerClass::DestoryAlarm(AlarmId alarmID, UC SCT_uid)
 	Alarm.disable(alarmID);
 	Alarm.free(alarmID);
 	LOGN(LOGTAG_MSG, "Destory alarm via UID:%c%d", CLS_SCHEDULE, SCT_uid);
-	
+
 	return true;
 	//Note: Remember to always follow up this function call with setting the AlarmID to dtINVALID_ALARM_ID
 }
@@ -1168,7 +1167,7 @@ ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
 			EEPROM.get(MEM_SCHEDULE_OFFSET + uid*SCT_ROW_SIZE, row);
 
 			// flags should be 111
-			if(row.uid == uid && row.op_flag == (OP_FLAG)1 
+			if(row.uid == uid && row.op_flag == (OP_FLAG)1
 							  && row.flash_flag == (FLASH_FLAG)1
 							  && row.run_flag == (RUN_FLAG)1)
 			{
@@ -1202,7 +1201,7 @@ ListNode<ScenarioRow_t>* SmartControllerClass::SearchScenario(UC uid)
 		ScenarioRow_t row;
 		if (uid < MAX_SNT_ROWS)
 		{
-			//find it 
+			//find it
 			//ToDo: access P1 memory to populate "row"
 
 			//flags should be 111

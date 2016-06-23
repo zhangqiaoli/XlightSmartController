@@ -40,7 +40,6 @@ public:
   void InitCloudObj();
 
   BOOL Start();
-  String GetSysID();
   UC GetStatus();
   void SetStatus(UC st);
 

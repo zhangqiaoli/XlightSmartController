@@ -445,6 +445,7 @@ bool RF24::begin(void)
   write_register(CONFIG, ( read_register(CONFIG) ) & ~_BV(PRIM_RX) );
 
   // if setup is 0 or ff then there was no response from module
+  failureDetected = 0;    // SBS added 20160623
   return ( setup != 0 && setup != 0xff );
 }
 
@@ -572,6 +573,7 @@ bool RF24::write( const void* buf, uint8_t len, const bool multicast )
   	flush_tx(); //Only going to be 1 packet int the FIFO at a time using this method, so just flush
   	return 0;
   }
+
 	//TX OK 1 or 0
   return 1;
 }

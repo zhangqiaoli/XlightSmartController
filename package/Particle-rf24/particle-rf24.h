@@ -630,6 +630,10 @@ s   *
     bool failureDetected;
   //#endif
 
+#if defined (FAILURE_HANDLING)
+  void errNotify();
+#endif
+
   /**@}*/
 
   /**@}*/
@@ -1818,4 +1822,3 @@ private:
  */
 
 #endif // __RF24_H__
-

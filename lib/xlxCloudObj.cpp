@@ -31,22 +31,24 @@
 CloudObjClass::CloudObjClass()
 {
   m_SysID = "";
+  m_SysVersion = "";
   m_devStatus = STATUS_OFF;
   m_temperature = 0.0;
   m_humidity = 0.0;
   m_brightness = 0;
   m_jpRoot = &(m_jBuf.createObject());
+}
+
+// Initialize Cloud Variables & Functions
+void CloudObjClass::InitCloudObj()
+{
   if( m_jpRoot->success() ) {
     (*m_jpRoot)["device"] = m_SysID.c_str();
     m_jpData = &(m_jpRoot->createNestedObject("sensor"));
   } else {
     m_jpData = &(JsonObject::invalid());
   }
-}
 
-// Initialize Cloud Variables & Functions
-void CloudObjClass::InitCloudObj()
-{
 #ifdef USE_PARTICLE_CLOUD
   Particle.variable(CLV_SysID, &m_SysID, STRING);
   Particle.variable(CLV_TimeZone, &m_tzString, STRING);
@@ -58,6 +60,16 @@ void CloudObjClass::InitCloudObj()
   Particle.function(CLF_PowerSwitch, &CloudObjClass::CldPowerSwitch, this);
   Particle.function(CLF_JSONCommand, &CloudObjClass::CldJSONCommand, this);
 #endif
+}
+
+String CloudObjClass::GetSysID()
+{
+	return m_SysID;
+}
+
+String CloudObjClass::GetSysVersion()
+{
+	return m_SysVersion;
 }
 
 // Here we can either send/publish data on individual data entry basis,

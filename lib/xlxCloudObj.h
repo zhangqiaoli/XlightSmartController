@@ -49,6 +49,7 @@ class CloudObjClass
 public:
   // Variables should be defined as public
   String m_SysID;
+  String m_SysVersion;    // firmware version
   int m_devStatus;
   String m_tzString;
   String m_jsonData;
@@ -61,6 +62,9 @@ public:
 
 public:
   CloudObjClass();
+
+  String GetSysID();
+  String GetSysVersion();
 
   virtual int CldSetTimeZone(String tzStr) = 0;
   virtual int CldPowerSwitch(String swStr) = 0;
