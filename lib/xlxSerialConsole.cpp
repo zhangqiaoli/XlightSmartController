@@ -41,14 +41,14 @@
 #include "xlxSerialConsole.h"
 
 #ifndef SERIAL
-#define SERAIL        Serail.printf
+#define SERAIL        Serial.printf
 #endif
 
 #ifndef SERIAL_LN
-#define SERAIL_LN     Serail.printlnf
+#define SERAIL_LN     Serial.printlnf
 #endif
 
 SerialConsoleClass::SerialConsoleClass()
 {
-  
+
 }
