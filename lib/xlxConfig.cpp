@@ -161,6 +161,7 @@ BOOL ConfigClass::LoadConfig()
 
   // ToDo: load Rules from P1 Flash, change m_isRTChanged to false
   // Use PI Flash access library
+  // create new alarms, use functions that bring unfound rows in corresponding tables to working memory
   // MEM_RULES_OFFSET
 
   return m_isLoaded;
