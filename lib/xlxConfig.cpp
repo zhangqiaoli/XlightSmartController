@@ -38,6 +38,8 @@
 #include "xliMemoryMap.h"
 #include "xlSmartController.h"
 
+using namespace Flashee;
+
 // the one and only instance of ConfigClass
 ConfigClass theConfig = ConfigClass();
 
@@ -46,6 +48,8 @@ ConfigClass theConfig = ConfigClass();
 //------------------------------------------------------------------
 ConfigClass::ConfigClass()
 {
+	P1Flash = Devices::createAddressErase();
+
   m_isLoaded = false;
   m_isChanged = false;
   m_isDSTChanged = false;
@@ -69,6 +73,29 @@ void ConfigClass::InitConfig()
   m_config.indBrightness = 0;
   m_config.typeMainDevice = 1;
   m_config.numDevices = 1;
+}
+
+void ConfigClass::InitConfig()
+{
+	Hue_t whiteHue;
+	whiteHue.B = 0;
+	whiteHue.G = 0;
+	whiteHue.R = 0;
+	whiteHue.CW = 0xFF;
+	whiteHue.WW = 0xFF;
+	whiteHue.State = 1; // 1 for on, 0 for off
+
+	theSys.DevStatus_row.op_flag = (OP_FLAG)1;
+	theSys.DevStatus_row.flash_flag = (FLASH_FLAG)1;
+	theSys.DevStatus_row.run_flag = (RUN_FLAG)1;
+
+	theSys.DevStatus_row.ring1 = whiteHue;
+	theSys.DevStatus_row.ring2 = whiteHue;
+	theSys.DevStatus_row.ring3 = whiteHue;
+	
+	//todo: are these 2 default status values correct?
+	theSys.DevStatus_row.id = 1;
+	theSys.DevStatus_row.type = 1;
 }
 
 BOOL ConfigClass::LoadConfig()
@@ -102,48 +129,39 @@ BOOL ConfigClass::LoadConfig()
     LOGE(LOGTAG_MSG, F("Failed to load Sysconfig."));
   }
 
-  // ToDo: load device status
+  // Load Device Status
   if( EEPROM.length() >= MEM_DEVICE_STATUS_OFFSET + MEM_DEVICE_STATUS_LEN )
   {
-	//load from memory
-	if (0//check row values
-		// ToDo: add error test cases
-		)
+	EEPROM.get(MEM_DEVICE_STATUS_OFFSET, theSys.DevStatus_row);
+	//check row values / error cases
+	if (theSys.DevStatus_row.op_flag != (OP_FLAG)1
+		|| theSys.DevStatus_row.flash_flag != (FLASH_FLAG)1
+		|| theSys.DevStatus_row.run_flag != (RUN_FLAG)1 )
 	{
-		//InitDevStatus();
-		//m_isDSTChanged = true;
-		//LOGW(LOGTAG_MSG, "Corrupt Device Status Table, using default status");
-		//SaveConfig();
+		//no devstatus saved, give default values
+		InitDevStatus();
+		m_isDSTChanged = true;
+		LOGW(LOGTAG_MSG, F("Corrupt Device Status Table, using default status."));
+		SaveConfig();
 	}
 	else
 	{
 		LOGD(LOGTAG_MSG, F("Device status table loaded."));
 	}
     m_isDSTChanged = false;
-  } else {
+  } 
+  else 
+  {
     LOGW(LOGTAG_MSG, F("Failed to load device status table."));
   }
 
-  // ToDo: load Schedule
-  if( EEPROM.length() >= MEM_SCHEDULE_OFFSET + MEM_SCHEDULE_LEN )
-  {
-    //...
+  // We dont load Schedule Table
+  // We dont load Scenario Table
 
-	//ToDo: load schedule, create alarms for all state_flag = full rows
-
-    m_isSCTChanged = false;
-    LOGD(LOGTAG_MSG, F("Schedule table loaded."));
-  } else {
-    LOGW(LOGTAG_MSG, F("Failed to load schedule table."));
-  }
 
   // ToDo: load Rules from P1 Flash, change m_isRTChanged to false
   // Use PI Flash access library
   // MEM_RULES_OFFSET
-
-  // ToDo: load Scenerios from P1 Flash, change m_isSNTChanged to false
-  // Use PI Flash access library
-  // MEM_SCENARIOS_OFFSET
 
   return m_isLoaded;
 }
@@ -202,7 +220,7 @@ BOOL ConfigClass::SaveConfig()
 
 				case PUT:
 				case POST:
-        case GET:
+				case GET:
 					//change flags to 111 to indicate flash row is occupied
 					tmpRow.op_flag = (OP_FLAG)1;
 					tmpRow.flash_flag = (FLASH_FLAG)1;
@@ -240,17 +258,118 @@ BOOL ConfigClass::SaveConfig()
 
   if ( m_isRTChanged )
   {
-	  //ToDo: ...
+	  bool success_flag = true;
+	  
+	  ListNode<RuleRow_t> *rowptr = theSys.Rule_table.getRoot();
+	  while (rowptr != NULL)
+	  {
+		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
+		  {
+			  RuleRow_t tmpRow = rowptr->data; //copy of data to write to p1
 
-	  m_isRTChanged = false;
-	  LOGD(LOGTAG_MSG, F("Rule table saved."));
+			  switch (rowptr->data.op_flag)
+			  {
+				case DELETE:
+					//change flags to indicate flash row is empty
+					tmpRow.op_flag = (OP_FLAG)0;
+					tmpRow.flash_flag = (FLASH_FLAG)0;
+					tmpRow.run_flag = (RUN_FLAG)0;
+					break;
+				case PUT:
+				case POST:
+				case GET:
+					//change flags to 111 to indicate flash row is occupied
+					tmpRow.op_flag = (OP_FLAG)1;
+					tmpRow.flash_flag = (FLASH_FLAG)1;
+					tmpRow.run_flag = (RUN_FLAG)1;
+					break;
+			  }
+
+			  //write tmpRow to p1
+			  int row_index = rowptr->data.uid;
+			  if (row_index < MAX_RT_ROWS)
+			  {
+				  P1Flash->write(tmpRow, MEM_RULES_OFFSET + row_index*RT_ROW_SIZE);
+				  
+				  rowptr->data.flash_flag = SAVED; //toggle flash flag
+			  }
+			  else
+			  {
+				  LOGE(LOGTAG_MSG, F("Error, cannot write Schedule row %d to flash, out of memory bounds"), row_index);
+				  success_flag = false;
+			  }
+		  }
+		  rowptr = rowptr->next;
+	  }
+
+	  if (success_flag)
+	  {
+		  m_isRTChanged = false;
+		  LOGD(LOGTAG_MSG, F("Rule table saved."));
+	  }
+	  else
+	  {
+		  LOGE(LOGTAG_MSG, F("Unable to write 1 or more Rule table rows to flash"));
+	  }
   }
 
   if (m_isSNTChanged)
   {
-	//ToDo: ...
+	  bool success_flag = true;
 
-	  m_isRTChanged = false;
+	  ListNode<ScenarioRow_t> *rowptr = theSys.Scenario_table.getRoot();
+	  while (rowptr != NULL)
+	  {
+		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
+		  {
+			  ScenarioRow_t tmpRow = rowptr->data; //copy of data to write to p1
+
+			  switch (rowptr->data.op_flag)
+			  {
+			  case DELETE:
+				  //change flags to indicate flash row is empty
+				  tmpRow.op_flag = (OP_FLAG)0;
+				  tmpRow.flash_flag = (FLASH_FLAG)0;
+				  tmpRow.run_flag = (RUN_FLAG)0;
+				  break;
+			  case PUT:
+			  case POST:
+			  case GET:
+				  //change flags to 111 to indicate flash row is occupied
+				  tmpRow.op_flag = (OP_FLAG)1;
+				  tmpRow.flash_flag = (FLASH_FLAG)1;
+				  tmpRow.run_flag = (RUN_FLAG)1;
+				  break;
+			  }
+
+			  //write tmpRow to p1
+			  int row_index = rowptr->data.uid;
+			  if (row_index < MAX_SNT_ROWS)
+			  {
+				  P1Flash->write(tmpRow, MEM_SCENARIOS_OFFSET + row_index*SNT_ROW_SIZE);
+
+				  rowptr->data.flash_flag = SAVED; //toggle flash flag
+			  }
+			  else
+			  {
+				  LOGE(LOGTAG_MSG, F("Error, cannot write Scenario row %d to flash, out of memory bounds"), row_index);
+				  success_flag = false;
+			  }
+		  }
+		  rowptr = rowptr->next;
+	  }
+
+	  if (success_flag)
+	  {
+		  m_isSNTChanged = false;
+		  LOGD(LOGTAG_MSG, F("Scenario table saved."));
+	  }
+	  else
+	  {
+		  LOGE(LOGTAG_MSG, F("Unable to write 1 or more Scenario table rows to flash"));
+	  }
+
+	  m_isSNTChanged = false;
 	  LOGD(LOGTAG_MSG, F("Scenerio table saved."));
   }
 
