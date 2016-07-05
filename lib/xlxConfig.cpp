@@ -75,7 +75,7 @@ void ConfigClass::InitConfig()
   m_config.numDevices = 1;
 }
 
-void ConfigClass::InitConfig()
+void ConfigClass::InitDevStatus()
 {
 	Hue_t whiteHue;
 	whiteHue.B = 0;
@@ -155,15 +155,40 @@ BOOL ConfigClass::LoadConfig()
     LOGW(LOGTAG_MSG, F("Failed to load device status table."));
   }
 
-  // We dont load Schedule Table
-  // We dont load Scenario Table
+  // We don't load Schedule Table directly
+  // We don't load Scenario Table directly
 
+  //Load Rules from P1 Flash
+  RuleRow_t RuleArray[MAX_RT_ROWS];
+  if (P1Flash->read<RuleRow_t[MAX_RT_ROWS]>(RuleArray, MEM_RULES_OFFSET))
+  {
+	  for (int i = 0; i < MAX_RT_ROWS; i++) //interate through RuleArray for non-empty rows
+	  {
+		  if (RuleArray[i].op_flag == (OP_FLAG)1
+			  && RuleArray[i].flash_flag == (FLASH_FLAG)1
+			  && RuleArray[i].run_flag == (RUN_FLAG)1)
+		  {
+			  //change flags to be written into working memory chain
+			  RuleArray[i].op_flag = POST;
+			  RuleArray[i].run_flag = UNEXECUTED;
+			  RuleArray[i].flash_flag = SAVED;		//Already know it exists in flash
+			  if (!theSys.Rule_table.add(RuleArray[i])) //add non-empty row to working memory chain
+			  {
+				LOGW(LOGTAG_MSG, F("Rule row %d failed to load from flash"), i);
+			  }
+		  } 
+		  //else: row is either empty or trash; do nothing
+	  }
 
-  // ToDo: load Rules from P1 Flash, change m_isRTChanged to false
-  // Use PI Flash access library
-  // create new alarms, use functions that bring unfound rows in corresponding tables to working memory
-  // MEM_RULES_OFFSET
-
+	  m_isRTChanged = true; //allow ReadNewRules() to run
+	  theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
+	  m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again
+  }
+  else
+  {
+	  LOGW(LOGTAG_MSG, F("Failed to load rule table."));
+  }
+  
   return m_isLoaded;
 }
 
@@ -290,7 +315,7 @@ BOOL ConfigClass::SaveConfig()
 			  int row_index = rowptr->data.uid;
 			  if (row_index < MAX_RT_ROWS)
 			  {
-				  P1Flash->write(tmpRow, MEM_RULES_OFFSET + row_index*RT_ROW_SIZE);
+				  P1Flash->write<RuleRow_t>(tmpRow, MEM_RULES_OFFSET + row_index*RT_ROW_SIZE);
 				  
 				  rowptr->data.flash_flag = SAVED; //toggle flash flag
 			  }
@@ -347,7 +372,7 @@ BOOL ConfigClass::SaveConfig()
 			  int row_index = rowptr->data.uid;
 			  if (row_index < MAX_SNT_ROWS)
 			  {
-				  P1Flash->write(tmpRow, MEM_SCENARIOS_OFFSET + row_index*SNT_ROW_SIZE);
+				  P1Flash->write<ScenarioRow_t>(tmpRow, MEM_SCENARIOS_OFFSET + row_index*SNT_ROW_SIZE);
 
 				  rowptr->data.flash_flag = SAVED; //toggle flash flag
 			  }

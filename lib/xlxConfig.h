@@ -8,7 +8,7 @@
 #include "TimeAlarms.h"
 
 #include "flashee-eeprom.h"
-
+							   
 // Change it only if Config_t structure is updated
 #define VERSION_CONFIG_DATA   1
 
@@ -139,12 +139,13 @@ private:
 
   Config_t m_config;
 
-  Flashee::FlashDevice* P1Flash; // write to P1 using spark-flashee-eeprom
-
 public:
   ConfigClass();
   void InitConfig();
   void InitDevStatus();
+
+  // write to P1 using spark-flashee-eeprom
+  Flashee::FlashDevice* P1Flash;
 
   BOOL LoadConfig();
   BOOL SaveConfig();
