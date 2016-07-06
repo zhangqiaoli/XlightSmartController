@@ -98,6 +98,16 @@ void ConfigClass::InitDevStatus()
 	theSys.DevStatus_row.type = 1;
 }
 
+BOOL ConfigClass::MemWriteScenarioRow(ScenarioRow_t row, uint32_t address)
+{
+	return P1Flash->read<ScenarioRow_t>(row, address);
+}
+
+BOOL ConfigClass::MemReadScenarioRow(ScenarioRow_t &row, uint32_t address)
+{
+	return P1Flash->write<ScenarioRow_t>(row, address);
+}
+
 BOOL ConfigClass::LoadConfig()
 {
   // Load System Configuration
