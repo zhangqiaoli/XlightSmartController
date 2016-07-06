@@ -17,7 +17,7 @@
 #define UC                        uint8_t
 #define US                        uint16_t
 #define UL                        uint32_t
-#define BYTE                      int8_t
+#define S_BYTE                    int8_t
 #define SHORT                     int16_t
 #define LONG                      int32_t
 

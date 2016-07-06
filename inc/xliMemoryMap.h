@@ -34,15 +34,15 @@
 //------------------------------------------------------------------
 #define MEM_EXT_FLASH_BASE        0x000000
 
-// Rules
+// Rules (65536 bytes)
 #define MEM_RULES_OFFSET          MEM_EXT_FLASH_BASE
 #define MEM_RULES_LEN             0x010000
 
-// Scenarios
+// Scenarios (65536 bytes)
 #define MEM_SCENARIOS_OFFSET      (MEM_RULES_OFFSET + MEM_RULES_LEN)
 #define MEM_SCENARIOS_LEN         0x010000
 
-// MAC List
+// MAC List (65536 bytes)
 #define MEM_MAC_LIST_OFFSET       (MEM_SCENARIOS_OFFSET + MEM_SCENARIOS_LEN)
 #define MEM_MAC_LIST_LEN          0x010000
 

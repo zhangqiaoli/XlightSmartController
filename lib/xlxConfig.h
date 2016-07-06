@@ -7,6 +7,8 @@
 #include "xliMemoryMap.h"
 #include "TimeAlarms.h"
 
+#include "flashee-eeprom.h"
+							   
 // Change it only if Config_t structure is updated
 #define VERSION_CONFIG_DATA   1
 
@@ -26,7 +28,7 @@ typedef struct
   UC dst                      :1;           // daylight saving time flag
 } Timezone_t;
 
-typedef struct
+typedef struct //__attribute__((packed))
 {
   UC State                    :4;           // Component state
   UC CW                       :8;           // Brightness of cold white
@@ -68,17 +70,17 @@ typedef struct //max 64 bytes
 // Xlight Schedule Table Structures
 //------------------------------------------------------------------
 
-typedef struct //Schedule Table
+typedef struct //__attribute__((packed)) //Schedule Table
 {
   OP_FLAG op_flag			: 2;
   FLASH_FLAG flash_flag		: 1;
   RUN_FLAG run_flag			: 1;
-	UC uid				          : 8;
-	UC weekdays			        : 7;	  //values: 0-7
-	BOOL isRepeat		        : 1;	  //values: 0-1
-	UC hour				          : 5;    //values: 0-23
-	UC min				          : 6;    //values: 0-59
-	AlarmId alarm_id	      : 8;
+	UC uid			        : 8;
+	UC weekdays			    : 7;	  //values: 0-7
+	BOOL isRepeat		    : 1;	  //values: 0-1
+	UC hour				    : 5;    //values: 0-23
+	UC min				    : 6;    //values: 0-59
+	AlarmId alarm_id	    : 8;
 } ScheduleRow_t;
 
 #define SCT_ROW_SIZE	sizeof(ScheduleRow_t)
@@ -88,11 +90,11 @@ typedef struct //Schedule Table
 // Xlight Rule Table Structures
 //------------------------------------------------------------------
 
-typedef struct
+typedef struct //__attribute__((packed))
 {
-	OP_FLAG op_flag : 2;
-	FLASH_FLAG flash_flag : 1;
-	RUN_FLAG run_flag : 1;
+	OP_FLAG op_flag			 : 2;
+	FLASH_FLAG flash_flag	 : 1;
+	RUN_FLAG run_flag		 : 1;
 	UC uid                   : 8;
 	UC SCT_uid               : 8;
 	UC SNT_uid               : 8;
@@ -107,11 +109,11 @@ typedef struct
 // Xlight Scenerio Table Structures
 //------------------------------------------------------------------
 
-typedef struct
+typedef struct //__attribute__((packed))
 {
-	OP_FLAG op_flag : 2;
-	FLASH_FLAG flash_flag : 1;
-	RUN_FLAG run_flag : 1;
+	OP_FLAG op_flag				: 2;
+	FLASH_FLAG flash_flag		: 1;
+	RUN_FLAG run_flag			: 1;
 	UC uid			            : 8;
 	Hue_t ring1;
 	Hue_t ring2;
@@ -140,6 +142,10 @@ private:
 public:
   ConfigClass();
   void InitConfig();
+  void InitDevStatus();
+
+  // write to P1 using spark-flashee-eeprom
+  Flashee::FlashDevice* P1Flash;
 
   BOOL LoadConfig();
   BOOL SaveConfig();

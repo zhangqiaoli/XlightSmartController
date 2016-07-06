@@ -1121,6 +1121,7 @@ bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_u
 //------------------------------------------------------------------
 ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
 {
+	//search chain in working memory
 	ListNode<ScheduleRow_t> *pObj = Schedule_table.search(uid);
 
 	if(!pObj)
@@ -1138,8 +1139,9 @@ ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
 							  && row.run_flag == (RUN_FLAG)1)
 			{
 				// Copy data entry to Working Memory and get the pointer
-				row.run_flag = UNEXECUTED;		// need to create Alarm later
 				row.op_flag = POST;				// op_flag should already be POST==(OP_FLAG)1
+				row.run_flag = UNEXECUTED;		// need to create Alarm later
+				row.flash_flag = SAVED;			// We know it has a copy in flash
 				if (Change_Schedule(row))
 				{
 					//pObj = Schedule_table.search(uid);
@@ -1168,7 +1170,7 @@ ListNode<ScenarioRow_t>* SmartControllerClass::SearchScenario(UC uid)
 		if (uid < MAX_SNT_ROWS)
 		{
 			//find it
-			//ToDo: access P1 memory to populate "row"
+			theConfig.P1Flash->read<ScenarioRow_t>(row, MEM_SCENARIOS_OFFSET + uid*SNT_ROW_SIZE);
 
 			//flags should be 111
 			if (row.uid == uid && row.op_flag == (OP_FLAG)1
@@ -1176,8 +1178,9 @@ ListNode<ScenarioRow_t>* SmartControllerClass::SearchScenario(UC uid)
 							   && row.run_flag == (RUN_FLAG)1)
 			{
 				// Copy data entry into working memory and get the pointer
-				row.run_flag = UNEXECUTED;
 				row.op_flag = POST;
+				row.run_flag = UNEXECUTED;
+				row.flash_flag = SAVED;			//we know it has a copy in flash
 				if (Change_Scenario(row))
 				{
 					pObj = Scenario_table.getLast();
