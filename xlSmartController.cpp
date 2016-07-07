@@ -1170,7 +1170,7 @@ ListNode<ScenarioRow_t>* SmartControllerClass::SearchScenario(UC uid)
 		if (uid < MAX_SNT_ROWS)
 		{
 			//find it
-			theConfig.P1Flash->read<ScenarioRow_t>(row, MEM_SCENARIOS_OFFSET + uid*SNT_ROW_SIZE);
+			theConfig.MemReadScenarioRow(row, MEM_SCENARIOS_OFFSET + uid*SNT_ROW_SIZE);
 
 			//flags should be 111
 			if (row.uid == uid && row.op_flag == (OP_FLAG)1

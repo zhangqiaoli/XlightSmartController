@@ -138,6 +138,7 @@ private:
   BOOL m_isSNTChanged;	 	  // Scenerio Table Change Flag
 
   Config_t m_config;
+  Flashee::FlashDevice* P1Flash;
 
 public:
   ConfigClass();
@@ -145,7 +146,8 @@ public:
   void InitDevStatus();
 
   // write to P1 using spark-flashee-eeprom
-  Flashee::FlashDevice* P1Flash;
+  BOOL MemWriteScenarioRow(ScenarioRow_t row, uint32_t address);
+  BOOL MemReadScenarioRow(ScenarioRow_t &row, uint32_t address);
 
   BOOL LoadConfig();
   BOOL SaveConfig();
