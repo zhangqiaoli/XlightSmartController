@@ -35,17 +35,6 @@
  * 2. Include MQTT lib
 **/
 
-//------------------------------------------------------------------
-// System level working constants
-//------------------------------------------------------------------
-// Running Time Environment Parameters
-#define RTE_DELAY_PUBLISH         500
-#define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
-#define RTE_DELAY_SELFCHECK       1000        // Self-check interval
-
-// Number of ticks on System Timer
-#define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
-
 #ifdef UNIT_TEST_ENABLE
 	#include "test.ino"
 #else
@@ -56,6 +45,7 @@
 #include "application.h"
 #include "xlxConfig.h"
 #include "xlSmartController.h"
+#include "xlxSerialConsole.h"
 #include "SparkIntervalTimer.h"
 
 //------------------------------------------------------------------
@@ -111,6 +101,9 @@ void setup()
 
   // Initialize Sensors
   theSys.InitSensors();
+
+	// Initialize Serial Console
+  theConsole.Init();
 
   // System Starts
   theSys.Start();

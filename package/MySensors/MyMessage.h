@@ -22,23 +22,12 @@
 #define MyMessage_h
 
 #include "application.h"
+#include "xliCommon.h"
 
-/*
-#ifdef __cplusplus
-#include <Arduino.h>
-#include <string.h>
-#include <stdint.h>
-#endif
-*/
-
-#define PROTOCOL_VERSION 2
+#define PROTOCOL_VERSION 1
 #define MAX_MESSAGE_LENGTH 32
 #define HEADER_SIZE 7
 #define MAX_PAYLOAD (MAX_MESSAGE_LENGTH - HEADER_SIZE)
-
-// This is the nodeId for sensor net gateway receiver sketch (where all sensors should send their data).
-#define GATEWAY_ADDRESS ((uint8_t)0)
-#define BROADCAST_ADDRESS ((uint8_t)0xFF)
 
 // Message types
 typedef enum {
@@ -187,45 +176,95 @@ typedef enum {
 #define BF_SET(y, x, start, len)    ( y= ((y) &~ BF_MASK(start, len)) | BF_PREP(x, start, len) )
 
 // Getters/setters for special bit fields in header
-#define mSetVersion(_msg,_version) BF_SET(_msg.version_length, _version, 0, 2)
-#define mGetVersion(_msg) BF_GET(_msg.version_length, 0, 2)
+#define mSetVersion(_msg,_version) BF_SET(_msg.header.version_length, _version, 0, 2)
+#define mGetVersion(_msg) BF_GET(_msg.header.version_length, 0, 2)
 
-#define mSetSigned(_msg,_signed) BF_SET(_msg.version_length, _signed, 2, 1)
-#define mGetSigned(_msg) BF_GET(_msg.version_length, 2, 1)
+#define mSetSigned(_msg,_signed) BF_SET(_msg.header.version_length, _signed, 2, 1)
+#define mGetSigned(_msg) BF_GET(_msg.header.version_length, 2, 1)
 
-#define mSetLength(_msg,_length) BF_SET(_msg.version_length, _length, 3, 5)
-#define mGetLength(_msg) BF_GET(_msg.version_length, 3, 5)
+#define mSetLength(_msg,_length) BF_SET(_msg.header.version_length, _length, 3, 5)
+#define mGetLength(_msg) BF_GET(_msg.header.version_length, 3, 5)
 
-#define mSetCommand(_msg,_command) BF_SET(_msg.command_ack_payload, _command, 0, 3)
-#define mGetCommand(_msg) BF_GET(_msg.command_ack_payload, 0, 3)
+#define mSetCommand(_msg,_command) BF_SET(_msg.header.command_ack_payload, _command, 0, 3)
+#define mGetCommand(_msg) BF_GET(_msg.header.command_ack_payload, 0, 3)
 
-#define mSetRequestAck(_msg,_rack) BF_SET(_msg.command_ack_payload, _rack, 3, 1)
-#define mGetRequestAck(_msg) BF_GET(_msg.command_ack_payload, 3, 1)
+#define mSetRequestAck(_msg,_rack) BF_SET(_msg.header.command_ack_payload, _rack, 3, 1)
+#define mGetRequestAck(_msg) BF_GET(_msg.header.command_ack_payload, 3, 1)
 
-#define mSetAck(_msg,_ackMsg) BF_SET(_msg.command_ack_payload, _ackMsg, 4, 1)
-#define mGetAck(_msg) BF_GET(_msg.command_ack_payload, 4, 1)
+#define mSetAck(_msg,_ackMsg) BF_SET(_msg.header.command_ack_payload, _ackMsg, 4, 1)
+#define mGetAck(_msg) BF_GET(_msg.header.command_ack_payload, 4, 1)
 
-#define mSetPayloadType(_msg, _pt) BF_SET(_msg.command_ack_payload, _pt, 5, 3)
-#define mGetPayloadType(_msg) BF_GET(_msg.command_ack_payload, 5, 3)
+#define mSetPayloadType(_msg, _pt) BF_SET(_msg.header.command_ack_payload, _pt, 5, 3)
+#define mGetPayloadType(_msg) BF_GET(_msg.header.command_ack_payload, 5, 3)
 
 
 // internal access for special fields
-#define miGetCommand() BF_GET(command_ack_payload, 0, 3)
+#define miSetCommand(_command) BF_SET(msg.header.command_ack_payload, _command, 0, 3)
+#define miGetCommand() BF_GET(msg.header.command_ack_payload, 0, 3)
 
-#define miSetLength(_length) BF_SET(version_length, _length, 3, 5)
-#define miGetLength() BF_GET(version_length, 3, 5)
+#define miSetLength(_length) BF_SET(msg.header.version_length, _length, 3, 5)
+#define miGetLength() BF_GET(msg.header.version_length, 3, 5)
 
-#define miSetRequestAck(_rack) BF_SET(command_ack_payload, _rack, 3, 1)
-#define miGetRequestAck() BF_GET(command_ack_payload, 3, 1)
+#define miSetRequestAck(_rack) BF_SET(msg.header.command_ack_payload, _rack, 3, 1)
+#define miGetRequestAck() BF_GET(msg.header.command_ack_payload, 3, 1)
 
-#define miSetAck(_ack) BF_SET(command_ack_payload, _ack, 4, 1)
-#define miGetAck() BF_GET(command_ack_payload, 4, 1)
+#define miSetAck(_ack) BF_SET(msg.header.command_ack_payload, _ack, 4, 1)
+#define miGetAck() BF_GET(msg.header.command_ack_payload, 4, 1)
 
-#define miSetPayloadType(_pt) BF_SET(command_ack_payload, _pt, 5, 3)
-#define miGetPayloadType() BF_GET(command_ack_payload, 5, 3)
+#define miSetPayloadType(_pt) BF_SET(msg.header.command_ack_payload, _pt, 5, 3)
+#define miGetPayloadType() BF_GET(msg.header.command_ack_payload, 5, 3)
 
+#define miSetVersion(_version) BF_SET(msg.header.version_length, _version, 0, 2)
+#define miGetVersion() BF_GET(msg.header.version_length, 0, 2)
 
-#ifdef __cplusplus
+#define miSetSigned(_signed) BF_SET(msg.header.version_length, _signed, 2, 1)
+#define miGetSigned() BF_GET(msg.header.version_length, 2, 1)
+
+typedef struct
+{
+	uint8_t last;            	 	// 8 bit - Id of last node this message passed
+	uint8_t sender;          	 	// 8 bit - Id of sender node (origin)
+	uint8_t destination;     	 	// 8 bit - Id of destination node
+
+	uint8_t version_length;		 	// 2 bit - Protocol version
+			                     		// 1 bit - Signed flag
+			                     		// 5 bit - Length of payload
+	uint8_t command_ack_payload; // 3 bit - Command type
+	                             // 1 bit - Request an ack - Indicator that receiver should send an ack back.
+								 						 	// 1 bit - Is ack messsage - Indicator that this is the actual ack message.
+	                            // 3 bit - Payload data type
+	uint8_t type;            	 	// 8 bit - Type varies depending on command
+	uint8_t sensor;          	 	// 8 bit - Id of sensor that this message concerns.
+} __attribute__((packed)) MyMsgHeader_t;
+
+// Each message can transfer a payload. We add one extra byte for string
+// terminator \0 to be "printable" this is not transferred OTA
+// This union is used to simplify the construction of the binary data types transferred.
+typedef union
+{
+	uint8_t bValue;
+	unsigned long ulValue;
+	long lValue;
+	unsigned int uiValue;
+	int iValue;
+	uint64_t ui64Value;
+	struct { // Float messages
+		float fValue;
+		uint8_t fPrecision;   // Number of decimals when serializing
+	};
+	struct {  // Presentation messages
+		uint8_t version; 	  // Library version
+		uint8_t sensorType;   // Sensor type hint for controller, see table above
+	};
+	char data[MAX_PAYLOAD + 1];
+} __attribute__((packed)) MyMsgPayload_t;
+
+typedef struct
+{
+	MyMsgHeader_t header;
+	MyMsgPayload_t payload;
+} __attribute__((packed)) MyMessage_t;
+
 class MyMessage
 {
 private:
@@ -234,8 +273,18 @@ private:
 public:
 	// Constructors
 	MyMessage();
-
 	MyMessage(uint8_t sensor, uint8_t type);
+
+	inline MyMessage& build (uint8_t _sender, uint8_t _destination, uint8_t _sensor, uint8_t _command, uint8_t _type, bool _enableAck) {
+		msg.header.sender = _sender;
+		msg.header.destination = _destination;
+		msg.header.sensor = _sensor;
+		msg.header.type = _type;
+		miSetCommand(_command);
+		miSetRequestAck(_enableAck);
+		miSetAck(false);
+		return *this;
+	}
 
 	char i2h(uint8_t i) const;
 
@@ -255,14 +304,29 @@ public:
 	unsigned long getULong() const;
 	int getInt() const;
 	unsigned int getUInt() const;
+	uint64_t getUInt64() const;
 
 	// Getter for ack-flag. True if this is an ack message.
 	bool isAck() const;
+	bool isReqAck() const;
+	uint8_t getSender() const;
+	uint8_t getLast() const;
+	uint8_t getType() const;
+	uint8_t getSensor() const;
+	uint8_t getDestination() const;
+	uint8_t getCommand() const;
+	uint8_t getLength() const;
+	uint8_t getVersion() const;
+	uint8_t getSigned() const;
 
 	// Setters for building message "on the fly"
-	MyMessage& setType(uint8_t type);
-	MyMessage& setSensor(uint8_t sensor);
-	MyMessage& setDestination(uint8_t destination);
+	MyMessage& setSender(uint8_t _sender);
+	MyMessage& setLast(uint8_t _last);
+	MyMessage& setType(uint8_t _type);
+	MyMessage& setSensor(uint8_t _sensor);
+	MyMessage& setDestination(uint8_t _destination);
+	MyMessage& setVersion(uint8_t _version);
+	MyMessage& setSigned(uint8_t _signed);
 
 	// Setters for payload
 	MyMessage& set(void* payload, uint8_t length);
@@ -273,58 +337,14 @@ public:
 	MyMessage& set(long value);
 	MyMessage& set(unsigned int value);
 	MyMessage& set(int value);
+	MyMessage& set(uint64_t value);
 
 	// Sun added 2016-05-18
-	char* getSerialString(char *buffer);
+	char* getSerialString(char *buffer) const;
 	// Sun added 2016-05-26
-	char* getJsonString(char *buffer);
+	char* getJsonString(char *buffer) const;
 
-#else
-
-typedef union {
-struct
-{
-
-#endif
-	uint8_t last;            	 // 8 bit - Id of last node this message passed
-	uint8_t sender;          	 // 8 bit - Id of sender node (origin)
-	uint8_t destination;     	 // 8 bit - Id of destination node
-
-	uint8_t version_length;		 // 2 bit - Protocol version
-			                     // 1 bit - Signed flag
-			                     // 5 bit - Length of payload
-	uint8_t command_ack_payload; // 3 bit - Command type
-	                             // 1 bit - Request an ack - Indicator that receiver should send an ack back.
-								 // 1 bit - Is ack messsage - Indicator that this is the actual ack message.
-	                             // 3 bit - Payload data type
-	uint8_t type;            	 // 8 bit - Type varies depending on command
-	uint8_t sensor;          	 // 8 bit - Id of sensor that this message concerns.
-
-	// Each message can transfer a payload. We add one extra byte for string
-	// terminator \0 to be "printable" this is not transferred OTA
-	// This union is used to simplify the construction of the binary data types transferred.
-	union {
-		uint8_t bValue;
-		unsigned long ulValue;
-		long lValue;
-		unsigned int uiValue;
-		int iValue;
-		struct { // Float messages
-			float fValue;
-			uint8_t fPrecision;   // Number of decimals when serializing
-		};
-		struct {  // Presentation messages
-			uint8_t version; 	  // Library version
-   		    uint8_t sensorType;   // Sensor type hint for controller, see table above
-		};
-		char data[MAX_PAYLOAD + 1];
-	} __attribute__((packed));
-#ifdef __cplusplus
-} __attribute__((packed));
-#else
+	MyMessage_t msg;
 };
-uint8_t array[HEADER_SIZE + MAX_PAYLOAD + 1];
-} __attribute__((packed)) MyMessage;
-#endif
 
 #endif

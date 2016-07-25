@@ -4,11 +4,13 @@
 #define xliCommon_h
 
 #include "application.h"
+#include "xliConfig.h"
 
 #define BITTEST(var,pos)          (((var)>>(pos)) & 0x0001)
 #define BITMASK(pos)              (0x0001 << (pos))
 #define BITSET(var,pos)           ((var) | BITMASK(pos))
 #define BITUNSET(var,pos)         ((var) & (~BITMASK(pos)))
+#define _BV(x)                    (1<<(x))
 
 //Here, common data types have been given alternative names through #define statements
 
@@ -50,13 +52,6 @@
 #define SEN_PIR_SPEED_NORMAL      2
 #define SEN_PIR_SPEED_HIGH        1
 
-// Maximun number of device associated to one controller
-#define MAX_DEVICE_PER_CONTROLLER 16
-
-// Maximun JSON data length
-#define COMMAND_JSON_SIZE         64
-#define SENSORDATA_JSON_SIZE      196
-
 // Row State Flags for Sync between Cloud, Flash, and Working Memory
 enum OP_FLAG {GET, POST, PUT, DELETE};
 enum FLASH_FLAG {UNSAVED, SAVED};
@@ -71,12 +66,6 @@ enum RUN_FLAG {UNEXECUTED, EXECUTED};
 #define CLS_LIGHT_STATUS          'h'
 #define CLS_TOPOLOGY              't'
 #define CLS_CONFIGURATION         'c'
-
-// Keep this number of rows in all tables after writing to Flash
-#define POST_FLASH_TABLE_SIZE		4
-
-// Maximun number of rows for any working memory table implimented using ChainClass
-#define PRE_FLASH_MAX_TABLE_SIZE	8
 
 // Sensor list: maximun 16 sensors
 typedef enum
@@ -105,5 +94,21 @@ typedef enum
   devtypWRing1,
   devtypDummy
 } devicetype_t;
+
+#ifndef SERIAL
+#define SERIAL        Serial.printf
+#endif
+
+#ifndef SERIAL_LN
+#define SERIAL_LN     Serial.printlnf
+#endif
+
+//--------------------------------------------------
+// Tools & Helpers
+//--------------------------------------------------
+uint8_t h2i(const char c);
+char* PrintUint64(char *buf, uint64_t value, bool bHex = true);
+char* PrintMacAddress(char *buf, const uint8_t *mac, char delim = ':');
+uint64_t StringToUInt64(const char *strData);
 
 #endif /* xliCommon_h */

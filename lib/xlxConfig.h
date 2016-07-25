@@ -8,15 +8,6 @@
 #include "TimeAlarms.h"
 
 #include "flashee-eeprom.h"
-							   
-// Change it only if Config_t structure is updated
-#define VERSION_CONFIG_DATA   1
-
-// Xlight Application Identification
-#define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM
-#define XLA_PRODUCT_NAME          "XController"             // Default value. Read from EEPROM
-#define XLA_AUTHORIZATION         "use-token-auth"
-#define XLA_TOKEN                 "your-access-token"       // Can update online
 
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures

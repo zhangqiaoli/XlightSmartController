@@ -17,16 +17,7 @@
  * version 2 as published by the Free Software Foundation.
  */
 
-#ifndef MyParserSerial_h
-#define MyParserSerial_h
+#include "MyTransport.h"
 
-#include "MyParser.h"
-
-class MyParserSerial : public MyParser
-{
-public:
-	MyParserSerial();
-	bool parse(MyMessage &message, char *inputString);
-	char* getSerialString(MyMessage &message, char *buffer) const;
-};
-#endif
+MyTransport::MyTransport() {
+}

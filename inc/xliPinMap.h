@@ -27,22 +27,34 @@
 #define PIN_LED_LEVEL_B1          D1          // Brightness indicator bit1, may also be PWM
 #define PIN_LED_LEVEL_B2          D2          // Brightness indicator bit2, may also be PWM
 
-#define PIN_EXT_SPI_MISO          D3          // SPI3MISO, may also be PWM
-#define PIN_EXT_SPI_SCK           D4          // SPI3SCK
-#define PIN_RF_CHIPSELECT         D5          // LT8910 chip select - output
-#define PIN_RF_RESET              D6          // LT8910 Reset - output
-#define PIN_RF_EOFFLAG            D7          // LT8910 package completion interupt flag - input
+#define PIN_BTN_DOWN              D3          // Panel button - down
+#define PIN_BTN_OK                D4          // Panel button - OK
+#define PIN_BTN_UP                D5          // Panel button - up
+#define PIN_SEN_PIR               D7          // Sensor: infra red motion, may also be PWM
 
 // Analog GPIO pins (12-bit A0 - A7), can also be used as digital GPIOs
-#define PIN_BTN_DOWN              A0          // Panel button - down
-#define PIN_BTN_OK                A1          // Panel button - OK
-#define PIN_BTN_UP                A2          // Panel button - up
-#define PIN_SEN_DHT               A3          // Sensor: temperature and humidity, DAC2
-#define PIN_SEN_PIR               A4          // Sensor: infra red motion, may also be PWM
-#define PIN_SEN_LIGHT             A5          // Sensor: ALS, may also be PWM
+#define PIN_RF24_CE		   		      A0
+#define PIN_RF24_CS		   	 	      A2
+#define PIN_SEN_DHT               A1          // Sensor: temperature and humidity
 #define PIN_SEN_MIC               A6          // Sensor: ECT MIC, DAC
-#define PIN_ANA_WKP               A7          // J4-1 for testing, may also be PWM
+#define PIN_SEN_LIGHT             A7          // Sensor: ALS, may also be PWM
 
+/*
+  RF2.4 Module
+  SPARK CORE    SHIELD SHIELD    NRF24L01+
+  GND           GND              1 (GND)
+  3V3 (3.3V)    3.3V             2 (3V3)
+  A0 (CSN)      9  (D6)          3 (CE)
+  A2 (SS)       10 (SS)          4 (CSN)
+  A3 (SCK)      13 (SCK)         5 (SCK)
+  A5 (MOSI)     11 (MOSI)        6 (MOSI)
+  A4 (MISO)     12 (MISO)        7 (MISO)
+  *A1(IRQ)      PC3(IRQ)          8(IRQ)
+
+  NOTE: Also place a 10-100uF cap across the power inputs of
+        the NRF24L01+.  I/O o fthe NRF24 is 5V tolerant, but
+        do NOT connect more than 3.3V to pin 2(3V3)!!!
+*/
 
 // P1 specific GPIO pins, can also be used as digital GPIOs
 /*

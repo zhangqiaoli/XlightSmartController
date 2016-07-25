@@ -26,6 +26,8 @@
 #include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xliPinMap.h"
+#include "xlxRF24Server.h"
+#include "xlxSerialConsole.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
@@ -104,12 +106,13 @@ void SmartControllerClass::Init()
 void SmartControllerClass::InitRadio()
 {
 	// Check RF2.4
-	CheckRF();
-	if (IsRFGood())
-	{
-		LOGN(LOGTAG_MSG, F("RF2.4 is working."));
-		SetStatus(STATUS_BMW);
-	}
+	if( CheckRF() ) {
+  	if (IsRFGood())
+  	{
+  		LOGN(LOGTAG_MSG, F("RF2.4 is working."));
+  		SetStatus(STATUS_BMW);
+  	}
+  }
 
 	// Check BLE
 	CheckBLE();
@@ -177,10 +180,6 @@ void SmartControllerClass::InitPins()
 	// Set communication pin mode
 	pinMode(PIN_BLE_RX, INPUT);
 	pinMode(PIN_BLE_TX, OUTPUT);
-	pinMode(PIN_EXT_SPI_MISO, INPUT);
-	pinMode(PIN_RF_CHIPSELECT, OUTPUT);
-	pinMode(PIN_RF_RESET, OUTPUT);
-	pinMode(PIN_RF_EOFFLAG, INPUT);
 }
 
 // Initialize Sensors
@@ -244,16 +243,16 @@ UC SmartControllerClass::GetStatus()
 
 void SmartControllerClass::SetStatus(UC st)
 {
-	LOGN(LOGTAG_STATUS, "System status changed from %d to %d", m_devStatus, st);
+	LOGN(LOGTAG_STATUS, F("System status changed from %d to %d"), m_devStatus, st);
 	if ((UC)m_devStatus != st)
 		m_devStatus = st;
 }
 
 BOOL SmartControllerClass::CheckRF()
 {
-	// ToDo: change value of m_isRF
-
-	return true;
+	// RF Server begins
+	m_isRF = theRadio.ServerBegin();
+	return m_isRF;
 }
 
 BOOL SmartControllerClass::CheckNetwork()
@@ -275,6 +274,7 @@ BOOL SmartControllerClass::CheckBLE()
 BOOL SmartControllerClass::SelfCheck(UL ms)
 {
 	static UC tickSaveConfig = 0;				// must be static
+  static UC tickCheckRadio = 0;				// must be static
 
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);
@@ -285,6 +285,16 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 		theConfig.SaveConfig();
 	}
 
+  // Check RF module
+  if (++tickCheckRadio > 60) {
+		tickCheckRadio = 0;
+    if( !IsRFGood() ) {
+      if( CheckRF() ) {
+        LOGN(LOGTAG_MSG, F("RF24 module recovered."));
+      }
+    }
+  }
+
 	// ToDo:add any other potential problems to check
 	//...
 
@@ -293,7 +303,7 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 
 BOOL SmartControllerClass::IsRFGood()
 {
-	return m_isRF;
+	return (m_isRF && theRadio.isValid());
 }
 
 BOOL SmartControllerClass::IsBLEGood()
@@ -315,7 +325,10 @@ BOOL SmartControllerClass::IsWANGood()
 void SmartControllerClass::ProcessCommands()
 {
 	// Check and process RF2.4 messages
-	m_cmRF24.CheckMessageBuffer();
+	//m_cmRF24.CheckMessageBuffer();
+
+	// Process Console Command
+  theConsole.processCommand();
 
 	// ToDo: process commands from other sources (Wifi, BLE)
 	// ToDo: Potentially move ReadNewRules here
@@ -395,7 +408,7 @@ void SmartControllerClass::CollectData(UC tick)
 	}
 
 	// ToDo: Proximity detection
-	// from all channels including Wi-Fi, BLE, etc. for MAC addresses and distance to device 
+	// from all channels including Wi-Fi, BLE, etc. for MAC addresses and distance to device
 }
 
 //------------------------------------------------------------------
@@ -458,7 +471,7 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
 }
 
 int SmartControllerClass::CldPowerSwitch(String swStr)
-{	
+{
 	//ToDo: this sends data from cloud to appropriate function to change lamp color/on-off
 	//ToDo: implement function to receive JSON, parse JSON, populate DevStatus_t row
 
