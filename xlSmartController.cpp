@@ -137,21 +137,23 @@ void SmartControllerClass::InitRadio()
 void SmartControllerClass::InitNetwork()
 {
 	// Check WAN and LAN
-	CheckNetwork();
-	if (IsWANGood())
+	if( CheckNetwork() )
 	{
-		LOGN(LOGTAG_MSG, F("WAN is working."));
-		SetStatus(STATUS_NWS);
+		if (IsWANGood())
+		{
+			LOGN(LOGTAG_MSG, F("WAN is working."));
+			SetStatus(STATUS_NWS);
 
-		// Initialize Logger: syslog & cloud log
-		// ToDo: substitude network parameters
-		//theLog.InitSysLog();
-		//theLog.InitCloud();
-	}
-	else if (GetStatus() == STATUS_BMW && IsLANGood())
-	{
-		LOGN(LOGTAG_MSG, F("LAN is working."));
-		SetStatus(STATUS_DIS);
+			// Initialize Logger: syslog & cloud log
+			// ToDo: substitude network parameters
+			//theLog.InitSysLog();
+			//theLog.InitCloud();
+		}
+		else if (GetStatus() == STATUS_BMW && IsLANGood())
+		{
+			LOGN(LOGTAG_MSG, F("LAN is working."));
+			SetStatus(STATUS_DIS);
+		}
 	}
 }
 
@@ -267,9 +269,28 @@ BOOL SmartControllerClass::CheckRF()
 
 BOOL SmartControllerClass::CheckNetwork()
 {
-	// ToDo: check WAN, change value of m_isWAN
+	// Check Wi-Fi module
+	if( !WiFi.ready() ) {
+		LOGE(LOGTAG_MSG, F("Wi-Fi module error!"));
+		return false;
+	}
 
-	// ToDo: check LAN, change value of m_isLan
+	// Check WAN
+	m_isWAN = WiFi.resolve("www.google.com");
+
+	// Check LAN if WAN is not OK
+	if( !m_isWAN ) {
+		m_isLAN = (WiFi.ping(WiFi.gatewayIP(), 3) < 3);
+		if( !m_isLAN ) {
+			LOGW(LOGTAG_MSG, F("Cannot reach local gateway!"));
+			m_isLAN = (WiFi.ping(WiFi.localIP(), 3) < 3);
+			if( !m_isLAN ) {
+				LOGE(LOGTAG_MSG, F("Cannot reach itself!"));
+			}
+		}
+	} else {
+		m_isLAN = true;
+	}
 
 	return true;
 }

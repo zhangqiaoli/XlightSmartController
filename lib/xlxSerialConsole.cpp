@@ -42,6 +42,8 @@
 **/
 
 #include "xlxSerialConsole.h"
+#include "xlSmartController.h"
+#include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xlxRF24Server.h"
 
@@ -339,7 +341,9 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("");
     } else if (strnicmp(sTopic, "node", 4) == 0) {
       uint8_t lv_NodeID = theRadio.getAddress();
-      SERIAL_LN("**NodeID is %d (%s)\n\r", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")));
+      SERIAL_LN("**NodeID: %d (%s), Status: %d", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")), theSys.GetStatus());
+      SERIAL_LN("  Product Info: %s-%s-%d", theConfig.GetOrganization().c_str(), theConfig.GetProductName().c_str(), theConfig.GetVersion());
+      SERIAL_LN("  System Info: %s-%s\n\r", theSys.GetSysID().c_str(), theSys.GetSysVersion().c_str());
     } else if (strnicmp(sTopic, "ble", 3) == 0) {
       // ToDo: show BLE summay
       SERIAL_LN("");
@@ -503,17 +507,17 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
   char *sParam1;
   if( sTopic ) {
     if (strnicmp(sTopic, "reset", 5) == 0) {
-      SERIAL_LN("System is about to reset...");
+      SERIAL_LN(F("System is about to reset..."));
       delay(500);
       System.reset();
     }
     else if (strnicmp(sTopic, "safe", 4) == 0) {
-      SERIAL_LN("System is about to enter safe mode...");
+      SERIAL_LN(F("System is about to enter safe mode..."));
       delay(1000);
       System.enterSafeMode();
     }
     else if (strnicmp(sTopic, "dfu", 3) == 0) {
-      SERIAL_LN("System is about to enter DFU mode...");
+      SERIAL_LN(F("System is about to enter DFU mode..."));
       delay(1000);
       System.dfu();
     }
@@ -528,12 +532,12 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
         nDur = atoi(sParam1);
       }
       theRadio.switch2BaseNetwork();
-      SERIAL_LN("Switched to base network\n\r");
+      SERIAL_LN(F("Switched to base network\n\r"));
     }
     else if (strnicmp(sTopic, "private", 7) == 0) {
       // Switch to Private Network
       theRadio.switch2MyNetwork();
-      SERIAL_LN("Switched to private network: %s\n\r", PrintUint64(strDisplay, theRadio.getCurrentNetworkID()));
+      SERIAL_LN(F("Switched to private network: %s\n\r"), PrintUint64(strDisplay, theRadio.getCurrentNetworkID()));
     }
   } else { return false; }
 
@@ -625,7 +629,7 @@ bool SerialConsoleClass::PingAddress(const char *sAddress)
   SERIAL("Pinging %s (", sAddress);
   Serial.print(ipAddr);
   SERIAL(")...");
-  int myByteCount = WiFi.ping(ipAddr, 4);
+  int myByteCount = WiFi.ping(ipAddr, 3);
   int elapsedTime = millis() - pingStartTime;
   SERIAL_LN("recieved %d bytes over %d ms", myByteCount, elapsedTime);
   return true;
