@@ -275,6 +275,10 @@ BOOL SmartControllerClass::CheckBLE()
 BOOL SmartControllerClass::SelfCheck(UL ms)
 {
 	static UC tickSaveConfig = 0;				// must be static
+	
+	//temp
+	Serial.println("selfcheck");
+	LOGD(LOGTAG_MSG, F("loging is working."));
 
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);
