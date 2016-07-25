@@ -81,7 +81,7 @@ void setup()
   theSys.Init();
 
   // Load Configuration
-  theConfig.LoadConfig();
+  //theConfig.LoadConfig();
 
   // Initialize Pins
   theSys.InitPins();
@@ -107,6 +107,11 @@ void setup()
 
   // System Starts
   theSys.Start();
+
+	// Wait the system started
+	while( Time.now() < 2000 ) {
+		Particle.process();
+	}
 }
 
 // Notes: approximate RTE_DELAY_SELFCHECK ms per loop
@@ -116,20 +121,20 @@ void loop()
   static UC tick = 0;
 
   // Process commands
-  theSys.ProcessCommands();
+  IF_MAINLOOP_TIMER( theSys.ProcessCommands(), "ProcessCommands" );
 
   // Collect data
-  theSys.CollectData(tick++);
+  IF_MAINLOOP_TIMER( theSys.CollectData(tick++), "CollectData" );
 
 	// Act on new Rules in Rules chain
-	theSys.ReadNewRules();
+	IF_MAINLOOP_TIMER( theSys.ReadNewRules(), "ReadNewRules" );
 
   // ToDo: transfer data
 
   // ToDo: status synchronize
 
   // Self-test & alarm trigger, also insert delay between each loop
-  theSys.SelfCheck(RTE_DELAY_SELFCHECK);
+  IF_MAINLOOP_TIMER( theSys.SelfCheck(RTE_DELAY_SELFCHECK), "SelfCheck" );
 }
 
 #endif

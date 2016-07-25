@@ -48,7 +48,6 @@ public:
   LoggerClass();
   void Init(String sysid);
 
-  BOOL InitSerial(UL speed);
   BOOL InitFlash(UL addr, UL size);
   BOOL InitSysLog(String host, US port);
   BOOL InitCloud(String url, String uid, String key);
@@ -56,6 +55,8 @@ public:
   UC GetLevel(UC logDest);
   void SetLevel(UC logDest, UC logLevel);
   void WriteLog(UC level, const char *tag, const char *msg, ...);
+  bool ChangeLogLevel(String &strMsg);
+  void PrintDestInfo();
 };
 
 //------------------------------------------------------------------

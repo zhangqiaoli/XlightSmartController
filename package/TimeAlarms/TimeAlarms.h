@@ -11,7 +11,7 @@
 //---------------------------------
 
 extern time_t time_zone_cache;  // from spark_wiring_time.cpp
-#define now() (Time.now()+time_zone_cache)
+#define now_tz()		(Time.now()+time_zone_cache)
 
 #define timeDayOfWeek_t int
 /* Useful Constants */

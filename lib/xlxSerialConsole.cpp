@@ -42,6 +42,7 @@
 **/
 
 #include "xlxSerialConsole.h"
+#include "xlxLogger.h"
 #include "xlxRF24Server.h"
 
 //------------------------------------------------------------------
@@ -197,11 +198,12 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
   } else if(strTopic.equals("show")) {
     SERIAL_LN(F("--- Command: show <object> ---"));
     SERIAL_LN(F("To show value or summary information, where <object> could be:"));
+    SERIAL_LN(F("   ble:     show BLE summary"));
+    SERIAL_LN(F("   debug:   show debug channel and level"));
     SERIAL_LN(F("   dev:     show device list"));
     SERIAL_LN(F("   flag:    show system flags"));
     SERIAL_LN(F("   net:     show network summary"));
     SERIAL_LN(F("   node:    show node summary"));
-    SERIAL_LN(F("   ble:     show BLE summary"));
     SERIAL_LN(F("   rf:      print RF details"));
     SERIAL_LN(F("   time:    show current time and time zone"));
     SERIAL_LN(F("   var:     show system variables"));
@@ -236,7 +238,9 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("e.g. set tz -5"));
     SERIAL_LN(F("e.g. set nodeid [0..250]"));
     SERIAL_LN(F("e.g. set base [0|1]"));
-    SERIAL_LN(F("e.g. set debug warn\n\r"));
+    SERIAL_LN(F("e.g. set debug [log:level]"));
+    SERIAL_LN(F("     , where log is [serial|flash|syslog|cloud|all"));
+    SERIAL_LN(F("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r"));
   } else if(strTopic.equals("sys")) {
     SERIAL_LN(F("--- Command: sys <mode> ---"));
     SERIAL_LN(F("To control the system status, where <mode> could be:"));
@@ -334,7 +338,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       }
       SERIAL_LN("");
     } else if (strnicmp(sTopic, "node", 4) == 0) {
-      SERIAL_LN("**NodeID is %d\n\r", theRadio.getAddress());
+      uint8_t lv_NodeID = theRadio.getAddress();
+      SERIAL_LN("**NodeID is %d (%s)\n\r", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")));
     } else if (strnicmp(sTopic, "ble", 3) == 0) {
       // ToDo: show BLE summay
       SERIAL_LN("");
@@ -346,6 +351,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("Now is %s, zone: %d\n\r", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), -5);
     } else if (strnicmp(sTopic, "version", 7) == 0) {
       SERIAL_LN("System version: %s\n\r", System.version().c_str());
+    } else if (strnicmp(sTopic, "debug", 5) == 0) {
+      theLog.PrintDestInfo();
     } else {
       retVal = false;
     }
@@ -468,9 +475,9 @@ bool SerialConsoleClass::doSet(const char *cmd)
     } else if (strnicmp(sTopic, "debug", 5) == 0) {
       sParam1 = next();
       if( sParam1) {
-        // ToDo:
-        SERIAL_LN("Set Debug Level to %s\n\r", sParam1);
-        retVal = true;
+        String strMsg = sParam1;
+        retVal = theLog.ChangeLogLevel(strMsg);
+        if( retVal ) SERIAL_LN("Set Debug Level to %s\n\r", sParam1);
       }
     }
   }

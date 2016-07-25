@@ -33,6 +33,8 @@
 
 // the one and only instance of LoggerClass
 LoggerClass theLog = LoggerClass();
+char strDestNames[][7] = {"serial", "flash", "syslog", "cloud", "all"};
+char strLevelNames[][9] = {"none", "alert", "critical", "error", "warn", "notice", "info", "debug"};
 
 //------------------------------------------------------------------
 // Xlight Logger Class
@@ -48,12 +50,6 @@ LoggerClass::LoggerClass()
 void LoggerClass::Init(String sysid)
 {
   m_SysID = sysid;
-}
-
-BOOL LoggerClass::InitSerial(UL speed)
-{
-  Serial.begin(speed);
-  return true;
 }
 
 BOOL LoggerClass::InitFlash(UL addr, UL size)
@@ -87,7 +83,7 @@ void LoggerClass::SetLevel(UC logDest, UC logLevel)
   if( logDest < LOGDEST_DUMMY)
   {
     if( m_level[logDest] != logLevel )
-      m_level[logDest] = logDest;
+      m_level[logDest] = logLevel;
   }
 }
 
@@ -121,4 +117,49 @@ void LoggerClass::WriteLog(UC level, const char *tag, const char *msg, ...)
   //;}
   //if( level <= m_level[LOGDEST_FLASH] ) {
   //}
+}
+
+bool LoggerClass::ChangeLogLevel(String &strMsg)
+{
+	int nPos = strMsg.indexOf(':');
+  UC lv_Dest, lv_Level;
+  String lv_sDest, lv_sLevel;
+  if( nPos > 0 ) {
+    lv_sDest = strMsg.substring(0, nPos);
+    lv_sLevel = strMsg.substring(nPos+1);
+  } else {
+    lv_sDest = strDestNames[LOGDEST_DUMMY];
+    lv_sLevel = strMsg;
+  }
+
+  // Parse Log Level
+  for( lv_Level = LEVEL_EMERGENCY; lv_Level <= LEVEL_DEBUG; lv_Level++ ) {
+    if( lv_sLevel.equals(strLevelNames[lv_Level]) ) break;
+  }
+  if( lv_Level > LEVEL_DEBUG ) return false;
+
+  // Parse Log Destination
+  for( lv_Dest = LOGDEST_SERIAL; lv_Dest <= LOGDEST_DUMMY; lv_Dest++ ) {
+    if( lv_sDest.equals(strDestNames[lv_Dest]) ) break;
+  }
+  if( lv_Dest > LOGDEST_DUMMY ) return false;
+
+  if( lv_Dest  == LOGDEST_DUMMY ) {
+    for( lv_Dest = LOGDEST_SERIAL; lv_Dest < LOGDEST_DUMMY; lv_Dest++ ) {
+      SetLevel(lv_Dest, lv_Level);
+    }
+  } else {
+    SetLevel(lv_Dest, lv_Level);
+  }
+
+  return true;
+}
+
+void LoggerClass::PrintDestInfo()
+{
+  UC lv_Dest;
+  for( lv_Dest = LOGDEST_SERIAL; lv_Dest < LOGDEST_DUMMY; lv_Dest++ ) {
+    SERIAL_LN("LOG Channel: %s - level: %s", strDestNames[lv_Dest], strLevelNames[GetLevel(lv_Dest)]);
+  }
+  SERIAL_LN("");
 }

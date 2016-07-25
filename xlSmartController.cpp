@@ -90,14 +90,16 @@ SmartControllerClass::SmartControllerClass()
 // Primitive initialization before loading configuration
 void SmartControllerClass::Init()
 {
+  // Open Serial Port
+  Serial.begin(SERIALPORT_SPEED_DEFAULT);
+
 	// Get System ID
 	m_SysID = System.deviceID();
 	m_SysVersion = System.version();
 	m_devStatus = STATUS_INIT;
 
-	// Initialize Logger: Serial & Flash
+	// Initialize Logger
 	theLog.Init(m_SysID);
-	theLog.InitSerial(SERIALPORT_SPEED_DEFAULT);
 	theLog.InitFlash(MEM_OFFLINE_DATA_OFFSET, MEM_OFFLINE_DATA_LEN);
 }
 

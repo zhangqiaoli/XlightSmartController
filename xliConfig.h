@@ -6,6 +6,7 @@
 /*** USER DEFINES:  ***/
 #define FAILURE_HANDLING
 //#define SERIAL_DEBUG
+//#define MAINLOOP_TIMER
 
 /**********************/
 
@@ -15,6 +16,12 @@
   #define IF_SERIAL_DEBUG(x) ({x;})
 #else
   #define IF_SERIAL_DEBUG(x)
+#endif
+
+#ifdef MAINLOOP_TIMER
+  #define IF_MAINLOOP_TIMER(x, name) ({unsigned long ulStart = millis(); x; SERIAL_LN("%s spent %lu ms", (name), millis() - ulStart);})
+#else
+  #define IF_MAINLOOP_TIMER(x, name) ({x;})
 #endif
 
 // Xlight Application Identification
@@ -29,7 +36,7 @@
 // Running Time Environment Parameters
 #define RTE_DELAY_PUBLISH         500
 #define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
-#define RTE_DELAY_SELFCHECK       1000        // Self-check interval
+#define RTE_DELAY_SELFCHECK       500         // Self-check interval
 
 // Number of ticks on System Timer
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
