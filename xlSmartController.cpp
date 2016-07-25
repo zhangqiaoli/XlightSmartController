@@ -26,6 +26,8 @@
 #include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xliPinMap.h"
+#include "xlxRF24Server.h"
+#include "xlxSerialConsole.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
@@ -88,15 +90,25 @@ SmartControllerClass::SmartControllerClass()
 // Primitive initialization before loading configuration
 void SmartControllerClass::Init()
 {
+  // Open Serial Port
+  Serial.begin(SERIALPORT_SPEED_DEFAULT);
+
+#ifdef SYS_SERIAL_DEBUG
+	// Wait Serial connection so that we can see the starting information
+	while(!Serial.available()) { Particle.process(); }
+	SERIAL_LN(F("SmartController is starting..."));
+#endif
+
 	// Get System ID
 	m_SysID = System.deviceID();
 	m_SysVersion = System.version();
 	m_devStatus = STATUS_INIT;
 
-	// Initialize Logger: Serial & Flash
+	// Initialize Logger
 	theLog.Init(m_SysID);
-	theLog.InitSerial(SERIALPORT_SPEED_DEFAULT);
 	theLog.InitFlash(MEM_OFFLINE_DATA_OFFSET, MEM_OFFLINE_DATA_LEN);
+
+	LOGN(LOGTAG_MSG, "SmartController is starting...SysID=%s", m_SysID.c_str());
 }
 
 // Second level initialization after loading configuration
@@ -104,12 +116,13 @@ void SmartControllerClass::Init()
 void SmartControllerClass::InitRadio()
 {
 	// Check RF2.4
-	CheckRF();
-	if (IsRFGood())
-	{
-		LOGN(LOGTAG_MSG, F("RF2.4 is working."));
-		SetStatus(STATUS_BMW);
-	}
+	if( CheckRF() ) {
+  	if (IsRFGood())
+  	{
+  		LOGN(LOGTAG_MSG, F("RF2.4 is working."));
+  		SetStatus(STATUS_BMW);
+  	}
+  }
 
 	// Check BLE
 	CheckBLE();
@@ -124,21 +137,23 @@ void SmartControllerClass::InitRadio()
 void SmartControllerClass::InitNetwork()
 {
 	// Check WAN and LAN
-	CheckNetwork();
-	if (IsWANGood())
+	if( CheckNetwork() )
 	{
-		LOGN(LOGTAG_MSG, F("WAN is working."));
-		SetStatus(STATUS_NWS);
+		if (IsWANGood())
+		{
+			LOGN(LOGTAG_MSG, F("WAN is working."));
+			SetStatus(STATUS_NWS);
 
-		// Initialize Logger: syslog & cloud log
-		// ToDo: substitude network parameters
-		//theLog.InitSysLog();
-		//theLog.InitCloud();
-	}
-	else if (GetStatus() == STATUS_BMW && IsLANGood())
-	{
-		LOGN(LOGTAG_MSG, F("LAN is working."));
-		SetStatus(STATUS_DIS);
+			// Initialize Logger: syslog & cloud log
+			// ToDo: substitude network parameters
+			//theLog.InitSysLog();
+			//theLog.InitCloud();
+		}
+		else if (GetStatus() == STATUS_BMW && IsLANGood())
+		{
+			LOGN(LOGTAG_MSG, F("LAN is working."));
+			SetStatus(STATUS_DIS);
+		}
 	}
 }
 
@@ -177,10 +192,6 @@ void SmartControllerClass::InitPins()
 	// Set communication pin mode
 	pinMode(PIN_BLE_RX, INPUT);
 	pinMode(PIN_BLE_TX, OUTPUT);
-	pinMode(PIN_EXT_SPI_MISO, INPUT);
-	pinMode(PIN_RF_CHIPSELECT, OUTPUT);
-	pinMode(PIN_RF_RESET, OUTPUT);
-	pinMode(PIN_RF_EOFFLAG, INPUT);
 }
 
 // Initialize Sensors
@@ -244,23 +255,42 @@ UC SmartControllerClass::GetStatus()
 
 void SmartControllerClass::SetStatus(UC st)
 {
-	LOGN(LOGTAG_STATUS, "System status changed from %d to %d", m_devStatus, st);
+	LOGN(LOGTAG_STATUS, F("System status changed from %d to %d"), m_devStatus, st);
 	if ((UC)m_devStatus != st)
 		m_devStatus = st;
 }
 
 BOOL SmartControllerClass::CheckRF()
 {
-	// ToDo: change value of m_isRF
-
-	return true;
+	// RF Server begins
+	m_isRF = theRadio.ServerBegin();
+	return m_isRF;
 }
 
 BOOL SmartControllerClass::CheckNetwork()
 {
-	// ToDo: check WAN, change value of m_isWAN
+	// Check Wi-Fi module
+	if( !WiFi.ready() ) {
+		LOGE(LOGTAG_MSG, F("Wi-Fi module error!"));
+		return false;
+	}
 
-	// ToDo: check LAN, change value of m_isLan
+	// Check WAN
+	m_isWAN = WiFi.resolve("www.google.com");
+
+	// Check LAN if WAN is not OK
+	if( !m_isWAN ) {
+		m_isLAN = (WiFi.ping(WiFi.gatewayIP(), 3) < 3);
+		if( !m_isLAN ) {
+			LOGW(LOGTAG_MSG, F("Cannot reach local gateway!"));
+			m_isLAN = (WiFi.ping(WiFi.localIP(), 3) < 3);
+			if( !m_isLAN ) {
+				LOGE(LOGTAG_MSG, F("Cannot reach itself!"));
+			}
+		}
+	} else {
+		m_isLAN = true;
+	}
 
 	return true;
 }
@@ -275,10 +305,7 @@ BOOL SmartControllerClass::CheckBLE()
 BOOL SmartControllerClass::SelfCheck(UL ms)
 {
 	static UC tickSaveConfig = 0;				// must be static
-	
-	//temp
-	Serial.println("selfcheck");
-	LOGD(LOGTAG_MSG, F("loging is working."));
+	static UC tickCheckRadio = 0;				// must be static
 
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);
@@ -289,6 +316,16 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 		theConfig.SaveConfig();
 	}
 
+  // Check RF module
+  if (++tickCheckRadio > 60) {
+		tickCheckRadio = 0;
+    if( !IsRFGood() ) {
+      if( CheckRF() ) {
+        LOGN(LOGTAG_MSG, F("RF24 module recovered."));
+      }
+    }
+  }
+
 	// ToDo:add any other potential problems to check
 	//...
 
@@ -297,7 +334,7 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 
 BOOL SmartControllerClass::IsRFGood()
 {
-	return m_isRF;
+	return (m_isRF && theRadio.isValid());
 }
 
 BOOL SmartControllerClass::IsBLEGood()
@@ -319,7 +356,10 @@ BOOL SmartControllerClass::IsWANGood()
 void SmartControllerClass::ProcessCommands()
 {
 	// Check and process RF2.4 messages
-	m_cmRF24.CheckMessageBuffer();
+	//m_cmRF24.CheckMessageBuffer();
+
+	// Process Console Command
+  theConsole.processCommand();
 
 	// ToDo: process commands from other sources (Wifi, BLE)
 	// ToDo: Potentially move ReadNewRules here
@@ -399,7 +439,7 @@ void SmartControllerClass::CollectData(UC tick)
 	}
 
 	// ToDo: Proximity detection
-	// from all channels including Wi-Fi, BLE, etc. for MAC addresses and distance to device 
+	// from all channels including Wi-Fi, BLE, etc. for MAC addresses and distance to device
 }
 
 //------------------------------------------------------------------
@@ -462,7 +502,7 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
 }
 
 int SmartControllerClass::CldPowerSwitch(String swStr)
-{	
+{
 	//ToDo: this sends data from cloud to appropriate function to change lamp color/on-off
 	//ToDo: implement function to receive JSON, parse JSON, populate DevStatus_t row
 

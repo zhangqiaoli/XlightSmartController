@@ -1,4 +1,4 @@
-#define UNIT_TEST_ENABLE //toggle unit testing
+//#define UNIT_TEST_ENABLE //toggle unit testing
 
 /**
  * This is the firmware of Xlight SmartController based on Photon/P1 MCU.
@@ -35,17 +35,6 @@
  * 2. Include MQTT lib
 **/
 
-//------------------------------------------------------------------
-// System level working constants
-//------------------------------------------------------------------
-// Running Time Environment Parameters
-#define RTE_DELAY_PUBLISH         500
-#define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
-#define RTE_DELAY_SELFCHECK       1000        // Self-check interval
-
-// Number of ticks on System Timer
-#define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
-
 #ifdef UNIT_TEST_ENABLE
 	#include "test.ino"
 #else
@@ -56,6 +45,7 @@
 #include "application.h"
 #include "xlxConfig.h"
 #include "xlSmartController.h"
+#include "xlxSerialConsole.h"
 #include "SparkIntervalTimer.h"
 
 //------------------------------------------------------------------
@@ -112,8 +102,16 @@ void setup()
   // Initialize Sensors
   theSys.InitSensors();
 
+	// Initialize Serial Console
+  theConsole.Init();
+
   // System Starts
   theSys.Start();
+
+	// Wait the system started
+	while( Time.now() < 2000 ) {
+		Particle.process();
+	}
 }
 
 // Notes: approximate RTE_DELAY_SELFCHECK ms per loop
@@ -123,20 +121,20 @@ void loop()
   static UC tick = 0;
 
   // Process commands
-  theSys.ProcessCommands();
+  IF_MAINLOOP_TIMER( theSys.ProcessCommands(), "ProcessCommands" );
 
   // Collect data
-  theSys.CollectData(tick++);
+  IF_MAINLOOP_TIMER( theSys.CollectData(tick++), "CollectData" );
 
 	// Act on new Rules in Rules chain
-	theSys.ReadNewRules();
+	IF_MAINLOOP_TIMER( theSys.ReadNewRules(), "ReadNewRules" );
 
   // ToDo: transfer data
 
   // ToDo: status synchronize
 
   // Self-test & alarm trigger, also insert delay between each loop
-  theSys.SelfCheck(RTE_DELAY_SELFCHECK);
+  IF_MAINLOOP_TIMER( theSys.SelfCheck(RTE_DELAY_SELFCHECK), "SelfCheck" );
 }
 
 #endif

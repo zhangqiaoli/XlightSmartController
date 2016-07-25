@@ -5,10 +5,8 @@
 
 #include "xliCommon.h"
 #include "xlxCloudObj.h"
-#include "xlxInterfaceRF24.h"
 #include "xlxConfig.h"
 #include "xlxChain.h"
-#include "xliMemoryMap.h"
 
 //------------------------------------------------------------------
 // Xlight Command Queue Structures
@@ -16,8 +14,6 @@
 
 //ToDo: Create command queue
 
-
-class SmartControllerClass;           // forward reference
 
 //------------------------------------------------------------------
 // Smart Controller Class
@@ -97,10 +93,6 @@ public:
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure
-
-protected:
-  // Communication Interfaces
-  RF24InterfaceClass m_cmRF24;
 };
 
 //------------------------------------------------------------------

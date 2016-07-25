@@ -100,12 +100,20 @@ void ConfigClass::InitDevStatus()
 
 BOOL ConfigClass::MemWriteScenarioRow(ScenarioRow_t row, uint32_t address)
 {
+#ifdef MCU_TYPE_P1
 	return P1Flash->read<ScenarioRow_t>(row, address);
+#else
+	return false;
+#endif
 }
 
 BOOL ConfigClass::MemReadScenarioRow(ScenarioRow_t &row, uint32_t address)
 {
+#ifdef MCU_TYPE_P1
 	return P1Flash->write<ScenarioRow_t>(row, address);
+#else
+	return false;
+#endif
 }
 
 BOOL ConfigClass::LoadConfig()
@@ -142,22 +150,22 @@ BOOL ConfigClass::LoadConfig()
   // Load Device Status
   if( sizeof(DevStatus_t) <= MEM_DEVICE_STATUS_LEN )
   {
-	EEPROM.get(MEM_DEVICE_STATUS_OFFSET, theSys.DevStatus_row);
-	//check row values / error cases
-	if (theSys.DevStatus_row.op_flag != (OP_FLAG)1
-		|| theSys.DevStatus_row.flash_flag != (FLASH_FLAG)1
-		|| theSys.DevStatus_row.run_flag != (RUN_FLAG)1 )
-	{
-		//no devstatus saved, give default values
-		InitDevStatus();
-		m_isDSTChanged = true;
-		LOGW(LOGTAG_MSG, F("Corrupt Device Status Table, using default status."));
-		SaveConfig();
-	}
-	else
-	{
-		LOGD(LOGTAG_MSG, F("Device status table loaded."));
-	}
+		EEPROM.get(MEM_DEVICE_STATUS_OFFSET, theSys.DevStatus_row);
+		//check row values / error cases
+		if (theSys.DevStatus_row.op_flag != (OP_FLAG)1
+			|| theSys.DevStatus_row.flash_flag != (FLASH_FLAG)1
+			|| theSys.DevStatus_row.run_flag != (RUN_FLAG)1 )
+		{
+			//no devstatus saved, give default values
+			InitDevStatus();
+			m_isDSTChanged = true;
+			LOGW(LOGTAG_MSG, F("Corrupt Device Status Table, using default status."));
+			SaveConfig();
+		}
+		else
+		{
+			LOGD(LOGTAG_MSG, F("Device status table loaded."));
+		}
     m_isDSTChanged = false;
   }
   else
@@ -169,6 +177,7 @@ BOOL ConfigClass::LoadConfig()
   // We don't load Scenario Table directly
 
   //Load Rules from P1 Flash
+#ifdef MCU_TYPE_P1
   RuleRow_t RuleArray[MAX_RT_ROWS];
   if (RT_ROW_SIZE*MAX_RT_ROWS <= MEM_RULES_LEN)
   {
@@ -204,7 +213,8 @@ BOOL ConfigClass::LoadConfig()
   {
 	  LOGW(LOGTAG_MSG, F("Failed to load rule table, too large."));
   }
-  
+#endif
+
   return m_isLoaded;
 }
 
@@ -331,8 +341,9 @@ BOOL ConfigClass::SaveConfig()
 			  int row_index = rowptr->data.uid;
 			  if (row_index < MAX_RT_ROWS)
 			  {
+#ifdef MCU_TYPE_P1
 				  P1Flash->write<RuleRow_t>(tmpRow, MEM_RULES_OFFSET + row_index*RT_ROW_SIZE);
-
+#endif
 				  rowptr->data.flash_flag = SAVED; //toggle flash flag
 			  }
 			  else
@@ -388,8 +399,9 @@ BOOL ConfigClass::SaveConfig()
 			  int row_index = rowptr->data.uid;
 			  if (row_index < MAX_SNT_ROWS)
 			  {
+#ifdef MCU_TYPE_P1
 				  P1Flash->write<ScenarioRow_t>(tmpRow, MEM_SCENARIOS_OFFSET + row_index*SNT_ROW_SIZE);
-
+#endif
 				  rowptr->data.flash_flag = SAVED; //toggle flash flag
 			  }
 			  else

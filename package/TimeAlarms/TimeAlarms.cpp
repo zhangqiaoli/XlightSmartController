@@ -1,5 +1,3 @@
-//TODO: Change licensing statement
-
 /*
   TimeAlarms.cpp - Arduino Time alarms for use with Time library
   Copyright (c) 208-2011 Michael Margolis.
@@ -19,10 +17,10 @@
   2 July 2011 - replaced alarm types implied from alarm value with enums to make trigger logic more robust
               - this fixes bug in repeating weekly alarms - thanks to Vincent Valdy and draythomp for testing
 */
-
+/*
 extern "C" {
 #include <string.h> // for memset
-}
+}*/
 
 
 
@@ -52,7 +50,7 @@ void AlarmClass::updateNextTrigger()
 {
   if( (value != 0) && Mode.isEnabled )
   {
-    time_t time = now();
+    time_t time = now_tz();
     if( dtIsAlarm(Mode.alarmType) && nextTrigger <= time )   // update alarm if next trigger is not yet in the future
     {
       if(Mode.alarmType == dtExplicitAlarm ) // is the value a specific date and time in the future
@@ -61,7 +59,7 @@ void AlarmClass::updateNextTrigger()
       }
       else if(Mode.alarmType == dtDailyAlarm)  //if this is a daily alarm
       {
-        if( value + previousMidnight(now()) <= time)
+        if( value + previousMidnight(now_tz()) <= time)
         {
           nextTrigger = value + nextMidnight(time); // if time has passed then set for tomorrow
         }
@@ -72,7 +70,7 @@ void AlarmClass::updateNextTrigger()
       }
       else if(Mode.alarmType == dtWeeklyAlarm)  // if this is a weekly alarm
       {
-        if( (value + previousSunday(now())) <= time)
+        if( (value + previousSunday(now_tz())) <= time)
         {
           nextTrigger = value + nextSunday(time); // if day has passed then set for the next week.
         }
@@ -278,7 +276,7 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
 
     uint8_t TimeAlarmsClass::getDigitsNow( dtUnits_t Units)
     {
-      time_t time = now();
+      time_t time = now_tz();
       if(Units == dtSecond) return numberOfSeconds(time);
       if(Units == dtMinute) return numberOfMinutes(time);
       if(Units == dtHour) return numberOfHours(time);
@@ -292,7 +290,7 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
       int retval = 0;
       if( isAllocated(ID) )
       {
-        retval = Alarm[ID].nextTrigger - now();
+        retval = Alarm[ID].nextTrigger - now_tz();
       }
 
       return retval;
@@ -317,7 +315,7 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
         isServicing = true;
         for( servicedAlarmId = 0; servicedAlarmId < dtNBR_ALARMS; servicedAlarmId++)
         {
-          if( Alarm[servicedAlarmId].Mode.isEnabled && (now() >= Alarm[servicedAlarmId].nextTrigger)  )
+          if( Alarm[servicedAlarmId].Mode.isEnabled && (now_tz() >= Alarm[servicedAlarmId].nextTrigger)  )
           {
             OnTick_t TickHandler = Alarm[servicedAlarmId].onTickHandler;
             uint32_t tag = Alarm[servicedAlarmId].tag;
@@ -353,7 +351,7 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
     // attempt to create an alarm and return true if successful
     AlarmID_t TimeAlarmsClass::create( time_t value, OnTick_t onTickHandler, uint8_t isOneShot, dtAlarmPeriod_t alarmType, uint8_t isEnabled)
     {
-      if( ! (dtIsAlarm(alarmType) && now() < SECS_PER_YEAR)) // only create alarm ids if the time is at least Jan 1 1971
+      if( ! (dtIsAlarm(alarmType) && now_tz() < SECS_PER_YEAR)) // only create alarm ids if the time is at least Jan 1 1971
       {
     	for(uint8_t id = 0; id < dtNBR_ALARMS; id++)
         {
@@ -375,4 +373,4 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
     // make one instance for the user to use
     TimeAlarmsClass Alarm = TimeAlarmsClass() ;
 
-#undef now()
+//#undef now_tz()

@@ -27,6 +27,7 @@
 #include "MyParser.h"
 #include "MyParserJson.h"
 #include "ArduinoJson.h"
+#include "MyTransport.h"
 
 MyParserJson::MyParserJson() : MyParser() {}
 
@@ -46,15 +47,15 @@ bool MyParserJson::parse(MyMessage &message, char *inputString) {
   if( root.size() < 5 )  // Check for invalid input
     return false;
 
-  message.destination = atoi(root["node-id"]);
-  message.sensor = atoi(root["sensor-id"]);
-  command = atoi(root["msg-type"]);
-  mSetCommand(message, command);
+  message.setDestination((uint8_t)atoi(root["nd"]));
+  message.setSensor((uint8_t)atoi(root["sen"]));
+  command = atoi(root["cmd"]);
+  mSetCommand(message.msg, command);
   ack = atoi(root["ack"]);
-  message.type = atoi(root["sub-type"]);
+  message.setType((uint8_t)atoi(root["typ"]));
 
   // Payload
-  str = root["payload"].asString();
+  str = root["payl"].asString();
   if (command == C_STREAM) {
     blen = 0;
     uint8_t val;
@@ -68,10 +69,10 @@ bool MyParserJson::parse(MyMessage &message, char *inputString) {
     value = str;
   }
 
-	message.sender = GATEWAY_ADDRESS;
-	message.last = GATEWAY_ADDRESS;
-  mSetRequestAck(message, ack?1:0);
-  mSetAck(message, false);
+	message.setSender( GATEWAY_ADDRESS );
+	message.setLast( GATEWAY_ADDRESS );
+  mSetRequestAck(message.msg, ack?1:0);
+  mSetAck(message.msg, false);
 	if (command == C_STREAM)
 		message.set(bvalue, blen);
 	else
@@ -79,13 +80,25 @@ bool MyParserJson::parse(MyMessage &message, char *inputString) {
 	return true;
 }
 
-uint8_t MyParserJson::h2i(char c) {
-	uint8_t i = 0;
-	if (c <= '9')
-		i += c - '0';
-	else if (c >= 'a')
-		i += c - 'a' + 10;
-	else
-		i += c - 'A' + 10;
-	return i;
+// Sun added 2016-05-26
+char* MyParserJson::getJsonString(MyMessage &message, char *buffer) const {
+	if (buffer != NULL) {
+		char payl[MAX_PAYLOAD*2+1];
+		StaticJsonBuffer<256> jBuf;
+		JsonObject *jroot;
+		jroot = &(jBuf.createObject());
+		if( jroot->success() ) {
+	    (*jroot)["nd"] = message.getDestination();
+			(*jroot)["sen"] = message.getSensor();
+			(*jroot)["cmd"] = mGetCommand(message.msg);
+			(*jroot)["ack"] = mGetRequestAck(message.msg);
+			(*jroot)["typ"] = message.getType();
+			(*jroot)["payl"] = message.getString(payl);
+
+			jroot->printTo(buffer, 256);
+	    return buffer;
+	  }
+	}
+
+	return NULL;
 }

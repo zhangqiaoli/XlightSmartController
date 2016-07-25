@@ -15,6 +15,11 @@
 #ifndef __RF24_H__
 #define __RF24_H__
 
+#define B0100   4
+#define B111    7
+#define B1111   15
+#define B111111 63
+
 /**
  * Power Amplifier level.
  *
@@ -36,6 +41,8 @@ typedef enum { RF24_1MBPS = 0, RF24_2MBPS, RF24_250KBPS } rf24_datarate_e;
  */
 typedef enum { RF24_CRC_DISABLED = 0, RF24_CRC_8, RF24_CRC_16 } rf24_crclength_e;
 
+#define MAX_RF_PAYLOAD    32
+
 /**
  * Driver for nRF24L01(+) 2.4GHz Wireless Transceiver
  */
@@ -49,10 +56,12 @@ private:
   bool p_variant; /* False for RF24L01 and true for RF24L01P */
   uint8_t payload_size; /**< Fixed size of payloads */
   bool dynamic_payloads_enabled; /**< Whether dynamic payloads are enabled. */
-  uint8_t pipe0_reading_address[5]; /**< Last address set on pipe 0 for reading. */
+  uint64_t pipe0_reading_address; /**< Last address set on pipe 0 for reading. */
   uint8_t addr_width; /**< The address width to use - 3,4 or 5 bytes. */
   uint32_t txRxDelay; /**< Var for adjusting delays depending on datarate */
 
+  bool ack_payload_available; /**< Whether there is an ack payload waiting */
+  uint8_t ack_payload_length; /**< Dynamic size of pending ack payload. */
 
 protected:
   /**
@@ -154,7 +163,7 @@ public:
    * @endcode
    * @return No return value. Use available().
    */
-  void read( void* buf, uint8_t len );
+  bool read( void* buf, uint8_t len );
 
   /**
    * Be sure to call openWritingPipe() first to set the destination
@@ -512,7 +521,7 @@ s   *
    * @param multicast Request ACK (0) or NOACK (1)
    * @return True if the payload was delivered successfully false if not
    */
-  void startFastWrite( const void* buf, uint8_t len, const bool multicast, bool startTx = 1 );
+  uint8_t startFastWrite( const void* buf, uint8_t len, const bool multicast, bool startTx = 1 );
 
   /**
    * Non-blocking write to the open writing pipe

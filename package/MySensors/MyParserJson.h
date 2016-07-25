@@ -16,8 +16,7 @@ class MyParserJson : public MyParser
 public:
   MyParserJson();
 	bool parse(MyMessage &message, char *inputString);
-private:
-	uint8_t h2i(char c);
+  char* getJsonString(MyMessage &message, char *buffer) const;
 };
 
 #endif

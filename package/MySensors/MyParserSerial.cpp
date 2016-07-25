@@ -19,7 +19,7 @@
 
 #include "MyParser.h"
 #include "MyParserSerial.h"
-//#include "MyTransport.h"
+#include "MyTransport.h"
 
 MyParserSerial::MyParserSerial() : MyParser() {}
 
@@ -38,20 +38,20 @@ bool MyParserSerial::parse(MyMessage &message, char *inputString) {
 			) {
 		switch (i) {
 			case 0: // Radioid (destination)
-				message.destination = atoi(str);
+				message.setDestination((uint8_t)atoi(str));
 				break;
 			case 1: // Childid
-				message.sensor = atoi(str);
+				message.setSensor((uint8_t)atoi(str));
 				break;
-			case 2: // Message type
+			case 2: // Command (message type)
 				command = atoi(str);
-				mSetCommand(message, command);
+				mSetCommand(message.msg, command);
 				break;
 			case 3: // Should we request ack from destination?
 				ack = atoi(str);
 				break;
-			case 4: // Data type
-				message.type = atoi(str);
+			case 4: // Sub-type
+				message.setType((uint8_t)atoi(str));
 				break;
 			case 5: // Variable value
 				if (command == C_STREAM) {
@@ -67,7 +67,7 @@ bool MyParserSerial::parse(MyMessage &message, char *inputString) {
 					value = str;
 					// Remove ending carriage return character (if it exists)
 					uint8_t lastCharacter = strlen(value)-1;
-					if (value[lastCharacter] == '\r')
+					if (value[lastCharacter] == '\r' || value[lastCharacter] == '\n')
 						value[lastCharacter] = 0;
 				}
 				break;
@@ -78,10 +78,10 @@ bool MyParserSerial::parse(MyMessage &message, char *inputString) {
 	if (i < 5)
 		return false;
 
-	message.sender = GATEWAY_ADDRESS;
-	message.last = GATEWAY_ADDRESS;
-    mSetRequestAck(message, ack?1:0);
-    mSetAck(message, false);
+	message.setSender( GATEWAY_ADDRESS );
+	message.setLast( GATEWAY_ADDRESS );
+  mSetRequestAck(message.msg, ack?1:0);
+  mSetAck(message.msg, false);
 	if (command == C_STREAM)
 		message.set(bvalue, blen);
 	else
@@ -89,13 +89,17 @@ bool MyParserSerial::parse(MyMessage &message, char *inputString) {
 	return true;
 }
 
-uint8_t MyParserSerial::h2i(char c) {
-	uint8_t i = 0;
-	if (c <= '9')
-		i += c - '0';
-	else if (c >= 'a')
-		i += c - 'a' + 10;
-	else
-		i += c - 'A' + 10;
-	return i;
+// Sun added 2016-05-18
+char* MyParserSerial::getSerialString(MyMessage &message, char *buffer) const {
+	if (buffer != NULL) {
+		char payl[MAX_PAYLOAD*2+1];
+
+		sprintf(buffer, "%d;%d;%d;%d;%d;%s\n",
+		  message.getDestination(), message.getSensor(),
+			mGetCommand(message.msg), mGetRequestAck(message.msg),
+			message.getType(),	message.getString(payl));
+		return buffer;
+	}
+
+	return NULL;
 }
