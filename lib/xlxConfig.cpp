@@ -92,7 +92,7 @@ void ConfigClass::InitDevStatus()
 	theSys.DevStatus_row.ring1 = whiteHue;
 	theSys.DevStatus_row.ring2 = whiteHue;
 	theSys.DevStatus_row.ring3 = whiteHue;
-	
+
 	//todo: are these 2 default status values correct?
 	theSys.DevStatus_row.id = 1;
 	theSys.DevStatus_row.type = 1;
@@ -159,8 +159,8 @@ BOOL ConfigClass::LoadConfig()
 		LOGD(LOGTAG_MSG, F("Device status table loaded."));
 	}
     m_isDSTChanged = false;
-  } 
-  else 
+  }
+  else
   {
     LOGW(LOGTAG_MSG, F("Failed to load device status table."));
   }
@@ -186,7 +186,7 @@ BOOL ConfigClass::LoadConfig()
 			  {
 				LOGW(LOGTAG_MSG, F("Rule row %d failed to load from flash"), i);
 			  }
-		  } 
+		  }
 		  //else: row is either empty or trash; do nothing
 	  }
 
@@ -198,7 +198,7 @@ BOOL ConfigClass::LoadConfig()
   {
 	  LOGW(LOGTAG_MSG, F("Failed to load rule table."));
   }
-  
+
   return m_isLoaded;
 }
 
@@ -295,7 +295,7 @@ BOOL ConfigClass::SaveConfig()
   if ( m_isRTChanged )
   {
 	  bool success_flag = true;
-	  
+
 	  ListNode<RuleRow_t> *rowptr = theSys.Rule_table.getRoot();
 	  while (rowptr != NULL)
 	  {
@@ -326,7 +326,7 @@ BOOL ConfigClass::SaveConfig()
 			  if (row_index < MAX_RT_ROWS)
 			  {
 				  P1Flash->write<RuleRow_t>(tmpRow, MEM_RULES_OFFSET + row_index*RT_ROW_SIZE);
-				  
+
 				  rowptr->data.flash_flag = SAVED; //toggle flash flag
 			  }
 			  else

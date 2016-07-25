@@ -93,6 +93,12 @@ void SmartControllerClass::Init()
   // Open Serial Port
   Serial.begin(SERIALPORT_SPEED_DEFAULT);
 
+#ifdef SYS_SERIAL_DEBUG
+	// Wait Serial connection so that we can see the starting information
+	while(!Serial.available()) { Particle.process(); }
+	SERIAL_LN(F("SmartController is starting..."));
+#endif
+
 	// Get System ID
 	m_SysID = System.deviceID();
 	m_SysVersion = System.version();
@@ -101,6 +107,8 @@ void SmartControllerClass::Init()
 	// Initialize Logger
 	theLog.Init(m_SysID);
 	theLog.InitFlash(MEM_OFFLINE_DATA_OFFSET, MEM_OFFLINE_DATA_LEN);
+
+	LOGN(LOGTAG_MSG, "SmartController is starting...SysID=%s", m_SysID.c_str());
 }
 
 // Second level initialization after loading configuration

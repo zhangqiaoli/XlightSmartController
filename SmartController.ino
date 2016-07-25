@@ -81,7 +81,7 @@ void setup()
   theSys.Init();
 
   // Load Configuration
-  //theConfig.LoadConfig();
+  theConfig.LoadConfig();
 
   // Initialize Pins
   theSys.InitPins();

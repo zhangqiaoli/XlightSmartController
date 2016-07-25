@@ -90,11 +90,11 @@ void LoggerClass::SetLevel(UC logDest, UC logLevel)
 void LoggerClass::WriteLog(UC level, const char *tag, const char *msg, ...)
 {
   int nSize = 0;
-  char buf[MAX_MESSAGE_LEN+2];
+  char buf[MAX_MESSAGE_LEN];
 
   // Prepare message
-  int nPos = snprintf(buf, MAX_MESSAGE_LEN, "%s %02d:%02d:%02d %d %s",
-      m_SysID.c_str(), Time.hour(), Time.minute(), Time.second(), level, tag);
+  int nPos = snprintf(buf, MAX_MESSAGE_LEN, "%02d:%02d:%02d %d %s ",
+      Time.hour(), Time.minute(), Time.second(), level, tag);
   va_list args;
   va_start(args, msg);
   nSize = vsnprintf(buf + nPos, MAX_MESSAGE_LEN - nPos, msg, args);
@@ -102,8 +102,6 @@ void LoggerClass::WriteLog(UC level, const char *tag, const char *msg, ...)
   // Send message to serial port
   if( level <= m_level[LOGDEST_SERIAL] )
   {
-    buf[nSize] = '\r';
-    buf[nSize+1] = '\n';
     Serial.println(buf);
   }
 
