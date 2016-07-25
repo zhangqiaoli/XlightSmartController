@@ -7,7 +7,7 @@
 // MCU Type: Particle family, and Photon or P1
 #define MCU_TYPE_Particle
 #ifdef MCU_TYPE_Particle
-#define MCU_TYPE_P1
+//#define MCU_TYPE_P1
 #endif
 
 //------------------------------------------------------------------

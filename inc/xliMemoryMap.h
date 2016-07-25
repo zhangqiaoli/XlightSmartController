@@ -5,7 +5,7 @@
 
 // Open it if use spark-flashee-eeprom to access the emulated EEPROM,
 /// instead of Photon EEPROM class (high level API)
-//#define FLASHEE_EEPROM
+//#define XL_FLASHEE_EEPROM
 
 //------------------------------------------------------------------
 // Emulated EEPROM: 2048bytes
@@ -14,7 +14,7 @@
 #define MEM_BANK_2_BASE           0x8010000
 
 // Device Status (16*64bytes)
-#ifdef FLASHEE_EEPROM
+#ifdef XL_FLASHEE_EEPROM
 #define MEM_DEVICE_STATUS_OFFSET  MEM_BANK_1_BASE
 #else
 #define MEM_DEVICE_STATUS_OFFSET  0x0000
