@@ -305,7 +305,7 @@ BOOL SmartControllerClass::CheckBLE()
 BOOL SmartControllerClass::SelfCheck(UL ms)
 {
 	static UC tickSaveConfig = 0;				// must be static
-  static UC tickCheckRadio = 0;				// must be static
+	static UC tickCheckRadio = 0;				// must be static
 
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);

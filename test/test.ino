@@ -76,7 +76,13 @@ test(example)
 	Test::include("SmartControllerClass_*");
 
 	//Additional Setup
-	IntervalTimer sysTimer;
+  for(int i = 10; i > 0; i--)
+  {
+    Serial.println(i);
+    delay(500);
+  }
+  Serial.println ("starting setup functions");
+	//IntervalTimer sysTimer;
 	theSys.Init();
 	theConfig.LoadConfig();
 	theSys.InitPins();
@@ -89,6 +95,8 @@ test(example)
 
   void loop()
   {
+    Serial.print (".");
+    delay(1000);
     if (flag)
       Test::run();
   }

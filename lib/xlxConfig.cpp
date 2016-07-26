@@ -48,7 +48,7 @@ ConfigClass theConfig = ConfigClass();
 //------------------------------------------------------------------
 ConfigClass::ConfigClass()
 {
-	P1Flash = Devices::createAddressErase();
+	P1Flash = Devices::createWearLevelErase();
 
   m_isLoaded = false;
   m_isChanged = false;
@@ -119,7 +119,7 @@ BOOL ConfigClass::MemReadScenarioRow(ScenarioRow_t &row, uint32_t address)
 BOOL ConfigClass::LoadConfig()
 {
   // Load System Configuration
-  if( EEPROM.length() >= MEM_CONFIG_OFFSET + MEM_CONFIG_LEN )
+  if( sizeof(Config_t) <= MEM_CONFIG_LEN )
   {
     EEPROM.get(MEM_CONFIG_OFFSET, m_config);
     if( m_config.version == 0xFF
@@ -144,11 +144,11 @@ BOOL ConfigClass::LoadConfig()
     m_isLoaded = true;
     m_isChanged = false;
   } else {
-    LOGE(LOGTAG_MSG, F("Failed to load Sysconfig."));
+    LOGE(LOGTAG_MSG, F("Failed to load Sysconfig, too large."));
   }
 
   // Load Device Status
-  if( EEPROM.length() >= MEM_DEVICE_STATUS_OFFSET + MEM_DEVICE_STATUS_LEN )
+  if( sizeof(DevStatus_t) <= MEM_DEVICE_STATUS_LEN )
   {
 		EEPROM.get(MEM_DEVICE_STATUS_OFFSET, theSys.DevStatus_row);
 		//check row values / error cases
@@ -170,7 +170,7 @@ BOOL ConfigClass::LoadConfig()
   }
   else
   {
-    LOGW(LOGTAG_MSG, F("Failed to load device status table."));
+    LOGW(LOGTAG_MSG, F("Failed to load device status table, too large."));
   }
 
   // We don't load Schedule Table directly
@@ -179,33 +179,39 @@ BOOL ConfigClass::LoadConfig()
   //Load Rules from P1 Flash
 #ifdef MCU_TYPE_P1
   RuleRow_t RuleArray[MAX_RT_ROWS];
-  if (P1Flash->read<RuleRow_t[MAX_RT_ROWS]>(RuleArray, MEM_RULES_OFFSET))
+  if (RT_ROW_SIZE*MAX_RT_ROWS <= MEM_RULES_LEN)
   {
-	  for (int i = 0; i < MAX_RT_ROWS; i++) //interate through RuleArray for non-empty rows
+	  if (P1Flash->read<RuleRow_t[MAX_RT_ROWS]>(RuleArray, MEM_RULES_OFFSET))
 	  {
-		  if (RuleArray[i].op_flag == (OP_FLAG)1
-			  && RuleArray[i].flash_flag == (FLASH_FLAG)1
-			  && RuleArray[i].run_flag == (RUN_FLAG)1)
+		  for (int i = 0; i < MAX_RT_ROWS; i++) //interate through RuleArray for non-empty rows
 		  {
-			  //change flags to be written into working memory chain
-			  RuleArray[i].op_flag = POST;
-			  RuleArray[i].run_flag = UNEXECUTED;
-			  RuleArray[i].flash_flag = SAVED;		//Already know it exists in flash
-			  if (!theSys.Rule_table.add(RuleArray[i])) //add non-empty row to working memory chain
+			  if (RuleArray[i].op_flag == (OP_FLAG)1
+				  && RuleArray[i].flash_flag == (FLASH_FLAG)1
+				  && RuleArray[i].run_flag == (RUN_FLAG)1)
 			  {
-				LOGW(LOGTAG_MSG, F("Rule row %d failed to load from flash"), i);
+				  //change flags to be written into working memory chain
+				  RuleArray[i].op_flag = POST;
+				  RuleArray[i].run_flag = UNEXECUTED;
+				  RuleArray[i].flash_flag = SAVED;		//Already know it exists in flash
+				  if (!theSys.Rule_table.add(RuleArray[i])) //add non-empty row to working memory chain
+				  {
+					  LOGW(LOGTAG_MSG, F("Rule row %d failed to load from flash"), i);
+				  }
 			  }
+			  //else: row is either empty or trash; do nothing
 		  }
-		  //else: row is either empty or trash; do nothing
+		  m_isRTChanged = true; //allow ReadNewRules() to run
+		  theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
+		  m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again
 	  }
-
-	  m_isRTChanged = true; //allow ReadNewRules() to run
-	  theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
-	  m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again
+	  else
+	  {
+		  LOGW(LOGTAG_MSG, F("Failed to read the rule table from flash."));
+	  }
   }
   else
   {
-	  LOGW(LOGTAG_MSG, F("Failed to load rule table."));
+	  LOGW(LOGTAG_MSG, F("Failed to load rule table, too large."));
   }
 #endif
 
