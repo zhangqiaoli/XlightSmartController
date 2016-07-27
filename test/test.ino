@@ -9,16 +9,15 @@
 #include "xliCommon.h"
 #include "xliMemoryMap.h"
 #include "xliPinMap.h"
+#include "xliConfig.h"
+
 #include "xlxCloudObj.h"
 #include "xlxConfig.h"
-#include "xlxInterfaceRF24.h"
 #include "xlxLogger.h"
 
 test(example)
 {
-  int a =3;
-  int b =3;
-  assertEqual(a, b);
+  
 }
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -72,8 +71,8 @@ test(example)
 	Test::out = &Serial;
 
 	//Test Selection (use ::exclude(char *pattern) and ::include(char *pattern))
-	Test::exclude("*");
-	Test::include("SmartControllerClass_*");
+	//Test::exclude("*");
+	//Test::include("SmartControllerClass_*");
 
 	//Additional Setup
   for(int i = 10; i > 0; i--)

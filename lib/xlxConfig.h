@@ -75,7 +75,7 @@ typedef struct //__attribute__((packed)) //Schedule Table
 } ScheduleRow_t;
 
 #define SCT_ROW_SIZE	sizeof(ScheduleRow_t)
-#define MAX_SCT_ROWS	(int)(MEM_SCHEDULE_LEN/sizeof(SCT_ROW_SIZE))
+#define MAX_SCT_ROWS	(int)(MEM_SCHEDULE_LEN/sizeof(SCT_ROW_SIZE)) //64
 
 //------------------------------------------------------------------
 // Xlight Rule Table Structures
@@ -94,8 +94,7 @@ typedef struct //__attribute__((packed))
 } RuleRow_t;
 
 #define RT_ROW_SIZE 	sizeof(RuleRow_t)
-#define MAX_RT_ROWS		100
-//#define MAX_RT_ROWS 	(int)(MEM_RULES_LEN/sizeof(RT_ROW_SIZE)) //16384 too big
+#define MAX_RT_ROWS		128
 
 //------------------------------------------------------------------
 // Xlight Scenerio Table Structures
@@ -114,8 +113,7 @@ typedef struct //__attribute__((packed))
 } ScenarioRow_t;
 
 #define SNT_ROW_SIZE	sizeof(ScenarioRow_t)
-#define MAX_SNT_ROWS	100
-//#define MAX_SNT_ROWS	(int)(MEM_SCENARIOS_LEN/sizeof(SNT_ROW_SIZE)) //16384 too big
+#define MAX_SNT_ROWS	128
 
 //------------------------------------------------------------------
 // Xlight Configuration Class

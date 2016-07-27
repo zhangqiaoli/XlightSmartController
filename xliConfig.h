@@ -42,11 +42,8 @@
 // Number of ticks on System Timer
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
 
-// Keep this number of rows in all tables after writing to Flash
-#define POST_FLASH_TABLE_SIZE       4
-
 // Maximun number of rows for any working memory table implimented using ChainClass
-#define PRE_FLASH_MAX_TABLE_SIZE    8
+#define MAX_TABLE_SIZE    8
 
 // Change it only if Config_t structure is updated
 #define VERSION_CONFIG_DATA         1
