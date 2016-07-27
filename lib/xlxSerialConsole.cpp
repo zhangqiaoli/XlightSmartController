@@ -296,7 +296,15 @@ bool SerialConsoleClass::doCheck(const char *cmd)
     if (strnicmp(sTopic, "rf", 2) == 0) {
       SERIAL_LN("**RF module is %s\n\r", (theRadio.isValid() ? "available" : "not available!"));
     } else if (strnicmp(sTopic, "wifi", 4) == 0) {
-        SERIAL_LN("**Wi-Fi module is %s\n\r", (WiFi.ready() ? "ready" : "not ready!"));
+        SERIAL("**Wi-Fi module is %s, ", (WiFi.ready() ? "ready" : "not ready!"));
+        int lv_RSSI = WiFi.RSSI();
+        if( lv_RSSI < 0 ) {
+          SERIAL_LN("RSSI=%ddB\n\r", WiFi.RSSI());
+        } else if( lv_RSSI == 1 ) {
+          SERIAL_LN("Wi-Fi chip error\n\r");
+        } else {
+          SERIAL_LN("time-out\n\r");
+        }
     } else if (strnicmp(sTopic, "wlan", 4) == 0) {
         SERIAL_LN("**Resolving IP for www.google.com...%s\n\r", (WiFi.resolve("www.google.com") ? "OK" : "failed!"));
     } else if (strnicmp(sTopic, "flash", 5) == 0) {

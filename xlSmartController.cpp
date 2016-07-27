@@ -270,6 +270,11 @@ BOOL SmartControllerClass::CheckRF()
 BOOL SmartControllerClass::CheckNetwork()
 {
 	// Check Wi-Fi module
+	if( WiFi.RSSI() > 0 ) {
+		LOGE(LOGTAG_MSG, F("Wi-Fi chip error!"));
+		return false;
+	}
+
 	if( !WiFi.ready() ) {
 		LOGE(LOGTAG_MSG, F("Wi-Fi module error!"));
 		return false;
