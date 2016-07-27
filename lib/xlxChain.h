@@ -51,7 +51,7 @@ public:
 	virtual ListNode<T>* getRoot();
 	virtual ListNode<T>* getLast();
 
-	//overload all "add" functions to first check if linkedlist length is greater than PRE_FLASH_MAX_TABLE_SIZE
+	//overload all "add" functions to first check if linkedlist length is greater than MAX_TABLE_SIZE
 	virtual bool add(int index, T);
 	virtual bool add(T);
 	virtual bool unshift(T);
