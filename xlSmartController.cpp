@@ -530,7 +530,12 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 
   int numRows = 0;
   bool bRowsKey = true;
-  StaticJsonBuffer<COMMAND_JSON_SIZE> jsonBuffer;
+
+  //ToDo: for StaticJsonBuffer<num> to work, num must be much bigger than the value being read in. Figure out why this is. In the meanime
+  //  use 1000 instead for unit testing
+  //StaticJsonBuffer<COMMAND_JSON_SIZE> jsonBuffer;
+  StaticJsonBuffer<1000> jsonBuffer;
+
   JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(jsonData.c_str()));
 
   if (!root.success())
@@ -621,12 +626,12 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			isSuccess = Change_Rule(row);
 			if (!isSuccess)
 			{
-				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Rule_t", data["uid"]);
+				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Rule_t", uidWhole);
 				return 0;
 			}
 			else
 			{
-				LOGI(LOGTAG_MSG, "UID:%s write row to Rule_t OK", data["uid"]);
+				LOGI(LOGTAG_MSG, "UID:%s write row to Rule_t OK", uidWhole);
 				return 1;
 			}
 			break;
@@ -643,7 +648,7 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			{
 				if (data["weekdays"] < 0 || data["weekdays"] > 7)		// [0..7]
 				{
-					LOGE(LOGTAG_MSG, "UID:%s Invalid 'weekdays' must between 0 and 7", data["uid"]);
+					LOGE(LOGTAG_MSG, "UID:%s Invalid 'weekdays' must between 0 and 7", uidWhole);
 					return 0;
 				}
 			}
@@ -651,25 +656,25 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			{
 				if (data["weekdays"] < 1 || data["weekdays"] > 7)		// [1..7]
 				{
-					LOGE(LOGTAG_MSG, "UID:%s Invalid 'weekdays' must between 1 and 7", data["uid"]);
+					LOGE(LOGTAG_MSG, "UID:%s Invalid 'weekdays' must between 1 and 7", uidWhole);
 					return 0;
 				}
 			}
 			else
 			{
-				LOGE(LOGTAG_MSG, "UID:%s Invalid 'isRepeat' must 0 or 1", data["uid"]);
+				LOGE(LOGTAG_MSG, "UID:%s Invalid 'isRepeat' must 0 or 1", uidWhole);
 				return 0;
 			}
 
 			if (data["hour"] < 0 || data["hour"] > 23)
 			{
-				LOGE(LOGTAG_MSG, "UID:%s Invalid 'hour' must between 0 and 23", data["uid"]);
+				LOGE(LOGTAG_MSG, "UID:%s Invalid 'hour' must between 0 and 23", uidWhole);
 				return 0;
 			}
 
 			if (data["min"] < 0 || data["min"] > 59)
 			{
-				LOGE(LOGTAG_MSG, "UID:%s Invalid 'min' must between 0 and 59", data["uid"]);
+				LOGE(LOGTAG_MSG, "UID:%s Invalid 'min' must between 0 and 59", uidWhole);
 				return 0;
 			}
 
@@ -682,12 +687,12 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			isSuccess = Change_Schedule(row);
 			if (!isSuccess)
 			{
-				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Schedule_t", data["uid"]);
+				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Schedule_t", uidWhole);
 				return 0;
 			}
 			else
 			{
-				LOGI(LOGTAG_MSG, "UID:%s write row to Schedule_t OK", data["uid"]);
+				LOGI(LOGTAG_MSG, "UID:%s write row to Schedule_t OK", uidWhole);
 				return 1;
 			}
 			break;
@@ -710,19 +715,19 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			isSuccess = Change_Scenario(row);
 			if (!isSuccess)
 			{
-				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Scenario_t", data["uid"]);
+				LOGE(LOGTAG_MSG, "UID:%s Unable to write row to Scenario_t", uidWhole);
 				return 0;
 			}
 			else
 			{
-				LOGI(LOGTAG_MSG, "UID:%s write row to Scenario_t OK", data["uid"]);
+				LOGI(LOGTAG_MSG, "UID:%s write row to Scenario_t OK", uidWhole);
 				return 1;
 			}
 			break;
 		}
 		default:
 		{
-			LOGE(LOGTAG_MSG, "UID:%s Invalid", data["uid"]);
+			LOGE(LOGTAG_MSG, "UID:%s Invalid", uidWhole);
 		}
 	}
 

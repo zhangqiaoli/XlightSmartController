@@ -4,7 +4,6 @@
 #define xlSmartController_h
 
 #include "xliCommon.h"
-#include "xliPinMap.h"
 #include "xlxCloudObj.h"
 #include "xlxConfig.h"
 #include "xlxChain.h"
