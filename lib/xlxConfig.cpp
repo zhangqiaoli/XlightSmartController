@@ -34,6 +34,7 @@
 **/
 
 #include "xlxConfig.h"
+#include "xliPinMap.h"
 #include "xlxLogger.h"
 #include "xliMemoryMap.h"
 #include "xlSmartController.h"
@@ -200,6 +201,7 @@ BOOL ConfigClass::LoadConfig()
 			  }
 			  //else: row is either empty or trash; do nothing
 		  }
+
 		  m_isRTChanged = true; //allow ReadNewRules() to run
 		  theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
 		  m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again

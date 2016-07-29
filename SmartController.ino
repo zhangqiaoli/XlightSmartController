@@ -51,6 +51,14 @@
 //------------------------------------------------------------------
 // Program Body Begins Here
 //------------------------------------------------------------------
+
+// SINGLETONS:
+// theSys: SmartControllerClass
+// theConfig: ConfigClass
+// theConsole: SerialConsoleClass
+// theLog: LoggerClass
+// theRadio: RF24ServerClass
+
 // Define hardware IntervalTimer
 IntervalTimer sysTimer;
 
@@ -73,10 +81,6 @@ void SysteTimerCB()
 
 void setup()
 {
-  //theSys: SmartControllerClass
-  //theConfig: ConfigClass
-  //sysTimer: IntervalTimer (Spark)
-
   // System Initialization
   theSys.Init();
 

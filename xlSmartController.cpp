@@ -23,9 +23,9 @@
  * ToDo:
 **/
 #include "xlSmartController.h"
+#include "xliPinMap.h"
 #include "xlxConfig.h"
 #include "xlxLogger.h"
-#include "xliPinMap.h"
 #include "xlxRF24Server.h"
 #include "xlxSerialConsole.h"
 
@@ -1244,6 +1244,146 @@ ListNode<ScenarioRow_t>* SmartControllerClass::SearchScenario(UC uid)
 	}
 
 	return pObj;
+}
+
+//------------------------------------------------------------------
+// Printing tables/working memory chains
+//------------------------------------------------------------------
+void SmartControllerClass::print_devStatus_row()
+{
+	switch (DevStatus_row.op_flag)
+	{
+	case 0: SERIAL_LN("op_flag = GET"); break;
+	case 1: SERIAL_LN("op_flag = POST"); break;
+	case 2: SERIAL_LN("op_flag = PUT"); break;
+	case 3: SERIAL_LN("op_flag = DELETE"); break;
+	}
+	switch (DevStatus_row.flash_flag)
+	{
+	case 0: SERIAL_LN("flash_flag = UNSAVED"); break;
+	case 1: SERIAL_LN("flash_flag = SAVED"); break;
+	}
+	switch (DevStatus_row.run_flag)
+	{
+	case 0: SERIAL_LN("run_flag = UNEXECUTED"); break;
+	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
+	}
+	SERIAL_LN("id = %d", DevStatus_row.id);
+	SERIAL_LN("type = %d", DevStatus_row.type);
+	SERIAL_LN("ring1 = %s", hue_to_string(DevStatus_row.ring1).c_str());
+	SERIAL_LN("ring2 = %s", hue_to_string(DevStatus_row.ring2).c_str());
+	SERIAL_LN("ring3 = %s", hue_to_string(DevStatus_row.ring3).c_str());
+}
+
+String SmartControllerClass::hue_to_string(Hue_t hue)
+{
+	String out = "";
+	out.concat("State:");
+	out.concat(hue.State);
+	out.concat("|");
+	out.concat("CW:");
+	out.concat(hue.CW);
+	out.concat("|");
+	out.concat("WW:");
+	out.concat(hue.WW);
+	out.concat("|");
+	out.concat("R:");
+	out.concat(hue.R);
+	out.concat("|");
+	out.concat("G:");
+	out.concat(hue.G);
+	out.concat("|");
+	out.concat("B:");
+	out.concat(hue.B);
+
+	return out;
+}
+
+void SmartControllerClass::print_schedule_table(int row)
+{
+	SERIAL_LN("====================");
+	SERIAL_LN("==== SCT Row %d ====", row);
+
+	switch (Schedule_table.get(row).op_flag)
+	{
+	case 0: SERIAL_LN("op_flag = GET"); break;
+	case 1: SERIAL_LN("op_flag = POST"); break;
+	case 2: SERIAL_LN("op_flag = PUT"); break;
+	case 3: SERIAL_LN("op_flag = DELETE"); break;
+	}
+	switch (Schedule_table.get(row).flash_flag)
+	{
+	case 0: SERIAL_LN("flash_flag = UNSAVED"); break;
+	case 1: SERIAL_LN("flash_flag = SAVED"); break;
+	}
+	switch (Schedule_table.get(row).run_flag)
+	{
+	case 0: SERIAL_LN("run_flag = UNEXECUTED"); break;
+	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
+	}
+	SERIAL_LN("uid = %d", Schedule_table.get(row).uid);
+	SERIAL_LN("weekdays = %d", Schedule_table.get(row).weekdays);
+	SERIAL_LN("isRepeat = %s", (Schedule_table.get(row).isRepeat ? "true" : "false"));
+	SERIAL_LN("hour = %d", Schedule_table.get(row).hour);
+	SERIAL_LN("min = %d", Schedule_table.get(row).min);
+	SERIAL_LN("alarm_id = %u", Schedule_table.get(row).alarm_id);
+}
+
+void SmartControllerClass::print_scenario_table(int row)
+{
+	SERIAL_LN("====================");
+	SERIAL_LN("==== SNT	Row %d ====", row);
+
+	switch (Scenario_table.get(row).op_flag)
+	{
+	case 0: SERIAL_LN("op_flag = GET"); break;
+	case 1: SERIAL_LN("op_flag = POST"); break;
+	case 2: SERIAL_LN("op_flag = PUT"); break;
+	case 3: SERIAL_LN("op_flag = DELETE"); break;
+	}
+	switch (Scenario_table.get(row).flash_flag)
+	{
+	case 0: SERIAL_LN("flash_flag = UNSAVED"); break;
+	case 1: SERIAL_LN("flash_flag = SAVED"); break;
+	}
+	switch (Scenario_table.get(row).run_flag)
+	{
+	case 0: SERIAL_LN("run_flag = UNEXECUTED"); break;
+	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
+	}
+	SERIAL_LN("uid = %d", Scenario_table.get(row).uid);
+	SERIAL_LN("ring1 = %s", hue_to_string(Scenario_table.get(row).ring1).c_str());
+	SERIAL_LN("ring2 = %s", hue_to_string(Scenario_table.get(row).ring2).c_str());
+	SERIAL_LN("ring3 = %s", hue_to_string(Scenario_table.get(row).ring3).c_str());
+	SERIAL_LN("filter = %d", Scenario_table.get(row).filter);
+}
+
+void SmartControllerClass::print_rule_table(int row)
+{
+	SERIAL_LN("===================");
+	SERIAL_LN("==== RT Row %d ====", row);
+
+	switch (Rule_table.get(row).op_flag)
+	{
+	case 0: SERIAL_LN("op_flag = GET"); break;
+	case 1: SERIAL_LN("op_flag = POST"); break;
+	case 2: SERIAL_LN("op_flag = PUT"); break;
+	case 3: SERIAL_LN("op_flag = DELETE"); break;
+	}
+	switch (Rule_table.get(row).flash_flag)
+	{
+	case 0: SERIAL_LN("flash_flag = UNSAVED"); break;
+	case 1: SERIAL_LN("flash_flag = SAVED"); break;
+	}
+	switch (Rule_table.get(row).run_flag)
+	{
+	case 0: SERIAL_LN("run_flag = UNEXECUTED"); break;
+	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
+	}
+	SERIAL_LN("uid = %d", Rule_table.get(row).uid);
+	SERIAL_LN("SCT_uid = %d", Rule_table.get(row).SCT_uid);
+	SERIAL_LN("SNT_uid = %d", Rule_table.get(row).SNT_uid);
+	SERIAL_LN("notif_uid = %d", Rule_table.get(row).notif_uid);
 }
 
 //------------------------------------------------------------------

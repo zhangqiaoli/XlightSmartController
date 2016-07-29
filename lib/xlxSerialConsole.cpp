@@ -209,6 +209,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   rf:      print RF details"));
     SERIAL_LN(F("   time:    show current time and time zone"));
     SERIAL_LN(F("   var:     show system variables"));
+	SERIAL_LN(F("   table:   show working memory tables"));
     SERIAL_LN(F("   version: show firmware version"));
     SERIAL_LN(F("e.g. show rf\n\r"));
   } else if(strTopic.equals("ping")) {
@@ -347,25 +348,78 @@ bool SerialConsoleClass::doShow(const char *cmd)
         SERIAL_LN("  SSID: %s", WiFi.SSID());
       }
       SERIAL_LN("");
-    } else if (strnicmp(sTopic, "node", 4) == 0) {
+
+	} else if (strnicmp(sTopic, "node", 4) == 0) {
       uint8_t lv_NodeID = theRadio.getAddress();
       SERIAL_LN("**NodeID: %d (%s), Status: %d", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")), theSys.GetStatus());
       SERIAL_LN("  Product Info: %s-%s-%d", theConfig.GetOrganization().c_str(), theConfig.GetProductName().c_str(), theConfig.GetVersion());
       SERIAL_LN("  System Info: %s-%s\n\r", theSys.GetSysID().c_str(), theSys.GetSysVersion().c_str());
-    } else if (strnicmp(sTopic, "ble", 3) == 0) {
+
+	} else if (strnicmp(sTopic, "ble", 3) == 0) {
       // ToDo: show BLE summay
       SERIAL_LN("");
-    } else if (strnicmp(sTopic, "rf", 2) == 0) {
+
+	} else if (strnicmp(sTopic, "rf", 2) == 0) {
       theRadio.PrintRFDetails();
       SERIAL_LN("");
-    } else if (strnicmp(sTopic, "time", 4) == 0) {
+
+	} else if (strnicmp(sTopic, "time", 4) == 0) {
       time_t time = Time.now();
       SERIAL_LN("Now is %s, zone: %d\n\r", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), -5);
-    } else if (strnicmp(sTopic, "version", 7) == 0) {
+
+	}
+	else if (strnicmp(sTopic, "var", 3) == 0) {
+		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
+		SERIAL_LN("theSys.m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
+		SERIAL_LN("theSys.m_isLAN = \t\t\t%s", (theSys.IsLANGood() ? "true" : "false"));
+		SERIAL_LN("theSys.m_isWAN = \t\t\t%s", (theSys.IsWANGood() ? "true" : "false"));
+		SERIAL_LN("theSys.mSysID = \t\t\t%s", theSys.m_SysID.c_str());
+		SERIAL_LN("theSys.m_SysVersion = \t\t\t%s", theSys.m_SysVersion.c_str());
+		SERIAL_LN("theSys.m_devStatus = \t\t\t%d", theSys.m_devStatus);
+		SERIAL_LN("theSys.m_tzString = \t\t\t%s", theSys.m_tzString.c_str());
+		SERIAL_LN("theSys.m_jsonData = \t\t\t%s", theSys.m_jsonData.c_str());
+		SERIAL_LN("theSys.m_lastMsg = \t\t\t%s", theSys.m_lastMsg.c_str());
+		SERIAL_LN("theSys.m_temperature = \t\t\t%.3f", theSys.m_temperature);
+		SERIAL_LN("theSys.m_humidity = \t\t\t%.3f", theSys.m_humidity);
+		SERIAL_LN("theSys.m_brightness = \t\t\t%u", theSys.m_brightness);
+		SERIAL_LN("theSys.m_motion = \t\t\t%s", (theSys.m_motion ? "true" : "false"));
+		SERIAL_LN("");
+		SERIAL_LN("theConfig.m_isLoaded = \t\t\t%s", (theConfig.IsConfigLoaded() ? "true" : "false"));
+		SERIAL_LN("theConfig.m_isChanged = \t\t%s", (theConfig.IsConfigChanged() ? "true" : "false"));
+		SERIAL_LN("theConfig.m_isDSTChanged = \t\t%s", (theConfig.IsDSTChanged() ? "true" : "false"));
+		SERIAL_LN("theConfig.m_isSCTChanged = \t\t%s", (theConfig.IsSCTChanged() ? "true" : "false"));
+		SERIAL_LN("theConfig.m_isRTChanged = \t\t%s", (theConfig.IsRTChanged() ? "true" : "false"));
+		SERIAL_LN("theConfig.m_isSNTChanged = \t\t%s\n\r", (theConfig.IsSNTChanged() ? "true" : "false"));
+		
+	} else if (strnicmp(sTopic, "table", 5) == 0) {
+		SERIAL_LN("SCT_ROW_SIZE: \t\t\t\t%u", SCT_ROW_SIZE);
+		SERIAL_LN("MAX_SCT_ROWS: \t\t\t\t%d", MAX_SCT_ROWS);
+		SERIAL_LN("RT_ROW_SIZE: \t\t\t\t%u", RT_ROW_SIZE);
+		SERIAL_LN("SNT_ROW_SIZE: \t\t\t\t%u", SNT_ROW_SIZE);
+		SERIAL_LN("");
+		SERIAL_LN("DevStatus_row: ");
+		theSys.print_devStatus_row();
+		SERIAL_LN("");
+		SERIAL_LN("Rule_table: ");
+			for (int i = 0; i < theSys.Rule_table.size(); i++)
+				theSys.print_rule_table(i);
+		SERIAL_LN("");
+		SERIAL_LN("Schedule_table: ");
+			for (int i = 0; i < theSys.Schedule_table.size(); i++)
+				theSys.print_schedule_table(i);
+		SERIAL_LN("");
+		SERIAL_LN("Scenario_table: ");
+			for (int i = 0; i < theSys.Scenario_table.size(); i++)
+				theSys.print_scenario_table(i);
+		SERIAL_LN("");
+
+	} else if (strnicmp(sTopic, "version", 7) == 0) {
       SERIAL_LN("System version: %s\n\r", System.version().c_str());
-    } else if (strnicmp(sTopic, "debug", 5) == 0) {
+
+	} else if (strnicmp(sTopic, "debug", 5) == 0) {
       theLog.PrintDestInfo();
-    } else {
+
+	} else {
       retVal = false;
     }
   } else {

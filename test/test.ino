@@ -14,10 +14,11 @@
 #include "xlxCloudObj.h"
 #include "xlxConfig.h"
 #include "xlxLogger.h"
+#include "xlxSerialConsole.h"
 
 test(example)
 {
-  
+  theSys.CldJSONCommand("{\"op_flag\":1, \"flash_flag\":0, \"run_flag\":0, \"uid\":\"s1\", \"ring1\":[8,8,8,8,8], \"ring2\":[8,8,8,8,8], \"ring3\":[8,8,8,8,8], \"filter\":0}");
 }
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -89,13 +90,26 @@ test(example)
 	theSys.InitNetwork();
 	theSys.InitCloudObj();
 	theSys.InitSensors();
+  theConsole.Init();
 	theSys.Start();
+	while (Time.now() < 2000) {
+		Particle.process();
+	}
   }
 
   void loop()
   {
-    Serial.print (".");
-    delay(1000);
+    //Serial.print (".");
+    static UC tick = 0;
+
+    IF_MAINLOOP_TIMER( theSys.ProcessCommands(), "ProcessCommands" );
+
+    IF_MAINLOOP_TIMER( theSys.CollectData(tick++), "CollectData" );
+
+  	IF_MAINLOOP_TIMER( theSys.ReadNewRules(), "ReadNewRules" );
+
+    IF_MAINLOOP_TIMER( theSys.SelfCheck(RTE_DELAY_SELFCHECK), "SelfCheck" );
+
     if (flag)
       Test::run();
   }

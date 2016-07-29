@@ -9,6 +9,14 @@
 
 #include "flashee-eeprom.h"
 
+/*Note: if any of these structures are modified, the following print functions may need updating:
+ - ConfigClass::print_config()
+ - SmartControllerClass::print_devStatus_row()
+ - SmartControllerClass::print_schedule_table()
+ - SmartControllerClass::print_scenario_table()
+ - SmartControllerClass::print_rule_table()
+*/
+
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------
