@@ -18,7 +18,8 @@
 
 test(example)
 {
-  theSys.CldJSONCommand("{\"op_flag\":1, \"flash_flag\":0, \"run_flag\":0, \"uid\":\"s1\", \"ring1\":[8,8,8,8,8], \"ring2\":[8,8,8,8,8], \"ring3\":[8,8,8,8,8], \"filter\":0}");
+  //String in ="";
+  theSys.CldJSONCommand("{'op_flag':1, 'flash_flag':0, 'run_flag':0, 'uid':'s1','ring1':[1,8,8,8,8,8], 'ring2':[1,8,8,8,8,8], 'ring3':[1,8,8,8,8,8], 'filter':0}");
 }
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
