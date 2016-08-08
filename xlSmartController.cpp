@@ -522,7 +522,40 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 	return 0;
 }
 
-int SmartControllerClass::CldJSONCommand(String jsonData)
+// Execute Operations, including SerialConsole commands
+/// Format: {type: '', cmd: ''}
+int SmartControllerClass::CldJSONCommand(String jsonCmd)
+{
+	StaticJsonBuffer<512> jsonBuffer;		// 64 * 8
+  JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(jsonCmd.c_str()));
+
+  if (!root.success())
+  {
+    LOGE(LOGTAG_MSG, "Error parsing json cmd: %s", jsonCmd.c_str());
+		return 0;
+  }
+
+	if (!root.containsKey("cmd") || !root.containsKey("data"))
+  {
+		LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
+		return 0;
+  }
+
+	const char* strCmd = root["cmd"];
+	const char* strData = root["data"];
+	if( stricmp(strCmd, "serial") == 0 ) {
+		// Execute serial port command, and reflect results on cloud variable
+		if( !theConfig.IsCloudSerialEnabled() ) {
+			LOGN(LOGTAG_MSG, "Cloud serial command is not allowed. Check system config.");
+			return 0;
+		}
+		theConsole.ExecuteCloudCommand(strData);
+	}
+
+	return 1;
+}
+
+int SmartControllerClass::CldJSONConfig(String jsonData)
 {
   //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
@@ -534,7 +567,7 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
   //ToDo: for StaticJsonBuffer<num> to work, num must be much bigger than the value being read in. Figure out why this is. In the meanime
   //  use 1000 instead for unit testing
   //StaticJsonBuffer<COMMAND_JSON_SIZE> jsonBuffer;
-  StaticJsonBuffer<1000> jsonBuffer;
+  StaticJsonBuffer<512> jsonBuffer;		// 64 * 8
 
   JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(jsonData.c_str()));
 
@@ -580,9 +613,9 @@ int SmartControllerClass::CldJSONCommand(String jsonData)
 bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 {
 	bool isSuccess = true;
-	OP_FLAG op_flag = (OP_FLAG)data["op_flag"].as<int>();
-	FLASH_FLAG flash_flag = (FLASH_FLAG)data["flash_flag"].as<int>();
-	RUN_FLAG run_flag = (RUN_FLAG)data["run_flag"].as<int>();
+	OP_FLAG op_flag = (OP_FLAG)data["op"].as<int>();
+	FLASH_FLAG flash_flag = (FLASH_FLAG)data["fl"].as<int>();
+	RUN_FLAG run_flag = (RUN_FLAG)data["run"].as<int>();
 
 	if (op_flag < GET || op_flag > DELETE)
 	{

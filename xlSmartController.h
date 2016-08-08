@@ -64,7 +64,8 @@ public:
   // Cloud interface implementation
   int CldSetTimeZone(String tzStr);
   int CldPowerSwitch(String swStr);
-  int CldJSONCommand(String jsonData);
+  int CldJSONCommand(String jsonCmd);
+  int CldJSONConfig(String jsonData);
 
   // Parsing Functions
   bool ParseCmdRow(JsonObject& data);

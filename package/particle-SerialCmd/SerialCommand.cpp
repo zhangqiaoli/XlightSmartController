@@ -202,6 +202,15 @@ int SerialCommand::findFirstCommand(uint8_t state)
 	return nFound;
 }
 
+// Manully set command buffer
+void SerialCommand::setCommandBuffer(const char *cmd)
+{
+	int len = min(SERIALCOMMANDBUFFER, strlen(cmd));
+	strncpy(buffer, cmd, len);
+	bufPos = len;
+	if (bufPos > SERIALCOMMANDBUFFER-1) bufPos=0; // wrap buffer around if full
+}
+
 void SerialCommand::SetStateMachine(const StateMachine_t *newSM, int sizeSM, uint8_t initState)
 {
 	CommandList = newSM;

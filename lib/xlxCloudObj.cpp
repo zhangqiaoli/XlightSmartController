@@ -59,6 +59,9 @@ void CloudObjClass::InitCloudObj()
   Particle.function(CLF_SetTimeZone, &CloudObjClass::CldSetTimeZone, this);
   Particle.function(CLF_PowerSwitch, &CloudObjClass::CldPowerSwitch, this);
   Particle.function(CLF_JSONCommand, &CloudObjClass::CldJSONCommand, this);
+  Particle.function(CLF_JSONConfig, &CloudObjClass::CldJSONConfig, this);
+
+  Particle.function(CLF_SetTimeZone, &CloudObjClass::CldSetTimeZone, this);
 #endif
 }
 
@@ -139,4 +142,15 @@ void CloudObjClass::UpdateJSONData()
     Particle.publish(CLT_NAME_SensorData, m_jsonData, CLT_TTL_SensorData, PRIVATE);
 #endif
   }
+}
+
+// Publish LOG message and update cloud veriable
+BOOL CloudObjClass::PublishLog(const char *msg)
+{
+  BOOL rc = true;
+  m_lastMsg = msg;
+#ifdef USE_PARTICLE_CLOUD
+  rc = Particle.publish(CLT_NAME_LOGMSG, msg, CLT_TTL_LOGMSG, PRIVATE);
+#endif
+  return rc;
 }

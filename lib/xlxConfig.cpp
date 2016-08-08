@@ -74,6 +74,7 @@ void ConfigClass::InitConfig()
   m_config.indBrightness = 0;
   m_config.typeMainDevice = 1;
   m_config.numDevices = 1;
+	m_config.enableCloudSerialCmd = false;
 }
 
 void ConfigClass::InitDevStatus()
@@ -605,6 +606,19 @@ void ConfigClass::SetToken(const char *strName)
 {
   strncpy(m_config.Token, strName, sizeof(m_config.Token) - 1);
   m_isChanged = true;
+}
+
+BOOL ConfigClass::ConfigClass::IsCloudSerialEnabled()
+{
+	return m_config.enableCloudSerialCmd;
+}
+
+void ConfigClass::SetCloudSerialEnabled(BOOL sw)
+{
+	if( sw != m_config.enableCloudSerialCmd ) {
+		m_config.enableCloudSerialCmd = sw;
+		m_isChanged = true;
+	}
 }
 
 BOOL ConfigClass::IsSensorEnabled(sensors_t sr)

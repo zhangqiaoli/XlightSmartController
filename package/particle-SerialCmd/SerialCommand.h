@@ -105,6 +105,7 @@ class SerialCommand
 
 		bool scanStateMachine();
 		int findFirstCommand(uint8_t state);
+		void setCommandBuffer(const char *cmd);
 
     int numCommand;
     int currentCommand;

@@ -53,6 +53,11 @@ public:
   bool SetWiFiCredential(const char *cmd);
   bool PingAddress(const char *sAddress);
   bool String2IP(const char *sAddress, IPAddress &ipAddr);
+
+  bool ExecuteCloudCommand(const char *cmd);
+
+private:
+  bool isInCloudCommand;
 };
 
 //------------------------------------------------------------------

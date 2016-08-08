@@ -8,8 +8,7 @@
 
 // Comment it off if we don't use Particle public cloud
 /// Notes:
-/// Currently, Particle public cloud only supports 10 variables and 4 functions.
-/// Therefore, they are better used for debugging and monitoring.
+/// Currently, Particle public cloud supports up to 20 variables and 15 functions.
 /// In general situation, we should use publish/subscribe or MQTT.
 #define USE_PARTICLE_CLOUD
 
@@ -29,6 +28,7 @@
 #define CLF_SetTimeZone         "SetTimeZone"     // Can also be a Particle Object
 #define CLF_PowerSwitch         "PowerSwitch"     // Can also be a Particle Object
 #define CLF_JSONCommand         "JSONCommand"     // Can also be a Particle Object
+#define CLF_JSONConfig          "JSONConfig"      // Can also be a Particle Object
 #define CLF_SetHue              "SetHue"
 #define CLF_SetCurTime          "SetCurTime"
 
@@ -36,10 +36,15 @@
 // 1. For Particle cloud the publishing speed is about 1 event per sec.
 // 2. The length of the topic is limited to a max of 63 characters.
 // 3. The maximum length of data is 255 bytes.
+/// Alarm event
 #define CLT_NAME_Alarm          "xlc-event-alarm"
-#define CLT_TTL_Alarm           3600              // 1 hour
+#define CLT_TTL_Alarm           1800              // 0.5 hour
+/// Sensor data update
 #define CLT_NAME_SensorData     "xlc-data-sensor"
 #define CLT_TTL_SensorData      SEN_DHT_SPEED_LOW
+/// LOG Message
+#define CLT_NAME_LOGMSG          "xlc-event-log"
+#define CLT_TTL_LOGMSG           3600              // 1 hour
 
 //------------------------------------------------------------------
 // Xlight CloudObj Class
@@ -68,13 +73,15 @@ public:
 
   virtual int CldSetTimeZone(String tzStr) = 0;
   virtual int CldPowerSwitch(String swStr) = 0;
-  virtual int CldJSONCommand(String jsonData) = 0;
+  virtual int CldJSONCommand(String jsonCmd) = 0;
+  virtual int CldJSONConfig(String jsonData) = 0;
 
   BOOL UpdateTemperature(float value);
   BOOL UpdateHumidity(float value);
   BOOL UpdateBrightness(uint16_t value);
   BOOL UpdateMotion(bool value);
   void UpdateJSONData();
+  BOOL PublishLog(const char *msg);
 
 protected:
   void InitCloudObj();

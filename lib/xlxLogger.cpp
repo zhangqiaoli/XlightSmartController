@@ -107,8 +107,9 @@ void LoggerClass::WriteLog(UC level, const char *tag, const char *msg, ...)
 
   // Output Log to Particle cloud variable
   buf[nSize] = NULL;
-  if( level <= m_level[LOGDEST_CLOUD] )
-    theSys.m_lastMsg = buf;
+  if( level <= m_level[LOGDEST_CLOUD] ) {
+    theSys.PublishLog(buf);
+  }
 
   // ToDo: send log to other destinations
   //if( level <= m_level[LOGDEST_SYSLOG] ) {

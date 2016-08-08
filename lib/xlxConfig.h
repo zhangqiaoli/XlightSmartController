@@ -48,6 +48,7 @@ typedef struct
   char Organization[24];                    // Organization name
   char ProductName[24];                     // Product name
   char Token[64];                           // Token
+  BOOL enableCloudSerialCmd;                // Whether enable cloud serial command
 } Config_t;
 
 //------------------------------------------------------------------
@@ -189,6 +190,9 @@ public:
 
   String GetToken();
   void SetToken(const char *strName);
+
+  BOOL IsCloudSerialEnabled();
+  void SetCloudSerialEnabled(BOOL sw = true);
 
   BOOL IsSensorEnabled(sensors_t sr);
   void SetSensorEnabled(sensors_t sr, BOOL sw = true);

@@ -153,6 +153,7 @@ const char *strAuthMethods[4] = {"None", "WPA2", "WEP", "TKIP"};
 //------------------------------------------------------------------
 SerialConsoleClass::SerialConsoleClass()
 {
+  isInCloudCommand = false;
 }
 
 void SerialConsoleClass::Init()
@@ -390,7 +391,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
 		SERIAL_LN("theConfig.m_isSCTChanged = \t\t%s", (theConfig.IsSCTChanged() ? "true" : "false"));
 		SERIAL_LN("theConfig.m_isRTChanged = \t\t%s", (theConfig.IsRTChanged() ? "true" : "false"));
 		SERIAL_LN("theConfig.m_isSNTChanged = \t\t%s\n\r", (theConfig.IsSNTChanged() ? "true" : "false"));
-		
+
 	} else if (strnicmp(sTopic, "table", 5) == 0) {
 		SERIAL_LN("SCT_ROW_SIZE: \t\t\t\t%u", SCT_ROW_SIZE);
 		SERIAL_LN("MAX_SCT_ROWS: \t\t\t\t%d", MAX_SCT_ROWS);
@@ -752,4 +753,15 @@ bool SerialConsoleClass::String2IP(const char *sAddress, IPAddress &ipAddr)
   }
 
   return true;
+}
+
+// Simulate to run a command string
+bool SerialConsoleClass::ExecuteCloudCommand(const char *cmd)
+{
+  clearBuffer();
+  setCommandBuffer(cmd);
+  isInCloudCommand = true;
+  bool rc = scanStateMachine();
+  isInCloudCommand = false;
+  return rc;
 }
