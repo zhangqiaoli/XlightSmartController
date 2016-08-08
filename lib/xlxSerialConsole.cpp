@@ -198,6 +198,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   wifi:  check Wi-Fi module status"));
     SERIAL_LN(F("   wlan:  check internet status"));
     SERIAL_LN(F("e.g. check rf\n\r"));
+    CloudOutput(F("check ble|flash|rf|wifi|wlan"));
   } else if(strTopic.equals("show")) {
     SERIAL_LN(F("--- Command: show <object> ---"));
     SERIAL_LN(F("To show value or summary information, where <object> could be:"));
@@ -210,32 +211,37 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   rf:      print RF details"));
     SERIAL_LN(F("   time:    show current time and time zone"));
     SERIAL_LN(F("   var:     show system variables"));
-	SERIAL_LN(F("   table:   show working memory tables"));
+	  SERIAL_LN(F("   table:   show working memory tables"));
     SERIAL_LN(F("   version: show firmware version"));
     SERIAL_LN(F("e.g. show rf\n\r"));
+    CloudOutput(F("show ble|debug|dev|flag|net|node|rf|time|var|table|version"));
   } else if(strTopic.equals("ping")) {
     SERIAL_LN(F("--- Command: ping <address> ---"));
     SERIAL_LN(F("To ping an IP or domain name, default address is 8.8.8.8"));
     SERIAL_LN(F("e.g. ping www.google.com"));
     SERIAL_LN(F("e.g. ping 192.168.0.1\n\r"));
+    CloudOutput(F("ping <address>"));
   } else if(strTopic.equals("do")) {
     SERIAL_LN(F("--- Command: do <action parameters> ---"));
     SERIAL_LN(F("To execute action, e.g. turn on the lamp"));
     SERIAL_LN(F("e.g. do on"));
     SERIAL_LN(F("e.g. do off"));
     SERIAL_LN(F("e.g. do color R,G,B\n\r"));
+    CloudOutput(F("do on|off|color"));
   } else if(strTopic.equals("test")) {
     SERIAL_LN(F("--- Command: test <action parameters> ---"));
     SERIAL_LN(F("To perform testing, where <action> could be:"));
     SERIAL_LN(F("   ping <ip address>: ping ip address"));
     SERIAL_LN(F("   send <NodeId:MessageId>: send test message to node"));
     SERIAL_LN(F("   send <message>: send MySensors format message\n\r"));
+    CloudOutput(F("test ping|send"));
   } else if(strTopic.equals("send")) {
     SERIAL_LN(F("--- Command: send <message> or <NodeId:MessageId> ---"));
     SERIAL_LN(F("To send testing message"));
     SERIAL_LN(F("e.g. send 0:1"));
     SERIAL_LN(F("e.g. send 0;1;0;0;6;"));
     SERIAL_LN(F("e.g. send 0;1;1;0;0;23.5\n\r"));
+    CloudOutput(F("send <message> or <NodeId:MessageId>"));
   } else if(strTopic.equals("set")) {
     SERIAL_LN(F("--- Command: set <object value> ---"));
     SERIAL_LN(F("To change config"));
@@ -245,6 +251,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("e.g. set debug [log:level]"));
     SERIAL_LN(F("     , where log is [serial|flash|syslog|cloud|all"));
     SERIAL_LN(F("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r"));
+    CloudOutput(F("set tz|nodeid|base|debug"));
   } else if(strTopic.equals("sys")) {
     SERIAL_LN(F("--- Command: sys <mode> ---"));
     SERIAL_LN(F("To control the system status, where <mode> could be:"));
@@ -256,10 +263,12 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   dfu:     enter DFU mode"));
     SERIAL_LN(F("   update:  update firmware"));
     SERIAL_LN(F("e.g. sys reset\n\r"));
+    CloudOutput(F("sys base|private|reset|safe|setup|dfu|update"));
   } else {
     SERIAL_LN(F("Available Commands:"));
     SERIAL_LN(F("    check, show, ping, do, test, send, set, sys, help or ?"));
     SERIAL_LN(F("Use 'help <command>' for more information\n\r"));
+    CloudOutput(F("check, show, ping, do, test, send, set, sys, help or ?"));
   }
 
   return true;
@@ -297,6 +306,7 @@ bool SerialConsoleClass::doCheck(const char *cmd)
   if( sTopic ) {
     if (strnicmp(sTopic, "rf", 2) == 0) {
       SERIAL_LN("**RF module is %s\n\r", (theRadio.isValid() ? "available" : "not available!"));
+      CloudOutput("RF module is %s", (theRadio.isValid() ? "available" : "not available!"));
     } else if (strnicmp(sTopic, "wifi", 4) == 0) {
         SERIAL("**Wi-Fi module is %s, ", (WiFi.ready() ? "ready" : "not ready!"));
         int lv_RSSI = WiFi.RSSI();
@@ -307,10 +317,13 @@ bool SerialConsoleClass::doCheck(const char *cmd)
         } else {
           SERIAL_LN("time-out\n\r");
         }
+        CloudOutput("Wi-Fi module is %s, RSSI=%ddB", (WiFi.ready() ? "ready" : "not ready!"), lv_RSSI);
     } else if (strnicmp(sTopic, "wlan", 4) == 0) {
         SERIAL_LN("**Resolving IP for www.google.com...%s\n\r", (WiFi.resolve("www.google.com") ? "OK" : "failed!"));
+        CloudOutput("WLAN is OK");
     } else if (strnicmp(sTopic, "flash", 5) == 0) {
         SERIAL_LN("** Free memory: %lu bytes, total EEPROM space: %lu bytes\n\r", System.freeMemory(), EEPROM.length());
+        CloudOutput("Free memory: %lu bytes, total EEPROM space: %lu bytes", System.freeMemory(), EEPROM.length());
     } else {
       retVal = false;
     }
@@ -349,25 +362,27 @@ bool SerialConsoleClass::doShow(const char *cmd)
         SERIAL_LN("  SSID: %s", WiFi.SSID());
       }
       SERIAL_LN("");
-
+      CloudOutput("RF NetworkID %s, MAC %s, SSID %s",
+          PrintUint64(strDisplay, theRadio.getCurrentNetworkID()),
+          PrintMacAddress(strDisplay, mac),
+          WiFi.SSID());
 	} else if (strnicmp(sTopic, "node", 4) == 0) {
       uint8_t lv_NodeID = theRadio.getAddress();
       SERIAL_LN("**NodeID: %d (%s), Status: %d", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")), theSys.GetStatus());
       SERIAL_LN("  Product Info: %s-%s-%d", theConfig.GetOrganization().c_str(), theConfig.GetProductName().c_str(), theConfig.GetVersion());
       SERIAL_LN("  System Info: %s-%s\n\r", theSys.GetSysID().c_str(), theSys.GetSysVersion().c_str());
-
+      CloudOutput("NodeID: %d (%s), Status: %d", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")), theSys.GetStatus());
 	} else if (strnicmp(sTopic, "ble", 3) == 0) {
       // ToDo: show BLE summay
       SERIAL_LN("");
-
+      CloudOutput("");
 	} else if (strnicmp(sTopic, "rf", 2) == 0) {
       theRadio.PrintRFDetails();
       SERIAL_LN("");
-
 	} else if (strnicmp(sTopic, "time", 4) == 0) {
       time_t time = Time.now();
       SERIAL_LN("Now is %s, zone: %d\n\r", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), -5);
-
+      CloudOutput("Local time %s, zone: %d", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), -5);
 	}
 	else if (strnicmp(sTopic, "var", 3) == 0) {
 		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
@@ -416,10 +431,9 @@ bool SerialConsoleClass::doShow(const char *cmd)
 
 	} else if (strnicmp(sTopic, "version", 7) == 0) {
       SERIAL_LN("System version: %s\n\r", System.version().c_str());
-
+      CloudOutput("System version: %s", System.version().c_str());
 	} else if (strnicmp(sTopic, "debug", 5) == 0) {
-      theLog.PrintDestInfo();
-
+      CloudOutput(theLog.PrintDestInfo());
 	} else {
       retVal = false;
     }
@@ -524,6 +538,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
       if( sParam1) {
         // ToDo: set time zone
         SERIAL_LN("Set Time Zone to %s\n\r", sParam1);
+        CloudOutput("Set Time Zone to %s", sParam1);
         retVal = true;
       }
     } else if (strnicmp(sTopic, "nodeid", 6) == 0) {
@@ -537,6 +552,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
       if( sParam1) {
         theRadio.enableBaseNetwork(atoi(sParam1) > 0);
         SERIAL_LN("Base RF network is %s\n\r", (theRadio.isBaseNetworkEnabled() ? "enabled" : "disabled"));
+        CloudOutput("Base RF network is %s", (theRadio.isBaseNetworkEnabled() ? "enabled" : "disabled"));
         retVal = true;
       }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {
@@ -544,7 +560,10 @@ bool SerialConsoleClass::doSet(const char *cmd)
       if( sParam1) {
         String strMsg = sParam1;
         retVal = theLog.ChangeLogLevel(strMsg);
-        if( retVal ) SERIAL_LN("Set Debug Level to %s\n\r", sParam1);
+        if( retVal ) {
+          SERIAL_LN("Set Debug Level to %s\n\r", sParam1);
+          CloudOutput("Set Debug Level to %s", sParam1);
+        }
       }
     }
   }
@@ -571,16 +590,19 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
   if( sTopic ) {
     if (strnicmp(sTopic, "reset", 5) == 0) {
       SERIAL_LN(F("System is about to reset..."));
+      CloudOutput("System is about to reset");
       delay(500);
       System.reset();
     }
     else if (strnicmp(sTopic, "safe", 4) == 0) {
       SERIAL_LN(F("System is about to enter safe mode..."));
+      CloudOutput("System is about to enter safe mod");
       delay(1000);
       System.enterSafeMode();
     }
     else if (strnicmp(sTopic, "dfu", 3) == 0) {
       SERIAL_LN(F("System is about to enter DFU mode..."));
+      CloudOutput("System is about to enter DFU mode");
       delay(1000);
       System.dfu();
     }
@@ -596,11 +618,13 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
       }
       theRadio.switch2BaseNetwork();
       SERIAL_LN(F("Switched to base network\n\r"));
+      CloudOutput(F("Switched to base network"));
     }
     else if (strnicmp(sTopic, "private", 7) == 0) {
       // Switch to Private Network
       theRadio.switch2MyNetwork();
       SERIAL_LN(F("Switched to private network: %s\n\r"), PrintUint64(strDisplay, theRadio.getCurrentNetworkID()));
+      CloudOutput(F("Switched to private network"));
     }
   } else { return false; }
 
@@ -613,21 +637,28 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
 // Get WI-Fi crediential from serial Port
 bool SerialConsoleClass::SetupWiFi(const char *cmd)
 {
+  String sText;
   switch( (consoleState_t)currentState ) {
   case consoleWF_YesNo:
     // Confirm menu choice
-    SERIAL_LN("Sure to setup Wi-Fi crediential? (y/N)");
+    sText = "Sure to setup Wi-Fi crediential? (y/N)";
+    SERIAL_LN(sText.c_str());
+    CloudOutput(sText.c_str());
     break;
 
   case consoleWF_GetSSID:
-    SERIAL_LN("Please enter SSID [%s]:", gstrWiFi_SSID.c_str());
+    sText = "Please enter SSID";
+    SERIAL_LN("%s [%s]:", sText.c_str(), gstrWiFi_SSID.c_str());
+    CloudOutput(sText.c_str());
     break;
 
   case consoleWF_GetPassword:
     // Record SSID
     if( strlen(cmd) > 0 )
       gstrWiFi_SSID = cmd;
-    SERIAL_LN("Please enter PASSWORD:");
+    sText = "Please enter PASSWORD";
+    SERIAL_LN("%s:", sText.c_str());
+    CloudOutput(sText.c_str());
     break;
 
   case consoleWF_GetAUTH:
@@ -640,6 +671,7 @@ bool SerialConsoleClass::SetupWiFi(const char *cmd)
     SERIAL_LN("  2. %s", strAuthMethods[2]);
     SERIAL_LN("  3. %s", strAuthMethods[3]);
     SERIAL_LN("  (q)uit");
+    CloudOutput("Select authentication method [0..3]");
     break;
 
   case consoleWF_Confirm:
@@ -650,6 +682,7 @@ bool SerialConsoleClass::SetupWiFi(const char *cmd)
     SERIAL_LN("  SSID: %s", gstrWiFi_SSID.c_str());
     SERIAL_LN("  Password: ******");
     SERIAL_LN("  Authentication: %s", strAuthMethods[gintWiFi_Auth]);
+    CloudOutput("Sure to apply the Wi-Fi credential? (y/N)");
     break;
   }
 
@@ -669,6 +702,7 @@ bool SerialConsoleClass::SetWiFiCredential(const char *cmd)
     WiFi.setCredentials(gstrWiFi_SSID, gstrWiFi_Password, WPA, WLAN_CIPHER_TKIP);
   }
   SERIAL("Wi-Fi credential saved...reconnecting...");
+  CloudOutput("Wi-Fi credential saved...reconnecting");
   WiFi.connect();
   SERIAL_LN("%s", (WiFi.ready() ? "OK" : "Failed"));
 
@@ -679,6 +713,7 @@ bool SerialConsoleClass::PingAddress(const char *sAddress)
 {
   if( !WiFi.ready() ) {
     SERIAL_LN("Wi-Fi is not ready!");
+    CloudOutput("Wi-Fi is not ready");
     return false;
   }
 
@@ -695,6 +730,7 @@ bool SerialConsoleClass::PingAddress(const char *sAddress)
   int myByteCount = WiFi.ping(ipAddr, 3);
   int elapsedTime = millis() - pingStartTime;
   SERIAL_LN("recieved %d bytes over %d ms", myByteCount, elapsedTime);
+  CloudOutput("Pinging %s recieved %d", sAddress, myByteCount);
   return true;
 }
 
@@ -764,4 +800,22 @@ bool SerialConsoleClass::ExecuteCloudCommand(const char *cmd)
   bool rc = scanStateMachine();
   isInCloudCommand = false;
   return rc;
+}
+
+// Output concise result to the cloud
+void SerialConsoleClass::CloudOutput(const char *msg, ...)
+{
+  if( !isInCloudCommand ) return;
+
+  int nSize = 0;
+  char buf[MAX_MESSAGE_LEN];
+
+  // Prepare message
+  va_list args;
+  va_start(args, msg);
+  nSize = vsnprintf(buf, MAX_MESSAGE_LEN, msg, args);
+  buf[nSize] = NULL;
+
+  // Set message
+  theSys.m_lastMsg = buf;
 }

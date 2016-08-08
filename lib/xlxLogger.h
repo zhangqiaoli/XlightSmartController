@@ -56,7 +56,7 @@ public:
   void SetLevel(UC logDest, UC logLevel);
   void WriteLog(UC level, const char *tag, const char *msg, ...);
   bool ChangeLogLevel(String &strMsg);
-  void PrintDestInfo();
+  String PrintDestInfo();
 };
 
 //------------------------------------------------------------------

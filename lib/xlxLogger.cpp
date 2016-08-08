@@ -154,11 +154,21 @@ bool LoggerClass::ChangeLogLevel(String &strMsg)
   return true;
 }
 
-void LoggerClass::PrintDestInfo()
+String LoggerClass::PrintDestInfo()
 {
+  String strShortDesc = "";
+
   UC lv_Dest;
   for( lv_Dest = LOGDEST_SERIAL; lv_Dest < LOGDEST_DUMMY; lv_Dest++ ) {
     SERIAL_LN("LOG Channel: %s - level: %s", strDestNames[lv_Dest], strLevelNames[GetLevel(lv_Dest)]);
+    if( lv_Dest != LOGDEST_SERIAL ) {
+      strShortDesc += "; ";
+    }
+    strShortDesc += strLevelNames[GetLevel(lv_Dest)];
+    strShortDesc += "@";
+    strShortDesc += strDestNames[lv_Dest];
   }
   SERIAL_LN("");
+
+  return strShortDesc;
 }

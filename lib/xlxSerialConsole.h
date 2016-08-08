@@ -55,6 +55,7 @@ public:
   bool String2IP(const char *sAddress, IPAddress &ipAddr);
 
   bool ExecuteCloudCommand(const char *cmd);
+  void CloudOutput(const char *msg, ...);
 
 private:
   bool isInCloudCommand;
