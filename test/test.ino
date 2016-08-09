@@ -21,7 +21,14 @@ test(example)
   //String in ="";
   /// Single row
   theSys.CldJSONConfig("{'op':1, 'fl':0, 'run':0, 'uid':'s1','ring1':[1,8,8,8,8,8], 'ring2':[1,8,8,8,8,8], 'ring3':[1,8,8,8,8,8], 'filter':0}");
-  //theSys.CldJSONCmd("{'cmd':'s1', 'data':[]}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'?'}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'? show'}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'check rf'}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'check wifi'}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'show debug'}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'show net'}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'ping'}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'sys reset'}");
 
   /// Multiple rows
   //theSys.CldJSONConfig("{'rows':2, 'data': [{'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0101080808080800}, {'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0201080808080800}, {'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0301080808080800}]");
