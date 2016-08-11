@@ -35,10 +35,10 @@ test(example)
 
   /// Format_3: Concatenate strings
   //// First string
-  theSys.CldJSONConfig("{'x0':'{'op':1, 'fl':0, 'run':0, 'uid':'s1','ring1':[1,8,8,8,8,8], '}");
+  theSys.CldJSONConfig("{'x0':'{\"op\":1, \"fl\":0, \"run\":0, \"uid\":\"s1\",\"ring1\":[1,8,8,8,8,8], '}");
   //// Strings in middle
-  theSys.CldJSONConfig("{'x1': ''ring2':[1,8,8,8,8,8], 'ring3':[1,8,8,8,8,8], '}");
-  theSys.CldJSONConfig("filter':0}'");
+  theSys.CldJSONConfig("{'x1': '\"ring2\":[1,8,8,8,8,8], \"ring3\":[1,8,8,8,8,8], '}");
+  theSys.CldJSONConfig("\"filter\":0}");
   //// Last string: same as Format_1 or Format_2
 
   //// Format_3 test case
