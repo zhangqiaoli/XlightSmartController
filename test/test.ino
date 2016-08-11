@@ -19,7 +19,7 @@
 test(example)
 {
   //String in ="";
-  /// Single row
+  /// Format_1: Single row
   theSys.CldJSONConfig("{'op':1, 'fl':0, 'run':0, 'uid':'s1','ring1':[1,8,8,8,8,8], 'ring2':[1,8,8,8,8,8], 'ring3':[1,8,8,8,8,8], 'filter':0}");
   theSys.CldJSONCmd("{'cmd':'serial', 'data':'?'}");
   theSys.CldJSONCmd("{'cmd':'serial', 'data':'? show'}");
@@ -30,8 +30,24 @@ test(example)
   theSys.CldJSONCmd("{'cmd':'serial', 'data':'ping'}");
   theSys.CldJSONCmd("{'cmd':'serial', 'data':'sys reset'}");
 
-  /// Multiple rows
+  /// Format_2: Multiple rows
   //theSys.CldJSONConfig("{'rows':2, 'data': [{'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0101080808080800}, {'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0201080808080800}, {'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0301080808080800}]");
+
+  /// Format_3: Concatenate strings
+  //// First string
+  theSys.CldJSONConfig("{'x0':'{'op':1, 'fl':0, 'run':0, 'uid':'s1','ring1':[1,8,8,8,8,8], '}");
+  //// Strings in middle
+  theSys.CldJSONConfig("{'x1': ''ring2':[1,8,8,8,8,8], 'ring3':[1,8,8,8,8,8], '}");
+  theSys.CldJSONConfig("filter':0}'");
+  //// Last string: same as Format_1 or Format_2
+
+  //// Format_3 test case
+  theSys.CldJSONCmd("{'x0': '{\"cmd\":\"serial\", '}");
+  theSys.CldJSONCmd("{'x1': '\"data\":\"check '}");
+  theSys.CldJSONCmd("wifi\"}");
+  //// Format_3 test case
+  theSys.CldJSONCmd("{'x0': ' '}");
+  theSys.CldJSONCmd("{'cmd':'serial', 'data':'show net'}");
 }
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>

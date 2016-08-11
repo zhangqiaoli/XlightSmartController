@@ -59,6 +59,7 @@ public:
   String m_tzString;
   String m_jsonData;
   String m_lastMsg;
+  String m_strCldCmd;
 
   float m_temperature;
   float m_humidity;
@@ -75,6 +76,7 @@ public:
   virtual int CldPowerSwitch(String swStr) = 0;
   virtual int CldJSONCommand(String jsonCmd) = 0;
   virtual int CldJSONConfig(String jsonData) = 0;
+  int ProcessJSONString(String inStr);
 
   BOOL UpdateTemperature(float value);
   BOOL UpdateHumidity(float value);
@@ -89,6 +91,7 @@ protected:
   StaticJsonBuffer<SENSORDATA_JSON_SIZE> m_jBuf;
   JsonObject *m_jpRoot;
   JsonObject *m_jpData;
+  JsonObject *m_jpCldCmd;
 };
 
 #endif /* xliCloudObj_h */

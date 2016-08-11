@@ -37,6 +37,7 @@ CloudObjClass::CloudObjClass()
   m_humidity = 0.0;
   m_brightness = 0;
   m_jpRoot = &(m_jBuf.createObject());
+  m_strCldCmd = "";
 }
 
 // Initialize Cloud Variables & Functions
@@ -153,4 +154,51 @@ BOOL CloudObjClass::PublishLog(const char *msg)
   rc = Particle.publish(CLT_NAME_LOGMSG, msg, CLT_TTL_LOGMSG, PRIVATE);
 #endif
   return rc;
+}
+
+// Concatenate string with regard to the length limitation of cloud API
+/// Return value:
+/// 0 - string is intact, can be executed
+/// 1 - waiting for more input
+/// -1 - error
+int CloudObjClass::ProcessJSONString(String inStr)
+{
+  String strTemp = inStr;
+  StaticJsonBuffer<COMMAND_JSON_SIZE * 8> lv_jBuf;
+  m_jpCldCmd = &(lv_jBuf.parseObject(const_cast<char*>(strTemp.c_str())));
+  if (!m_jpCldCmd->success())
+  {
+		if( m_strCldCmd.length() > 0 ) {
+      m_strCldCmd.concat(inStr);
+      StaticJsonBuffer<COMMAND_JSON_SIZE * 8> lv_jBuf2;
+			m_jpCldCmd = &(lv_jBuf2.parseObject(const_cast<char*>(m_strCldCmd.c_str())));
+      m_strCldCmd = "";		// Already concatenated
+			if (!m_jpCldCmd->success()) {
+				return -1;
+			}
+		} else {
+			return -1;
+		}
+  }
+
+	if (m_jpCldCmd->containsKey("x0") ) {
+		// Begin of a new string
+		m_strCldCmd = (*m_jpCldCmd)["x0"];
+		return 1;
+  }	else if (m_jpCldCmd->containsKey("x1") ) {
+		// Concatenate
+		strTemp = (*m_jpCldCmd)["x1"];
+    m_strCldCmd += strTemp;
+		return 1;
+  } else if( m_strCldCmd.length() > 0 ) {
+		m_strCldCmd.concat(inStr);
+    StaticJsonBuffer<COMMAND_JSON_SIZE * 8> lv_jBuf3;
+		m_jpCldCmd = &(lv_jBuf3.parseObject(const_cast<char*>(m_strCldCmd.c_str())));
+    m_strCldCmd = "";		// Already concatenated
+		if (!m_jpCldCmd->success()) {
+			return -1;
+		}
+	}
+
+  return 0;
 }

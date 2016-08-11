@@ -394,6 +394,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
 		SERIAL_LN("theSys.m_devStatus = \t\t\t%d", theSys.m_devStatus);
 		SERIAL_LN("theSys.m_tzString = \t\t\t%s", theSys.m_tzString.c_str());
 		SERIAL_LN("theSys.m_jsonData = \t\t\t%s", theSys.m_jsonData.c_str());
+    SERIAL_LN("theSys.m_strCldCmd = \t\t%s\n\r", theSys.m_strCldCmd.c_str());
 		SERIAL_LN("theSys.m_lastMsg = \t\t\t%s", theSys.m_lastMsg.c_str());
 		SERIAL_LN("theSys.m_temperature = \t\t\t%.3f", theSys.m_temperature);
 		SERIAL_LN("theSys.m_humidity = \t\t\t%.3f", theSys.m_humidity);

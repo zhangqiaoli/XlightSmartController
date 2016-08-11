@@ -526,23 +526,24 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 /// Format: {type: '', cmd: ''}
 int SmartControllerClass::CldJSONCommand(String jsonCmd)
 {
-	StaticJsonBuffer<512> jsonBuffer;		// 64 * 8
-  JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(jsonCmd.c_str()));
-
-  if (!root.success())
-  {
-    LOGE(LOGTAG_MSG, "Error parsing json cmd: %s", jsonCmd.c_str());
+	int rc = ProcessJSONString(jsonCmd);
+	if (rc < 0) {
+		// Error input
+		LOGE(LOGTAG_MSG, "Error parsing json cmd: %s", jsonCmd.c_str());
 		return 0;
-  }
+	} else if (rc > 0) {
+		// Wait for more...
+		return 1;
+	}
 
-	if (!root.containsKey("cmd") || !root.containsKey("data"))
+	if (!(*m_jpCldCmd).containsKey("cmd") || !(*m_jpCldCmd).containsKey("data"))
   {
 		LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
 		return 0;
   }
 
-	const char* strCmd = root["cmd"];
-	const char* strData = root["data"];
+	const char* strCmd = (*m_jpCldCmd)["cmd"];
+	const char* strData = (*m_jpCldCmd)["data"];
 	if( stricmp(strCmd, "serial") == 0 ) {
 		// Execute serial port command, and reflect results on cloud variable
 		if( !theConfig.IsCloudSerialEnabled() ) {
@@ -566,25 +567,24 @@ int SmartControllerClass::CldJSONConfig(String jsonData)
 
   //ToDo: for StaticJsonBuffer<num> to work, num must be much bigger than the value being read in. Figure out why this is. In the meanime
   //  use 1000 instead for unit testing
-  //StaticJsonBuffer<COMMAND_JSON_SIZE> jsonBuffer;
-  StaticJsonBuffer<512> jsonBuffer;		// 64 * 8
+	int rc = ProcessJSONString(jsonData);
+	if (rc < 0) {
+		// Error input
+		LOGE(LOGTAG_MSG, "Error parsing json input: %s", jsonData.c_str());
+		return 0;
+	} else if (rc > 0) {
+		// Wait for more...
+		return 1;
+	}
 
-  JsonObject& root = jsonBuffer.parseObject(const_cast<char*>(jsonData.c_str()));
-
-  if (!root.success())
-  {
-    LOGE(LOGTAG_MSG, "Error parsing input: %s", jsonData.c_str());
-    numRows = 0;
-  }
-
-  if (!root.containsKey("rows"))
+  if (!(*m_jpCldCmd).containsKey("rows"))
   {
     numRows = 1;
     bRowsKey = false;
   }
   else
   {
-    numRows = root["rows"].as<int>();
+    numRows = (*m_jpCldCmd)["rows"].as<int>();
   }
 
   int successCount = 0;
@@ -592,14 +592,14 @@ int SmartControllerClass::CldJSONConfig(String jsonData)
   {
 	  if (!bRowsKey)
 	  {
-		  if (ParseCmdRow(root))
+		  if (ParseCmdRow(*m_jpCldCmd))
 		  {
 			  successCount++;
 		  }
 	  }
 	  else
 	  {
-		  JsonObject& data = root["data"][j];
+		  JsonObject& data = (*m_jpCldCmd)["data"][j];
 		  if (ParseCmdRow(data))
 		  {
 			  successCount++;
