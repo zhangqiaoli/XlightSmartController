@@ -11,7 +11,7 @@
 
 /*Note: if any of these structures are modified, the following print functions may need updating:
  - ConfigClass::print_config()
- - SmartControllerClass::print_devStatus_row()
+ - SmartControllerClass::print_devStatus_table()
  - SmartControllerClass::print_schedule_table()
  - SmartControllerClass::print_scenario_table()
  - SmartControllerClass::print_rule_table()
@@ -60,12 +60,15 @@ typedef struct //max 64 bytes
   OP_FLAG op_flag : 2;
   FLASH_FLAG flash_flag : 1;
   RUN_FLAG run_flag : 1;
-  UC id;                                    // ID, 1 based
-  UC type;                                  // Type of lamp
+  UC uid;						   // required
+  UC node_id;                      // Node ID (for RF communication), 1 based
+  UC type;                         // Type of lamp
   Hue_t ring1;
   Hue_t ring2;
   Hue_t ring3;
 } DevStatus_t;
+
+#define DST_ROW_SIZE sizeof(DevStatus_t)
 
 //------------------------------------------------------------------
 // Xlight Schedule Table Structures
@@ -108,6 +111,7 @@ typedef struct //__attribute__((packed))
 	FLASH_FLAG flash_flag	 : 1;
 	RUN_FLAG run_flag		 : 1;
 	UC uid                   : 8;
+	UC node_id				 : 8;
 	UC SCT_uid               : 8;
 	UC SNT_uid               : 8;
 	UC notif_uid             : 8;

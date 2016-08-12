@@ -89,17 +89,19 @@ void ConfigClass::InitDevStatus()
 	whiteHue.WW = 0xFF;
 	whiteHue.State = 1; // 1 for on, 0 for off
 
-	theSys.DevStatus_row.op_flag = (OP_FLAG)1;
-	theSys.DevStatus_row.flash_flag = (FLASH_FLAG)1;
-	theSys.DevStatus_row.run_flag = (RUN_FLAG)1;
+	//ToDo: ensure radio pairing has occured before doing this step in the future
+	DevStatus_t first_row;
 
-	theSys.DevStatus_row.ring1 = whiteHue;
-	theSys.DevStatus_row.ring2 = whiteHue;
-	theSys.DevStatus_row.ring3 = whiteHue;
+	first_row.op_flag = (OP_FLAG)1;
+	first_row.flash_flag = (FLASH_FLAG)1;
+	first_row.run_flag = (RUN_FLAG)1;
+	first_row.node_id = 1; //first light
+	first_row.type = 1; //todo: this this value correct?
+	first_row.ring1 = whiteHue;
+	first_row.ring2 = whiteHue;
+	first_row.ring3 = whiteHue;
 
-	//todo: are these 2 default status values correct?
-	theSys.DevStatus_row.id = 1;
-	theSys.DevStatus_row.type = 1;
+	theSys.DevStatus_table.add(first_row);
 }
 
 BOOL ConfigClass::MemWriteScenarioRow(ScenarioRow_t row, uint32_t address)
@@ -490,62 +492,105 @@ BOOL ConfigClass::SetNumNodes(UC num)
 // Load Device Status
 BOOL ConfigClass::LoadDeviceStatus()
 {
-  if( sizeof(DevStatus_t) <= MEM_DEVICE_STATUS_LEN )
-  {
-		EEPROM.get(MEM_DEVICE_STATUS_OFFSET, theSys.DevStatus_row);
+	if (sizeof(DevStatus_t) <= MEM_DEVICE_STATUS_LEN)
+	{
+		DevStatus_t DevStatusArray[MAX_DEVICE_PER_CONTROLLER];
+		EEPROM.get(MEM_DEVICE_STATUS_OFFSET, DevStatusArray);
 		//check row values / error cases
-		if (theSys.DevStatus_row.op_flag != (OP_FLAG)1
-			|| theSys.DevStatus_row.flash_flag != (FLASH_FLAG)1
-			|| theSys.DevStatus_row.run_flag != (RUN_FLAG)1 )
+
+		for (int i = 0; i < MAX_DEVICE_PER_CONTROLLER; i++)
 		{
-			//no devstatus saved, give default values
+			if (DevStatusArray[i].op_flag == (OP_FLAG)1
+				|| DevStatusArray[i].flash_flag == (FLASH_FLAG)1
+				|| DevStatusArray[i].run_flag == (RUN_FLAG)1)
+			{
+				if (!theSys.DevStatus_table.add(DevStatusArray[i]))
+				{
+					LOGW(LOGTAG_MSG, F("DevStatus row %d failed to load from flash"), i);
+				}
+			}
+		}
+
+		//Todo: this code should be where RF pairing happens. 
+		//currently initiating with assumption of 1 light w node_id=1
+		if (theSys.DevStatus_table.size() == 0)
+		{
 			InitDevStatus();
 			m_isDSTChanged = true;
-			LOGW(LOGTAG_MSG, F("Corrupt Device Status Table, using default status."));
+			LOGW(LOGTAG_MSG, F("Device status table blank, loaded default status."));
 			SaveConfig();
 		}
 		else
 		{
 			LOGD(LOGTAG_MSG, F("Device status table loaded."));
 		}
-    m_isDSTChanged = false;
-  }
-  else
-  {
-    LOGW(LOGTAG_MSG, F("Failed to load device status table, too large."));
-  }
 
-	return true;
+		m_isDSTChanged = false;
+	}
+	else
+	{
+		LOGW(LOGTAG_MSG, F("Failed to load device status table, too large."));
+	}
 }
 
 // Save Device Status
 BOOL ConfigClass::SaveDeviceStatus()
 {
-  if( m_isDSTChanged )
-  {
-	  DevStatus_t tmpRow = theSys.DevStatus_row; //copy of data to write to flash
+	if (m_isDSTChanged)
+	{
+		bool success_flag = true;
+		ListNode<DevStatus_t> *rowptr = theSys.DevStatus_table.getRoot();
+		while (rowptr != NULL)
+		{
+			if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
+			{
+				DevStatus_t tmpRow = rowptr->data;
 
-	  //change flags to 111 to indicate flash row is occupied
-	  tmpRow.op_flag = (OP_FLAG)1;
-	  tmpRow.flash_flag = (FLASH_FLAG)1;
-	  tmpRow.run_flag = (RUN_FLAG)1;
+				switch (rowptr->data.op_flag)
+				{
+				case DELETE:
+					//change flags to 000 to indicate flash row is empty
+					tmpRow.op_flag = (OP_FLAG)0;
+					tmpRow.flash_flag = (FLASH_FLAG)0;
+					tmpRow.run_flag = (RUN_FLAG)0;
+					break;
 
-	  if (sizeof(tmpRow) <= MEM_DEVICE_STATUS_LEN)
-	  {
-		  EEPROM.put(MEM_DEVICE_STATUS_OFFSET, tmpRow); //write to flash
-		  theSys.DevStatus_row.flash_flag = SAVED; //toggle flash flag
+				case PUT:
+				case POST:
+				case GET:
+					//change flags to 111 to indicate flash row is occupied
+					tmpRow.op_flag = (OP_FLAG)1;
+					tmpRow.flash_flag = (FLASH_FLAG)1;
+					tmpRow.run_flag = (RUN_FLAG)1;
+					break;
+				}
 
-		  m_isDSTChanged = false;
-		  LOGD(LOGTAG_MSG, F("Device status table saved."));
-			return true;
-	  }
-	  else
-	  {
-		  LOGE(LOGTAG_MSG, F("Unable to write Device Status to flash, out of memory bounds"));
-	  }
-  }
+				//write tmpRow to flash. Node_id - 1 determines place in memory since node_id is 1 based
+				int row_index = rowptr->data.node_id;
+				if ((row_index - 1) < MAX_DEVICE_PER_CONTROLLER && row_index > 0)
+				{
+					EEPROM.put(MEM_DEVICE_STATUS_OFFSET + (row_index - 1)*DST_ROW_SIZE, tmpRow);
+					rowptr->data.flash_flag = SAVED;
+				}
+				else
+				{
+					LOGE(LOGTAG_MSG, F("Error, cannot write DevStatus row %d to flash, out of memory bounds"), row_index);
+					success_flag = false;
+				}
+			}
+			rowptr = rowptr->next;
+		}
 
-	return false;
+		if (success_flag)
+		{
+			m_isDSTChanged = false;
+			LOGD(LOGTAG_MSG, F("Device status table saved."));
+		}
+		else
+		{
+			LOGE(LOGTAG_MSG, F("Unable to write 1 or more Device status table rows to flash"));
+		}
+	}
 }
 
 // Save Schedule Table

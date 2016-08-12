@@ -7,6 +7,8 @@
 #include "xlxCloudObj.h"
 #include "xlxConfig.h"
 #include "xlxChain.h"
+#include "MyMessage.h"
+#include "xlxSerialConsole.h"
 
 //------------------------------------------------------------------
 // Xlight Command Queue Structures
@@ -55,8 +57,8 @@ public:
   void CollectData(UC tick);
 
   // Device Control Functions
-  int DevSoftSwitch(BOOL sw, UC dev = 0);
-  int DevChangeColor();					//ToDo: Params
+  int DevSoftSwitch(BOOL sw, UC dev = 1);
+  int DevChangeColor(MyMessage msg);					//ToDo: Params
 
   // High speed system timer process
   void FastProcess();
@@ -80,13 +82,13 @@ public:
   bool Change_Sensor();	//ToDo
 
   //LinkedLists (Working memory tables)
-  DevStatus_t DevStatus_row;
+  ChainClass<DevStatus_t> DevStatus_table = ChainClass<DevStatus_t>(MAX_DEVICE_PER_CONTROLLER);
   ChainClass<ScheduleRow_t> Schedule_table = ChainClass<ScheduleRow_t>(MAX_TABLE_SIZE);
   ChainClass<ScenarioRow_t> Scenario_table = ChainClass<ScenarioRow_t>(MAX_TABLE_SIZE);
   ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>((int)(MEM_RULES_LEN / sizeof(RuleRow_t))); // 65536/5 = 13107
 
   //Print LinkedLists (Working memory tables)
-  void print_devStatus_row();
+  void print_devStatus_table(int row);
   void print_schedule_table(int row);
   void print_scenario_table(int row);
   void print_rule_table(int row);

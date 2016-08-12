@@ -211,7 +211,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   rf:      print RF details"));
     SERIAL_LN(F("   time:    show current time and time zone"));
     SERIAL_LN(F("   var:     show system variables"));
-	  SERIAL_LN(F("   table:   show working memory tables"));
+    SERIAL_LN(F("   table:   show working memory tables"));
     SERIAL_LN(F("   version: show firmware version"));
     SERIAL_LN(F("e.g. show rf\n\r"));
     CloudOutput(F("show ble|debug|dev|flag|net|node|rf|time|var|table|version"));
@@ -409,13 +409,16 @@ bool SerialConsoleClass::doShow(const char *cmd)
 		SERIAL_LN("theConfig.m_isSNTChanged = \t\t%s\n\r", (theConfig.IsSNTChanged() ? "true" : "false"));
 
 	} else if (strnicmp(sTopic, "table", 5) == 0) {
+		SERIAL_LN("DST_ROW_SIZE: \t\t\t%u", DST_ROW_SIZE);
+		SERIAL_LN("RT_ROW_SIZE: \t\t\t\t%u", RT_ROW_SIZE);
 		SERIAL_LN("SCT_ROW_SIZE: \t\t\t\t%u", SCT_ROW_SIZE);
 		SERIAL_LN("MAX_SCT_ROWS: \t\t\t\t%d", MAX_SCT_ROWS);
-		SERIAL_LN("RT_ROW_SIZE: \t\t\t\t%u", RT_ROW_SIZE);
 		SERIAL_LN("SNT_ROW_SIZE: \t\t\t\t%u", SNT_ROW_SIZE);
+
 		SERIAL_LN("");
-		SERIAL_LN("DevStatus_row: ");
-		theSys.print_devStatus_row();
+		SERIAL_LN("DevStatus_table: ");
+			for (int i = 0; i < theSys.DevStatus_table.size(); i++)
+				theSys.print_devStatus_table(i);
 		SERIAL_LN("");
 		SERIAL_LN("Rule_table: ");
 			for (int i = 0; i < theSys.Rule_table.size(); i++)
@@ -730,8 +733,9 @@ bool SerialConsoleClass::PingAddress(const char *sAddress)
   SERIAL(")...");
   int myByteCount = WiFi.ping(ipAddr, 3);
   int elapsedTime = millis() - pingStartTime;
-  SERIAL_LN("recieved %d bytes over %d ms", myByteCount, elapsedTime);
+  SERIAL_LN("received %d bytes over %d ms", myByteCount, elapsedTime);
   CloudOutput("Pinging %s recieved %d", sAddress, myByteCount);
+
   return true;
 }
 

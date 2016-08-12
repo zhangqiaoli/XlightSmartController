@@ -27,7 +27,6 @@
 #include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xlxRF24Server.h"
-#include "xlxSerialConsole.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
@@ -462,7 +461,7 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 	return 0;
 }
 
-int SmartControllerClass::DevChangeColor()
+int SmartControllerClass::DevChangeColor(MyMessage msg)
 {
 	// ToDo:
 
@@ -1287,30 +1286,34 @@ ListNode<ScenarioRow_t>* SmartControllerClass::SearchScenario(UC uid)
 //------------------------------------------------------------------
 // Printing tables/working memory chains
 //------------------------------------------------------------------
-void SmartControllerClass::print_devStatus_row()
+void SmartControllerClass::print_devStatus_table(int row)
 {
-	switch (DevStatus_row.op_flag)
+	SERIAL_LN("==========================");
+	SERIAL_LN("==== DevStatus Row %d ====", row);
+
+	switch (DevStatus_table.get(row).op_flag)
 	{
 	case 0: SERIAL_LN("op_flag = GET"); break;
 	case 1: SERIAL_LN("op_flag = POST"); break;
 	case 2: SERIAL_LN("op_flag = PUT"); break;
 	case 3: SERIAL_LN("op_flag = DELETE"); break;
 	}
-	switch (DevStatus_row.flash_flag)
+	switch (Schedule_table.get(row).flash_flag)
 	{
 	case 0: SERIAL_LN("flash_flag = UNSAVED"); break;
 	case 1: SERIAL_LN("flash_flag = SAVED"); break;
 	}
-	switch (DevStatus_row.run_flag)
+	switch (Schedule_table.get(row).run_flag)
 	{
 	case 0: SERIAL_LN("run_flag = UNEXECUTED"); break;
 	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
 	}
-	SERIAL_LN("id = %d", DevStatus_row.id);
-	SERIAL_LN("type = %d", DevStatus_row.type);
-	SERIAL_LN("ring1 = %s", hue_to_string(DevStatus_row.ring1).c_str());
-	SERIAL_LN("ring2 = %s", hue_to_string(DevStatus_row.ring2).c_str());
-	SERIAL_LN("ring3 = %s", hue_to_string(DevStatus_row.ring3).c_str());
+	SERIAL_LN("uid = %d", DevStatus_table.get(row).uid);
+	SERIAL_LN("node_id = %d", DevStatus_table.get(row).node_id);
+	SERIAL_LN("type = %d", DevStatus_table.get(row).type);
+	SERIAL_LN("ring1 = %s", hue_to_string(DevStatus_table.get(row).ring1).c_str());
+	SERIAL_LN("ring2 = %s", hue_to_string(DevStatus_table.get(row).ring2).c_str());
+	SERIAL_LN("ring3 = %s", hue_to_string(DevStatus_table.get(row).ring3).c_str());
 }
 
 String SmartControllerClass::hue_to_string(Hue_t hue)
@@ -1419,6 +1422,7 @@ void SmartControllerClass::print_rule_table(int row)
 	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
 	}
 	SERIAL_LN("uid = %d", Rule_table.get(row).uid);
+	SERIAL_LN("node_id = %d", Rule_table.get(row).node_id);
 	SERIAL_LN("SCT_uid = %d", Rule_table.get(row).SCT_uid);
 	SERIAL_LN("SNT_uid = %d", Rule_table.get(row).SNT_uid);
 	SERIAL_LN("notif_uid = %d", Rule_table.get(row).notif_uid);
