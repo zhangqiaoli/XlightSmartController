@@ -147,6 +147,7 @@ private:
   BOOL m_isSCTChanged;      // Schedule Table Change Flag
   BOOL m_isRTChanged;		    // Rules Table Change Flag
   BOOL m_isSNTChanged;	 	  // Scenerio Table Change Flag
+  BOOL m_isNIDChanged;	 	  // Node ID List Change Flag
 
   Config_t m_config;
   Flashee::FlashDevice* P1Flash;
@@ -178,6 +179,9 @@ public:
 
   BOOL IsSNTChanged();
   void SetSNTChanged(BOOL flag);
+
+  BOOL IsNIDChanged();
+  void SetNIDChanged(BOOL flag);
 
   UC GetVersion();
   BOOL SetVersion(UC ver);

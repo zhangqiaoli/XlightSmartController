@@ -57,6 +57,7 @@ ConfigClass::ConfigClass()
   m_isSCTChanged = false;
   m_isRTChanged = false;
   m_isSNTChanged = false;
+	m_isNIDChanged = false;
   InitConfig();
 }
 
@@ -486,6 +487,16 @@ BOOL ConfigClass::IsSNTChanged()
 void ConfigClass::SetSNTChanged(BOOL flag)
 {
 	m_isSNTChanged = flag;
+}
+
+BOOL ConfigClass::IsNIDChanged()
+{
+	return m_isNIDChanged;
+}
+
+void ConfigClass::SetNIDChanged(BOOL flag)
+{
+	m_isNIDChanged = flag;
 }
 
 UC ConfigClass::GetVersion()
