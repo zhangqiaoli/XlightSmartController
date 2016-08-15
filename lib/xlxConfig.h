@@ -49,6 +49,7 @@ typedef struct
   char ProductName[24];                     // Product name
   char Token[64];                           // Token
   BOOL enableCloudSerialCmd;                // Whether enable cloud serial command
+  UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
 } Config_t;
 
 //------------------------------------------------------------------
@@ -165,6 +166,18 @@ public:
   BOOL SaveConfig();
   BOOL IsConfigLoaded();
 
+  BOOL LoadDeviceStatus();
+  BOOL SaveDeviceStatus();
+
+  BOOL SaveScheduleTable();
+  BOOL SaveScenarioTable();
+
+  BOOL LoadRuleTable();
+  BOOL SaveRuleTable();
+
+  BOOL LoadNodeIDList();
+  BOOL SaveNodeIDList();
+
   BOOL IsConfigChanged();
   void SetConfigChanged(BOOL flag);
 
@@ -220,6 +233,9 @@ public:
 
   UC GetNumDevices();
   BOOL SetNumDevices(UC num);
+
+  UC GetNumNodes();
+  BOOL SetNumNodes(UC num);
 };
 
 //------------------------------------------------------------------

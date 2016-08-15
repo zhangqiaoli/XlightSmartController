@@ -75,6 +75,7 @@ void ConfigClass::InitConfig()
   m_config.indBrightness = 0;
   m_config.typeMainDevice = 1;
   m_config.numDevices = 1;
+	m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
 	m_config.enableCloudSerialCmd = false;
 }
 
@@ -132,6 +133,7 @@ BOOL ConfigClass::LoadConfig()
       || m_config.timeZone.offset < -780
       || m_config.timeZone.offset > 780
       || m_config.numDevices > MAX_DEVICE_PER_CONTROLLER
+			|| m_config.numNodes > MAX_NODE_PER_CONTROLLER
       || m_config.typeMainDevice == devtypUnknown
       || m_config.typeMainDevice >= devtypDummy )
     {
@@ -151,73 +153,16 @@ BOOL ConfigClass::LoadConfig()
   }
 
   // Load Device Status
-  if( sizeof(DevStatus_t) <= MEM_DEVICE_STATUS_LEN )
-  {
-		EEPROM.get(MEM_DEVICE_STATUS_OFFSET, theSys.DevStatus_row);
-		//check row values / error cases
-		if (theSys.DevStatus_row.op_flag != (OP_FLAG)1
-			|| theSys.DevStatus_row.flash_flag != (FLASH_FLAG)1
-			|| theSys.DevStatus_row.run_flag != (RUN_FLAG)1 )
-		{
-			//no devstatus saved, give default values
-			InitDevStatus();
-			m_isDSTChanged = true;
-			LOGW(LOGTAG_MSG, F("Corrupt Device Status Table, using default status."));
-			SaveConfig();
-		}
-		else
-		{
-			LOGD(LOGTAG_MSG, F("Device status table loaded."));
-		}
-    m_isDSTChanged = false;
-  }
-  else
-  {
-    LOGW(LOGTAG_MSG, F("Failed to load device status table, too large."));
-  }
+	LoadDeviceStatus();
 
   // We don't load Schedule Table directly
   // We don't load Scenario Table directly
 
-  //Load Rules from P1 Flash
-#ifdef MCU_TYPE_P1
-  RuleRow_t RuleArray[MAX_RT_ROWS];
-  if (RT_ROW_SIZE*MAX_RT_ROWS <= MEM_RULES_LEN)
-  {
-	  if (P1Flash->read<RuleRow_t[MAX_RT_ROWS]>(RuleArray, MEM_RULES_OFFSET))
-	  {
-		  for (int i = 0; i < MAX_RT_ROWS; i++) //interate through RuleArray for non-empty rows
-		  {
-			  if (RuleArray[i].op_flag == (OP_FLAG)1
-				  && RuleArray[i].flash_flag == (FLASH_FLAG)1
-				  && RuleArray[i].run_flag == (RUN_FLAG)1)
-			  {
-				  //change flags to be written into working memory chain
-				  RuleArray[i].op_flag = POST;
-				  RuleArray[i].run_flag = UNEXECUTED;
-				  RuleArray[i].flash_flag = SAVED;		//Already know it exists in flash
-				  if (!theSys.Rule_table.add(RuleArray[i])) //add non-empty row to working memory chain
-				  {
-					  LOGW(LOGTAG_MSG, F("Rule row %d failed to load from flash"), i);
-				  }
-			  }
-			  //else: row is either empty or trash; do nothing
-		  }
+  // Load Rules
+	LoadRuleTable();
 
-		  m_isRTChanged = true; //allow ReadNewRules() to run
-		  theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
-		  m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again
-	  }
-	  else
-	  {
-		  LOGW(LOGTAG_MSG, F("Failed to read the rule table from flash."));
-	  }
-  }
-  else
-  {
-	  LOGW(LOGTAG_MSG, F("Failed to load rule table, too large."));
-  }
-#endif
+	// Load NodeID List
+	LoadNodeIDList();
 
   return m_isLoaded;
 }
@@ -231,205 +176,20 @@ BOOL ConfigClass::SaveConfig()
     LOGI(LOGTAG_MSG, F("Sysconfig saved."));
   }
 
-  if( m_isDSTChanged )
-  {
-	  DevStatus_t tmpRow = theSys.DevStatus_row; //copy of data to write to flash
+	// Save Device Status
+	SaveDeviceStatus();
 
-	  //change flags to 111 to indicate flash row is occupied
-	  tmpRow.op_flag = (OP_FLAG)1;
-	  tmpRow.flash_flag = (FLASH_FLAG)1;
-	  tmpRow.run_flag = (RUN_FLAG)1;
+	// Save Schedule Table
+	SaveScheduleTable();
 
-	  if (sizeof(tmpRow) <= MEM_DEVICE_STATUS_LEN)
-	  {
-		  EEPROM.put(MEM_DEVICE_STATUS_OFFSET, tmpRow); //write to flash
-		  theSys.DevStatus_row.flash_flag = SAVED; //toggle flash flag
+	// Save Rule Table
+	SaveRuleTable();
 
-		  m_isDSTChanged = false;
-		  LOGD(LOGTAG_MSG, F("Device status table saved."));
-	  }
-	  else
-	  {
-		  LOGE(LOGTAG_MSG, F("Unable to write Device Status to flash, out of memory bounds"));
-	  }
-  }
+	// Save Scenario Table
+	SaveScenarioTable();
 
-  if( m_isSCTChanged )
-  {
-	  bool success_flag = true;
-
-	  ListNode<ScheduleRow_t> *rowptr = theSys.Schedule_table.getRoot();
-	  while (rowptr != NULL)
-	  {
-		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
-		  {
-			  ScheduleRow_t tmpRow = rowptr->data; //copy of data to write to flash
-
-			  switch (rowptr->data.op_flag)
-			  {
-				case DELETE:
-					//change flags to 000 to indicate flash row is empty
-					tmpRow.op_flag = (OP_FLAG)0;
-					tmpRow.flash_flag = (FLASH_FLAG)0;
-					tmpRow.run_flag = (RUN_FLAG)0;
-					break;
-
-				case PUT:
-				case POST:
-				case GET:
-					//change flags to 111 to indicate flash row is occupied
-					tmpRow.op_flag = (OP_FLAG)1;
-					tmpRow.flash_flag = (FLASH_FLAG)1;
-					tmpRow.run_flag = (RUN_FLAG)1;
-					break;
-			  }
-
-			  //write tmpRow to flash
-			  int row_index = rowptr->data.uid;
-			  if (row_index < MAX_SCT_ROWS)
-			  {
-				  EEPROM.put(MEM_SCHEDULE_OFFSET + row_index*SCT_ROW_SIZE, tmpRow); //write to flash
-
-				  rowptr->data.flash_flag = SAVED; //toggle flash flag
-			  }
-			  else
-			  {
-				  LOGE(LOGTAG_MSG, F("Error, cannot write Schedule row %d to flash, out of memory bounds"), row_index);
-				  success_flag = false;
-			  }
-		  }
-		  rowptr = rowptr->next;
-	  }
-
-	  if (success_flag)
-	  {
-		  m_isSCTChanged = false;
-		  LOGD(LOGTAG_MSG, F("Schedule table saved."));
-	  }
-	  else
-	  {
-		  LOGE(LOGTAG_MSG, F("Unable to write 1 or more Schedule table rows to flash"));
-	  }
-  }
-
-  if ( m_isRTChanged )
-  {
-	  bool success_flag = true;
-
-	  ListNode<RuleRow_t> *rowptr = theSys.Rule_table.getRoot();
-	  while (rowptr != NULL)
-	  {
-		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
-		  {
-			  RuleRow_t tmpRow = rowptr->data; //copy of data to write to p1
-
-			  switch (rowptr->data.op_flag)
-			  {
-				case DELETE:
-					//change flags to indicate flash row is empty
-					tmpRow.op_flag = (OP_FLAG)0;
-					tmpRow.flash_flag = (FLASH_FLAG)0;
-					tmpRow.run_flag = (RUN_FLAG)0;
-					break;
-				case PUT:
-				case POST:
-				case GET:
-					//change flags to 111 to indicate flash row is occupied
-					tmpRow.op_flag = (OP_FLAG)1;
-					tmpRow.flash_flag = (FLASH_FLAG)1;
-					tmpRow.run_flag = (RUN_FLAG)1;
-					break;
-			  }
-
-			  //write tmpRow to p1
-			  int row_index = rowptr->data.uid;
-			  if (row_index < MAX_RT_ROWS)
-			  {
-#ifdef MCU_TYPE_P1
-				  P1Flash->write<RuleRow_t>(tmpRow, MEM_RULES_OFFSET + row_index*RT_ROW_SIZE);
-#endif
-				  rowptr->data.flash_flag = SAVED; //toggle flash flag
-			  }
-			  else
-			  {
-				  LOGE(LOGTAG_MSG, F("Error, cannot write Schedule row %d to flash, out of memory bounds"), row_index);
-				  success_flag = false;
-			  }
-		  }
-		  rowptr = rowptr->next;
-	  }
-
-	  if (success_flag)
-	  {
-		  m_isRTChanged = false;
-		  LOGD(LOGTAG_MSG, F("Rule table saved."));
-	  }
-	  else
-	  {
-		  LOGE(LOGTAG_MSG, F("Unable to write 1 or more Rule table rows to flash"));
-	  }
-  }
-
-  if (m_isSNTChanged)
-  {
-	  bool success_flag = true;
-
-	  ListNode<ScenarioRow_t> *rowptr = theSys.Scenario_table.getRoot();
-	  while (rowptr != NULL)
-	  {
-		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
-		  {
-			  ScenarioRow_t tmpRow = rowptr->data; //copy of data to write to p1
-
-			  switch (rowptr->data.op_flag)
-			  {
-			  case DELETE:
-				  //change flags to indicate flash row is empty
-				  tmpRow.op_flag = (OP_FLAG)0;
-				  tmpRow.flash_flag = (FLASH_FLAG)0;
-				  tmpRow.run_flag = (RUN_FLAG)0;
-				  break;
-			  case PUT:
-			  case POST:
-			  case GET:
-				  //change flags to 111 to indicate flash row is occupied
-				  tmpRow.op_flag = (OP_FLAG)1;
-				  tmpRow.flash_flag = (FLASH_FLAG)1;
-				  tmpRow.run_flag = (RUN_FLAG)1;
-				  break;
-			  }
-
-			  //write tmpRow to p1
-			  int row_index = rowptr->data.uid;
-			  if (row_index < MAX_SNT_ROWS)
-			  {
-#ifdef MCU_TYPE_P1
-				  P1Flash->write<ScenarioRow_t>(tmpRow, MEM_SCENARIOS_OFFSET + row_index*SNT_ROW_SIZE);
-#endif
-				  rowptr->data.flash_flag = SAVED; //toggle flash flag
-			  }
-			  else
-			  {
-				  LOGE(LOGTAG_MSG, F("Error, cannot write Scenario row %d to flash, out of memory bounds"), row_index);
-				  success_flag = false;
-			  }
-		  }
-		  rowptr = rowptr->next;
-	  }
-
-	  if (success_flag)
-	  {
-		  m_isSNTChanged = false;
-		  LOGD(LOGTAG_MSG, F("Scenario table saved."));
-	  }
-	  else
-	  {
-		  LOGE(LOGTAG_MSG, F("Unable to write 1 or more Scenario table rows to flash"));
-	  }
-
-	  m_isSNTChanged = false;
-	  LOGD(LOGTAG_MSG, F("Scenerio table saved."));
-  }
+	// Save NodeID List
+	SaveNodeIDList();
 
   return true;
 }
@@ -706,4 +466,346 @@ BOOL ConfigClass::SetNumDevices(UC num)
     return true;
   }
   return false;
+}
+
+UC ConfigClass::GetNumNodes()
+{
+	return m_config.numNodes;
+}
+
+BOOL ConfigClass::SetNumNodes(UC num)
+{
+	if( m_config.numNodes <= MAX_NODE_PER_CONTROLLER )
+  {
+    if( num != m_config.numNodes )
+    {
+      m_config.numNodes = num;
+      m_isChanged = true;
+    }
+    return true;
+  }
+  return false;
+}
+
+// Load Device Status
+BOOL ConfigClass::LoadDeviceStatus()
+{
+  if( sizeof(DevStatus_t) <= MEM_DEVICE_STATUS_LEN )
+  {
+		EEPROM.get(MEM_DEVICE_STATUS_OFFSET, theSys.DevStatus_row);
+		//check row values / error cases
+		if (theSys.DevStatus_row.op_flag != (OP_FLAG)1
+			|| theSys.DevStatus_row.flash_flag != (FLASH_FLAG)1
+			|| theSys.DevStatus_row.run_flag != (RUN_FLAG)1 )
+		{
+			//no devstatus saved, give default values
+			InitDevStatus();
+			m_isDSTChanged = true;
+			LOGW(LOGTAG_MSG, F("Corrupt Device Status Table, using default status."));
+			SaveConfig();
+		}
+		else
+		{
+			LOGD(LOGTAG_MSG, F("Device status table loaded."));
+		}
+    m_isDSTChanged = false;
+  }
+  else
+  {
+    LOGW(LOGTAG_MSG, F("Failed to load device status table, too large."));
+  }
+
+	return true;
+}
+
+// Save Device Status
+BOOL ConfigClass::SaveDeviceStatus()
+{
+  if( m_isDSTChanged )
+  {
+	  DevStatus_t tmpRow = theSys.DevStatus_row; //copy of data to write to flash
+
+	  //change flags to 111 to indicate flash row is occupied
+	  tmpRow.op_flag = (OP_FLAG)1;
+	  tmpRow.flash_flag = (FLASH_FLAG)1;
+	  tmpRow.run_flag = (RUN_FLAG)1;
+
+	  if (sizeof(tmpRow) <= MEM_DEVICE_STATUS_LEN)
+	  {
+		  EEPROM.put(MEM_DEVICE_STATUS_OFFSET, tmpRow); //write to flash
+		  theSys.DevStatus_row.flash_flag = SAVED; //toggle flash flag
+
+		  m_isDSTChanged = false;
+		  LOGD(LOGTAG_MSG, F("Device status table saved."));
+			return true;
+	  }
+	  else
+	  {
+		  LOGE(LOGTAG_MSG, F("Unable to write Device Status to flash, out of memory bounds"));
+	  }
+  }
+
+	return false;
+}
+
+// Save Schedule Table
+BOOL ConfigClass::SaveScheduleTable()
+{
+  if( m_isSCTChanged )
+  {
+	  bool success_flag = true;
+
+	  ListNode<ScheduleRow_t> *rowptr = theSys.Schedule_table.getRoot();
+	  while (rowptr != NULL)
+	  {
+		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
+		  {
+			  ScheduleRow_t tmpRow = rowptr->data; //copy of data to write to flash
+
+			  switch (rowptr->data.op_flag)
+			  {
+				case DELETE:
+					//change flags to 000 to indicate flash row is empty
+					tmpRow.op_flag = (OP_FLAG)0;
+					tmpRow.flash_flag = (FLASH_FLAG)0;
+					tmpRow.run_flag = (RUN_FLAG)0;
+					break;
+
+				case PUT:
+				case POST:
+				case GET:
+					//change flags to 111 to indicate flash row is occupied
+					tmpRow.op_flag = (OP_FLAG)1;
+					tmpRow.flash_flag = (FLASH_FLAG)1;
+					tmpRow.run_flag = (RUN_FLAG)1;
+					break;
+			  }
+
+			  //write tmpRow to flash
+			  int row_index = rowptr->data.uid;
+			  if (row_index < MAX_SCT_ROWS)
+			  {
+				  EEPROM.put(MEM_SCHEDULE_OFFSET + row_index*SCT_ROW_SIZE, tmpRow); //write to flash
+
+				  rowptr->data.flash_flag = SAVED; //toggle flash flag
+			  }
+			  else
+			  {
+				  LOGE(LOGTAG_MSG, F("Error, cannot write Schedule row %d to flash, out of memory bounds"), row_index);
+				  success_flag = false;
+			  }
+		  }
+		  rowptr = rowptr->next;
+	  }
+
+	  if (success_flag)
+	  {
+		  m_isSCTChanged = false;
+		  LOGD(LOGTAG_MSG, F("Schedule table saved."));
+			return true;
+	  }
+	  else
+	  {
+		  LOGE(LOGTAG_MSG, F("Unable to write 1 or more Schedule table rows to flash"));
+	  }
+  }
+
+	return false;
+}
+
+// Save Scenario Table
+BOOL ConfigClass::SaveScenarioTable()
+{
+  if (m_isSNTChanged)
+  {
+	  bool success_flag = true;
+
+	  ListNode<ScenarioRow_t> *rowptr = theSys.Scenario_table.getRoot();
+	  while (rowptr != NULL)
+	  {
+		  if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
+		  {
+			  ScenarioRow_t tmpRow = rowptr->data; //copy of data to write to p1
+
+			  switch (rowptr->data.op_flag)
+			  {
+			  case DELETE:
+				  //change flags to indicate flash row is empty
+				  tmpRow.op_flag = (OP_FLAG)0;
+				  tmpRow.flash_flag = (FLASH_FLAG)0;
+				  tmpRow.run_flag = (RUN_FLAG)0;
+				  break;
+			  case PUT:
+			  case POST:
+			  case GET:
+				  //change flags to 111 to indicate flash row is occupied
+				  tmpRow.op_flag = (OP_FLAG)1;
+				  tmpRow.flash_flag = (FLASH_FLAG)1;
+				  tmpRow.run_flag = (RUN_FLAG)1;
+				  break;
+			  }
+
+			  //write tmpRow to p1
+			  int row_index = rowptr->data.uid;
+			  if (row_index < MAX_SNT_ROWS)
+			  {
+#ifdef MCU_TYPE_P1
+				  P1Flash->write<ScenarioRow_t>(tmpRow, MEM_SCENARIOS_OFFSET + row_index*SNT_ROW_SIZE);
+#endif
+				  rowptr->data.flash_flag = SAVED; //toggle flash flag
+			  }
+			  else
+			  {
+				  LOGE(LOGTAG_MSG, F("Error, cannot write Scenario row %d to flash, out of memory bounds"), row_index);
+				  success_flag = false;
+			  }
+		  }
+		  rowptr = rowptr->next;
+	  }
+
+	  if (success_flag)
+	  {
+		  m_isSNTChanged = false;
+		  LOGD(LOGTAG_MSG, F("Scenario table saved."));
+			return true;
+	  }
+	  else
+	  {
+		  LOGE(LOGTAG_MSG, F("Unable to write 1 or more Scenario table rows to flash"));
+	  }
+
+	  m_isSNTChanged = false;
+	  LOGD(LOGTAG_MSG, F("Scenerio table saved."));
+  }
+
+	return false;
+}
+
+// Load Rules from P1 Flash
+BOOL ConfigClass::LoadRuleTable()
+{
+#ifdef MCU_TYPE_P1
+  RuleRow_t RuleArray[MAX_RT_ROWS];
+  if (RT_ROW_SIZE*MAX_RT_ROWS <= MEM_RULES_LEN)
+  {
+	  if (P1Flash->read<RuleRow_t[MAX_RT_ROWS]>(RuleArray, MEM_RULES_OFFSET))
+	  {
+		  for (int i = 0; i < MAX_RT_ROWS; i++) //interate through RuleArray for non-empty rows
+		  {
+			  if (RuleArray[i].op_flag == (OP_FLAG)1
+				  && RuleArray[i].flash_flag == (FLASH_FLAG)1
+				  && RuleArray[i].run_flag == (RUN_FLAG)1)
+			  {
+				  //change flags to be written into working memory chain
+				  RuleArray[i].op_flag = POST;
+				  RuleArray[i].run_flag = UNEXECUTED;
+				  RuleArray[i].flash_flag = SAVED;		//Already know it exists in flash
+				  if (!theSys.Rule_table.add(RuleArray[i])) //add non-empty row to working memory chain
+				  {
+					  LOGW(LOGTAG_MSG, F("Rule row %d failed to load from flash"), i);
+				  }
+			  }
+			  //else: row is either empty or trash; do nothing
+		  }
+
+		  m_isRTChanged = true; //allow ReadNewRules() to run
+		  theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
+		  m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again
+	  }
+	  else
+	  {
+		  LOGW(LOGTAG_MSG, F("Failed to read the rule table from flash."));
+	  }
+  }
+  else
+  {
+	  LOGW(LOGTAG_MSG, F("Failed to load rule table, too large."));
+  }
+#endif
+
+	return true;
+}
+
+// Save Rule Table
+BOOL ConfigClass::SaveRuleTable()
+{
+	if ( m_isRTChanged )
+	{
+		bool success_flag = true;
+
+		ListNode<RuleRow_t> *rowptr = theSys.Rule_table.getRoot();
+		while (rowptr != NULL)
+		{
+			if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
+			{
+				RuleRow_t tmpRow = rowptr->data; //copy of data to write to p1
+
+				switch (rowptr->data.op_flag)
+				{
+				case DELETE:
+					//change flags to indicate flash row is empty
+					tmpRow.op_flag = (OP_FLAG)0;
+					tmpRow.flash_flag = (FLASH_FLAG)0;
+					tmpRow.run_flag = (RUN_FLAG)0;
+					break;
+				case PUT:
+				case POST:
+				case GET:
+					//change flags to 111 to indicate flash row is occupied
+					tmpRow.op_flag = (OP_FLAG)1;
+					tmpRow.flash_flag = (FLASH_FLAG)1;
+					tmpRow.run_flag = (RUN_FLAG)1;
+					break;
+				}
+
+				//write tmpRow to p1
+				int row_index = rowptr->data.uid;
+				if (row_index < MAX_RT_ROWS)
+				{
+	#ifdef MCU_TYPE_P1
+					P1Flash->write<RuleRow_t>(tmpRow, MEM_RULES_OFFSET + row_index*RT_ROW_SIZE);
+	#endif
+					rowptr->data.flash_flag = SAVED; //toggle flash flag
+				}
+				else
+				{
+					LOGE(LOGTAG_MSG, F("Error, cannot write Schedule row %d to flash, out of memory bounds"), row_index);
+					success_flag = false;
+				}
+			}
+			rowptr = rowptr->next;
+		}
+
+		if (success_flag)
+		{
+			m_isRTChanged = false;
+			LOGD(LOGTAG_MSG, F("Rule table saved."));
+			return true;
+		}
+		else
+		{
+			LOGE(LOGTAG_MSG, F("Unable to write 1 or more Rule table rows to flash"));
+		}
+	}
+
+	return false;
+}
+
+// Load NodeID List
+BOOL ConfigClass::LoadNodeIDList()
+{
+	// ToDo:
+
+	return true;
+}
+
+// Save NodeID List
+BOOL ConfigClass::SaveNodeIDList()
+{
+	if ( m_isNIDChanged )
+	{
+		// ToDo: save Node ID list
+	}
+
+	return false;
 }
