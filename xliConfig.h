@@ -42,16 +42,19 @@
 // Number of ticks on System Timer
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
 
-// Maximun number of rows for any working memory table implimented using ChainClass
+// Maximum number of rows for any working memory table implimented using ChainClass
 #define MAX_TABLE_SIZE    8
 
 // Change it only if Config_t structure is updated
 #define VERSION_CONFIG_DATA         1
 
-// Maximun number of device associated to one controller
+// Maximum number of device associated to one controller
 #define MAX_DEVICE_PER_CONTROLLER   16
 
-// Maximun JSON data length
+// Maximum number of nodes under one controller
+#define MAX_NODE_PER_CONTROLLER   64
+
+// Maximum JSON data length
 #define COMMAND_JSON_SIZE           64
 #define SENSORDATA_JSON_SIZE        196
 

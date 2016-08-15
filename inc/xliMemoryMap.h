@@ -13,13 +13,13 @@
 #define MEM_BANK_1_BASE           0x800C000
 #define MEM_BANK_2_BASE           0x8010000
 
-// Device Status (16*64bytes)
+// Device Status (16*48bytes)
 #ifdef XL_FLASHEE_EEPROM
 #define MEM_DEVICE_STATUS_OFFSET  MEM_BANK_1_BASE
 #else
 #define MEM_DEVICE_STATUS_OFFSET  0x0000
 #endif
-#define MEM_DEVICE_STATUS_LEN     0x0400
+#define MEM_DEVICE_STATUS_LEN     0x0300
 
 // Parameters (256bytes)
 #define MEM_CONFIG_OFFSET         (MEM_DEVICE_STATUS_OFFSET + MEM_DEVICE_STATUS_LEN)
@@ -28,6 +28,10 @@
 // Schedule (256bytes)
 #define MEM_SCHEDULE_OFFSET       (MEM_CONFIG_OFFSET + MEM_CONFIG_LEN)
 #define MEM_SCHEDULE_LEN          0x0100
+
+// Node ID List (64*12bytes)
+#define MEM_NODELIST_OFFSET       (MEM_SCHEDULE_OFFSET + MEM_SCHEDULE_LEN)
+#define MEM_NODELIST_LEN          0x0300
 
 //------------------------------------------------------------------
 // P1 external Flash: 1MB, access via SPI flash library

@@ -84,7 +84,18 @@ typedef struct //__attribute__((packed)) //Schedule Table
 } ScheduleRow_t;
 
 #define SCT_ROW_SIZE	sizeof(ScheduleRow_t)
-#define MAX_SCT_ROWS	(int)(MEM_SCHEDULE_LEN/sizeof(SCT_ROW_SIZE)) //64
+#define MAX_SCT_ROWS	(int)(MEM_SCHEDULE_LEN / SCT_ROW_SIZE)
+
+//------------------------------------------------------------------
+// Xlight NodeID List
+//------------------------------------------------------------------
+typedef struct    // Exact 12 bytes
+{
+	UC nid;
+	UC reserved;
+  UC identify[6];
+  UL recentActive;
+} NodeIdRow_t;
 
 //------------------------------------------------------------------
 // Xlight Rule Table Structures
