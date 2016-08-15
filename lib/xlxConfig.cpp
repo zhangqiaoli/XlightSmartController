@@ -548,12 +548,12 @@ BOOL ConfigClass::SaveDeviceStatus()
 	if (m_isDSTChanged)
 	{
 		bool success_flag = true;
-		ListNode<DevStatus_t> *rowptr = theSys.DevStatus_table.getRoot();
+		ListNode<DevStatusRow_t> *rowptr = theSys.DevStatus_table.getRoot();
 		while (rowptr != NULL)
 		{
 			if (rowptr->data.run_flag == EXECUTED && rowptr->data.flash_flag == UNSAVED)
 			{
-				DevStatus_t tmpRow = rowptr->data;
+				DevStatusRow_t tmpRow = rowptr->data;
 
 				switch (rowptr->data.op_flag)
 				{
