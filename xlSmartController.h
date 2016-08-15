@@ -29,6 +29,7 @@ private:
   BOOL m_isWAN;
 
   String hue_to_string(Hue_t hue);
+  bool updateDevStatusRow(MyMessage msg);
 
 public:
   SmartControllerClass();
@@ -57,8 +58,7 @@ public:
   void CollectData(UC tick);
 
   // Device Control Functions
-  int DevSoftSwitch(BOOL sw, UC dev = 1);
-  int DevChangeColor(MyMessage msg);					//ToDo: Params
+  int DevSoftSwitch(BOOL sw, UC dev = 0);
 
   // High speed system timer process
   void FastProcess();
@@ -82,7 +82,7 @@ public:
   bool Change_Sensor();	//ToDo
 
   //LinkedLists (Working memory tables)
-  ChainClass<DevStatus_t> DevStatus_table = ChainClass<DevStatus_t>(MAX_DEVICE_PER_CONTROLLER);
+  ChainClass<DevStatusRow_t> DevStatus_table = ChainClass<DevStatusRow_t>(MAX_DEVICE_PER_CONTROLLER);
   ChainClass<ScheduleRow_t> Schedule_table = ChainClass<ScheduleRow_t>(MAX_TABLE_SIZE);
   ChainClass<ScenarioRow_t> Scenario_table = ChainClass<ScenarioRow_t>(MAX_TABLE_SIZE);
   ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>((int)(MEM_RULES_LEN / sizeof(RuleRow_t))); // 65536/5 = 13107
@@ -101,6 +101,7 @@ public:
   // UID search functions
   ListNode<ScheduleRow_t> *SearchSchedule(UC uid);
   ListNode<ScenarioRow_t> *SearchScenario(UC uid);
+  ListNode<DevStatusRow_t> *SearchDevStatus(UC dest_id); //destination node
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure

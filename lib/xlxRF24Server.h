@@ -15,7 +15,8 @@ public:
   uint64_t GetNetworkID();
   void SetRole_Gateway();
   bool ChangeNodeID(const uint8_t bNodeID);
-  bool ProcessSend(String &strMsg);
+  bool ProcessSend(String &strMsg, MyMessage &my_msg); 
+  bool ProcessSend(String &strMsg); //overloaded
   bool ProcessReceive();
   uint8_t GetNextAvailableNodeId();
 

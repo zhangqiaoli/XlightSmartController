@@ -409,7 +409,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
 		SERIAL_LN("theConfig.m_isSNTChanged = \t\t%s\n\r", (theConfig.IsSNTChanged() ? "true" : "false"));
 
 	} else if (strnicmp(sTopic, "table", 5) == 0) {
-		SERIAL_LN("DST_ROW_SIZE: \t\t\t%u", DST_ROW_SIZE);
+		SERIAL_LN("DST_ROW_SIZE: \t\t\t\t%u", DST_ROW_SIZE);
 		SERIAL_LN("RT_ROW_SIZE: \t\t\t\t%u", RT_ROW_SIZE);
 		SERIAL_LN("SCT_ROW_SIZE: \t\t\t\t%u", SCT_ROW_SIZE);
 		SERIAL_LN("MAX_SCT_ROWS: \t\t\t\t%d", MAX_SCT_ROWS);

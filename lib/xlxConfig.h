@@ -17,6 +17,7 @@
  - SmartControllerClass::print_rule_table()
 */
 
+#define PACK //MSVS intellisense doesn't work when structs are packed
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------
@@ -27,7 +28,10 @@ typedef struct
   UC dst                      :1;           // daylight saving time flag
 } Timezone_t;
 
-typedef struct //__attribute__((packed))
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
   UC State                    :4;           // Component state
   UC CW                       :8;           // Brightness of cold white
@@ -55,7 +59,10 @@ typedef struct
 //------------------------------------------------------------------
 // Xlight Device Status Table Structures
 //------------------------------------------------------------------
-typedef struct //max 64 bytes
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
   OP_FLAG op_flag : 2;
   FLASH_FLAG flash_flag : 1;
@@ -66,15 +73,17 @@ typedef struct //max 64 bytes
   Hue_t ring1;
   Hue_t ring2;
   Hue_t ring3;
-} DevStatus_t;
+} DevStatusRow_t;
 
-#define DST_ROW_SIZE sizeof(DevStatus_t)
+#define DST_ROW_SIZE sizeof(DevStatusRow_t)
 
 //------------------------------------------------------------------
 // Xlight Schedule Table Structures
 //------------------------------------------------------------------
-
-typedef struct //__attribute__((packed)) //Schedule Table
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
   OP_FLAG op_flag			: 2;
   FLASH_FLAG flash_flag		: 1;
@@ -105,7 +114,10 @@ typedef struct    // Exact 12 bytes
 // Xlight Rule Table Structures
 //------------------------------------------------------------------
 
-typedef struct //__attribute__((packed))
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
 	OP_FLAG op_flag			 : 2;
 	FLASH_FLAG flash_flag	 : 1;
@@ -125,7 +137,10 @@ typedef struct //__attribute__((packed))
 // Xlight Scenerio Table Structures
 //------------------------------------------------------------------
 
-typedef struct //__attribute__((packed))
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
 	OP_FLAG op_flag				: 2;
 	FLASH_FLAG flash_flag		: 1;

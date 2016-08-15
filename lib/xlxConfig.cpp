@@ -75,8 +75,8 @@ void ConfigClass::InitConfig()
   m_config.indBrightness = 0;
   m_config.typeMainDevice = 1;
   m_config.numDevices = 1;
-	m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
-	m_config.enableCloudSerialCmd = false;
+  m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
+  m_config.enableCloudSerialCmd = false;
 }
 
 void ConfigClass::InitDevStatus()
@@ -90,11 +90,12 @@ void ConfigClass::InitDevStatus()
 	whiteHue.State = 1; // 1 for on, 0 for off
 
 	//ToDo: ensure radio pairing has occured before doing this step in the future
-	DevStatus_t first_row;
+	DevStatusRow_t first_row;
 
 	first_row.op_flag = (OP_FLAG)1;
-	first_row.flash_flag = (FLASH_FLAG)1;
+	first_row.flash_flag = (FLASH_FLAG)0;
 	first_row.run_flag = (RUN_FLAG)1;
+	first_row.uid = 0;
 	first_row.node_id = 1; //first light
 	first_row.type = 1; //todo: this this value correct?
 	first_row.ring1 = whiteHue;
@@ -107,7 +108,7 @@ void ConfigClass::InitDevStatus()
 BOOL ConfigClass::MemWriteScenarioRow(ScenarioRow_t row, uint32_t address)
 {
 #ifdef MCU_TYPE_P1
-	return P1Flash->read<ScenarioRow_t>(row, address);
+	return P1Flash->write<ScenarioRow_t>(row, address);
 #else
 	return false;
 #endif
@@ -116,7 +117,7 @@ BOOL ConfigClass::MemWriteScenarioRow(ScenarioRow_t row, uint32_t address)
 BOOL ConfigClass::MemReadScenarioRow(ScenarioRow_t &row, uint32_t address)
 {
 #ifdef MCU_TYPE_P1
-	return P1Flash->write<ScenarioRow_t>(row, address);
+	return P1Flash->read<ScenarioRow_t>(row, address);
 #else
 	return false;
 #endif
@@ -154,13 +155,13 @@ BOOL ConfigClass::LoadConfig()
     LOGE(LOGTAG_MSG, F("Failed to load Sysconfig, too large."));
   }
 
-  // Load Device Status
+	// Load Device Status
 	LoadDeviceStatus();
 
-  // We don't load Schedule Table directly
-  // We don't load Scenario Table directly
+	// We don't load Schedule Table directly
+	// We don't load Scenario Table directly
 
-  // Load Rules
+	// Load Rules
 	LoadRuleTable();
 
 	// Load NodeID List
@@ -492,27 +493,32 @@ BOOL ConfigClass::SetNumNodes(UC num)
 // Load Device Status
 BOOL ConfigClass::LoadDeviceStatus()
 {
-	if (sizeof(DevStatus_t) <= MEM_DEVICE_STATUS_LEN)
+	if (sizeof(DevStatusRow_t) <= MEM_DEVICE_STATUS_LEN)
 	{
-		DevStatus_t DevStatusArray[MAX_DEVICE_PER_CONTROLLER];
+		DevStatusRow_t DevStatusArray[MAX_DEVICE_PER_CONTROLLER];
 		EEPROM.get(MEM_DEVICE_STATUS_OFFSET, DevStatusArray);
 		//check row values / error cases
 
 		for (int i = 0; i < MAX_DEVICE_PER_CONTROLLER; i++)
 		{
 			if (DevStatusArray[i].op_flag == (OP_FLAG)1
-				|| DevStatusArray[i].flash_flag == (FLASH_FLAG)1
-				|| DevStatusArray[i].run_flag == (RUN_FLAG)1)
+				&& DevStatusArray[i].flash_flag == (FLASH_FLAG)1
+				&& DevStatusArray[i].run_flag == (RUN_FLAG)1
+				&& DevStatusArray[i].uid == i)
 			{
-				if (!theSys.DevStatus_table.add(DevStatusArray[i]))
+				if (theSys.DevStatus_table.add(DevStatusArray[i]))
+				{
+					SERIAL_LN("Loaded device status row for node_id:%d, uid:%d", DevStatusArray[i].node_id, DevStatusArray[i].uid);
+				}
+				else
 				{
 					LOGW(LOGTAG_MSG, F("DevStatus row %d failed to load from flash"), i);
 				}
 			}
 		}
 
-		//Todo: this code should be where RF pairing happens. 
-		//currently initiating with assumption of 1 light w node_id=1
+		//Todo: this code should be where RF pairing happens.
+		//currently initiating with assumption of 1 light w node_id=1, uid=0
 		if (theSys.DevStatus_table.size() == 0)
 		{
 			InitDevStatus();
@@ -530,7 +536,10 @@ BOOL ConfigClass::LoadDeviceStatus()
 	else
 	{
 		LOGW(LOGTAG_MSG, F("Failed to load device status table, too large."));
+		return false;
 	}
+
+	return true;
 }
 
 // Save Device Status
@@ -565,11 +574,11 @@ BOOL ConfigClass::SaveDeviceStatus()
 					break;
 				}
 
-				//write tmpRow to flash. Node_id - 1 determines place in memory since node_id is 1 based
-				int row_index = rowptr->data.node_id;
-				if ((row_index - 1) < MAX_DEVICE_PER_CONTROLLER && row_index > 0)
+				//write tmpRow to flash using uid
+				int row_index = rowptr->data.uid;
+				if ((row_index) < MAX_DEVICE_PER_CONTROLLER)
 				{
-					EEPROM.put(MEM_DEVICE_STATUS_OFFSET + (row_index - 1)*DST_ROW_SIZE, tmpRow);
+					EEPROM.put(MEM_DEVICE_STATUS_OFFSET + row_index*DST_ROW_SIZE, tmpRow);
 					rowptr->data.flash_flag = SAVED;
 				}
 				else
@@ -580,7 +589,6 @@ BOOL ConfigClass::SaveDeviceStatus()
 			}
 			rowptr = rowptr->next;
 		}
-
 		if (success_flag)
 		{
 			m_isDSTChanged = false;
@@ -730,42 +738,44 @@ BOOL ConfigClass::SaveScenarioTable()
 BOOL ConfigClass::LoadRuleTable()
 {
 #ifdef MCU_TYPE_P1
-  RuleRow_t RuleArray[MAX_RT_ROWS];
-  if (RT_ROW_SIZE*MAX_RT_ROWS <= MEM_RULES_LEN)
-  {
-	  if (P1Flash->read<RuleRow_t[MAX_RT_ROWS]>(RuleArray, MEM_RULES_OFFSET))
-	  {
-		  for (int i = 0; i < MAX_RT_ROWS; i++) //interate through RuleArray for non-empty rows
-		  {
-			  if (RuleArray[i].op_flag == (OP_FLAG)1
-				  && RuleArray[i].flash_flag == (FLASH_FLAG)1
-				  && RuleArray[i].run_flag == (RUN_FLAG)1)
-			  {
-				  //change flags to be written into working memory chain
-				  RuleArray[i].op_flag = POST;
-				  RuleArray[i].run_flag = UNEXECUTED;
-				  RuleArray[i].flash_flag = SAVED;		//Already know it exists in flash
-				  if (!theSys.Rule_table.add(RuleArray[i])) //add non-empty row to working memory chain
-				  {
-					  LOGW(LOGTAG_MSG, F("Rule row %d failed to load from flash"), i);
-				  }
-			  }
-			  //else: row is either empty or trash; do nothing
-		  }
-
-		  m_isRTChanged = true; //allow ReadNewRules() to run
-		  theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
-		  m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again
-	  }
-	  else
-	  {
-		  LOGW(LOGTAG_MSG, F("Failed to read the rule table from flash."));
-	  }
-  }
-  else
-  {
-	  LOGW(LOGTAG_MSG, F("Failed to load rule table, too large."));
-  }
+	RuleRow_t RuleArray[MAX_RT_ROWS];
+	if (RT_ROW_SIZE*MAX_RT_ROWS <= MEM_RULES_LEN)
+	{
+		if (P1Flash->read<RuleRow_t[MAX_RT_ROWS]>(RuleArray, MEM_RULES_OFFSET))
+		{
+			for (int i = 0; i < MAX_RT_ROWS; i++) //interate through RuleArray for non-empty rows
+			{
+				if (RuleArray[i].op_flag == (OP_FLAG)1
+					&& RuleArray[i].flash_flag == (FLASH_FLAG)1
+					&& RuleArray[i].run_flag == (RUN_FLAG)1
+					&& RuleArray[i].uid == i)
+				{
+					//change flags to be written into working memory chain
+					RuleArray[i].op_flag = POST;
+					RuleArray[i].run_flag = UNEXECUTED;
+					RuleArray[i].flash_flag = SAVED;		//Already know it exists in flash
+					if (!theSys.Rule_table.add(RuleArray[i])) //add non-empty row to working memory chain
+					{
+						LOGW(LOGTAG_MSG, F("Rule row %d failed to load from flash"), i);
+					}
+				}
+				//else: row is either empty or trash; do nothing
+			}
+			m_isRTChanged = true; //allow ReadNewRules() to run
+			theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
+			m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again
+		}
+		else
+		{
+			LOGW(LOGTAG_MSG, F("Failed to read the rule table from flash."));
+			return false;
+		}
+	}
+	else
+	{
+		LOGW(LOGTAG_MSG, F("Failed to load rule table, too large."));
+		return false;
+	}
 #endif
 
 	return true;
