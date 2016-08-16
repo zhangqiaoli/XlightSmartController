@@ -27,7 +27,7 @@
 #include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xlxRF24Server.h"
-#include "MyParserSerial.h"
+#include "xlxSerialConsole.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"

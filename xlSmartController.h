@@ -8,7 +8,6 @@
 #include "xlxConfig.h"
 #include "xlxChain.h"
 #include "MyMessage.h"
-#include "xlxSerialConsole.h"
 
 //------------------------------------------------------------------
 // Xlight Command Queue Structures
