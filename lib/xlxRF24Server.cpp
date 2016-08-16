@@ -107,105 +107,115 @@ void RF24ServerClass::SetRole_Gateway()
 	setAddress(GATEWAY_ADDRESS, lv_networkID);
 }
 
+bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
+{
+	bool sentOK = false;
+	bool bMsgReady = false;
+	int iValue;
+	float fValue;
+	char strBuffer[64];
+
+	int nPos = strMsg.indexOf(':');
+	uint8_t lv_nNodeID;
+	uint8_t lv_nMsgID;
+	if (nPos > 0) {
+		// Extract NodeID & MessageID
+		lv_nNodeID = (uint8_t)(strMsg.substring(0, nPos).toInt());
+		lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1).toInt());
+	}
+	else {
+		// Parse serial message
+		lv_nMsgID = 0;
+	}
+
+	switch (lv_nMsgID)
+	{
+	case 0: // Free style
+		iValue = min(strMsg.length(), 63);
+		strncpy(strBuffer, strMsg.c_str(), iValue);
+		strBuffer[iValue] = 0;
+		// Serail format to MySensors message structure
+		bMsgReady = msgParser.parse(msg, strBuffer);
+		if (bMsgReady) {
+			SERIAL("Now sending message...");
+		}
+		break;
+
+	case 1:   // Request new node ID
+		if (getAddress() == GATEWAY_ADDRESS) {
+			SERIAL_LN("Controller can not request node ID\n\r");
+		}
+		else {
+			ChangeNodeID(AUTO);
+			msg.build(AUTO, BASESERVICE_ADDRESS, NODE_SENSOR_ID, C_INTERNAL, I_ID_REQUEST, false);
+			msg.set("DTIT-is-great");     // Optional Key
+			bMsgReady = true;
+			SERIAL("Now sending request node id message...");
+		}
+		break;
+
+	case 2:   // Lamp present, req ack
+		msg.build(getAddress(), lv_nNodeID, NODE_SENSOR_ID, C_PRESENTATION, S_LIGHT, true);
+		msg.set("Found Sunny");
+		bMsgReady = true;
+		SERIAL("Now sending lamp present message...");
+		break;
+
+	case 3:   // Temperature sensor present with sensor id 1, req no ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_PRESENTATION, S_TEMP, false);
+		msg.set("");
+		bMsgReady = true;
+		SERIAL("Now sending DHT11 present message...");
+		break;
+
+	case 4:   // Temperature set to 23.5, req no ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_TEMP, false);
+		fValue = 23.5;
+		msg.set(fValue, 2);
+		bMsgReady = true;
+		SERIAL("Now sending set temperature message...");
+		break;
+
+	case 5:   // Humidity set to 45, req no ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_HUM, false);
+		iValue = 45;
+		msg.set(iValue);
+		bMsgReady = true;
+		SERIAL("Now sending set humidity message...");
+		break;
+	}
+
+	if (bMsgReady) {
+		_times++;
+
+		// Determine the receiver addresse
+		uint8_t lv_sendTo = msg.getDestination();
+		SERIAL("to %d...", lv_sendTo);
+
+		sentOK = send(lv_sendTo, msg);
+		if (sentOK)
+		{
+			my_msg = msg;
+			_succ++;
+			SERIAL_LN("OK");
+			/*
+			if( lv_nMsgID == 1 ) {
+			radio.switch2MyNetwork();
+			SERIAL_LN("Switched to private network");
+			}*/
+		}
+		else {
+			SERIAL_LN("failed");
+		}
+	}
+
+	return sentOK;
+}
+
 bool RF24ServerClass::ProcessSend(String &strMsg)
 {
-  bool sentOK = false;
-  bool bMsgReady = false;
-  int iValue;
-  float fValue;
-  char strBuffer[64];
-
-  int nPos = strMsg.indexOf(':');
-  uint8_t lv_nNodeID;
-  uint8_t lv_nMsgID;
-  if( nPos > 0 ) {
-    // Extract NodeID & MessageID
-    lv_nNodeID = (uint8_t)(strMsg.substring(0, nPos).toInt());
-    lv_nMsgID = (uint8_t)(strMsg.substring(nPos+1).toInt());
-  } else {
-    // Parse serial message
-    lv_nMsgID = 0;
-  }
-
-  switch( lv_nMsgID )
-  {
-  case 0: // Free style
-    iValue = min(strMsg.length(), 63);
-    strncpy(strBuffer, strMsg.c_str(), iValue);
-    strBuffer[iValue] = 0;
-    // Serail format to MySensors message structure
-    bMsgReady = msgParser.parse(msg, strBuffer);
-    if( bMsgReady ) {
-      SERIAL("Now sending message...");
-    }
-    break;
-
-  case 1:   // Request new node ID
-    if( getAddress() == GATEWAY_ADDRESS ) {
-      SERIAL_LN("Controller can not request node ID\n\r");
-    } else {
-      ChangeNodeID(AUTO);
-      msg.build(AUTO, BASESERVICE_ADDRESS, NODE_SENSOR_ID, C_INTERNAL, I_ID_REQUEST, false);
-      msg.set("DTIT-is-great");     // Optional Key
-      bMsgReady = true;
-      SERIAL("Now sending request node id message...");
-    }
-    break;
-
-  case 2:   // Lamp present, req ack
-    msg.build(getAddress(), lv_nNodeID, NODE_SENSOR_ID, C_PRESENTATION, S_LIGHT, true);
-    msg.set("Found Sunny");
-    bMsgReady = true;
-    SERIAL("Now sending lamp present message...");
-    break;
-
-  case 3:   // Temperature sensor present with sensor id 1, req no ack
-    msg.build(getAddress(), lv_nNodeID, 1, C_PRESENTATION, S_TEMP, false);
-    msg.set("");
-    bMsgReady = true;
-    SERIAL("Now sending DHT11 present message...");
-    break;
-
-  case 4:   // Temperature set to 23.5, req no ack
-    msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_TEMP, false);
-    fValue = 23.5;
-    msg.set(fValue, 2);
-    bMsgReady = true;
-    SERIAL("Now sending set temperature message...");
-    break;
-
-  case 5:   // Humidity set to 45, req no ack
-    msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_HUM, false);
-    iValue = 45;
-    msg.set(iValue);
-    bMsgReady = true;
-    SERIAL("Now sending set humidity message...");
-    break;
-  }
-
-  if( bMsgReady ) {
-    _times++;
-
-    // Determine the receiver addresse
-    uint8_t lv_sendTo = msg.getDestination();
-    SERIAL("to %d...", lv_sendTo);
-
-    sentOK = send(lv_sendTo, msg);
-    if( sentOK )
-    {
-      _succ++;
-      SERIAL_LN("OK");
-      /*
-      if( lv_nMsgID == 1 ) {
-        radio.switch2MyNetwork();
-        SERIAL_LN("Switched to private network");
-      }*/
-    } else {
-      SERIAL_LN("failed");
-    }
-  }
-
-  return sentOK;
+	MyMessage tempMsg;
+	return ProcessSend(strMsg);
 }
 
 bool RF24ServerClass::ProcessReceive()
@@ -282,7 +292,7 @@ bool RF24ServerClass::ProcessReceive()
 // Just for testing now
 uint8_t RF24ServerClass::GetNextAvailableNodeId()
 {
-  // ToDo: maintain a ID table (e.g. DevStatus_t[n])
+  // ToDo: maintain a ID table (e.g. DevStatusRow_t[n])
   static uint8_t nextID = 0;
   if( ++nextID > MAX_DEVICE_PER_CONTROLLER ) {
     nextID = 1;

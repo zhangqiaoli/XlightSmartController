@@ -27,7 +27,7 @@
 #include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xlxRF24Server.h"
-#include "xlxSerialConsole.h"
+#include "MyParserSerial.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
@@ -462,13 +462,6 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 	return 0;
 }
 
-int SmartControllerClass::DevChangeColor()
-{
-	// ToDo:
-
-	return 0;
-}
-
 // High speed system timer process
 void SmartControllerClass::FastProcess()
 {
@@ -508,16 +501,44 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
 
 int SmartControllerClass::CldPowerSwitch(String swStr)
 {
-	//ToDo: this sends data from cloud to appropriate function to change lamp color/on-off
-	//ToDo: implement function to receive JSON, parse JSON, populate DevStatus_t row
+	//This sends data from cloud to appropriate function to change lamp color/on-off. Message comes in as MySensor serial input
+	//TESTING SAMPLES
+	// Set S_CUSTOM:
+    // all rings red: 1;23;1;1;24;1099528339456
+    // all rings CW/WW: 1;23;1;1;24;2199006478336
+    // all rings off: 1;23;1;1;24;16777215
+    // ring 1 red: 1;23;1;1;24;282574505050112
+  // Set S_DIMMER, V_STATUS on/off
+    // 	1;4;1;1;2;1
+  // Set S_DIMMER, V_DIMMER value 0-100
+    //  1;4;1;1;3;50
 
+	//fast, simple control (ToDo: delete this feature? )
+	/*
 	BOOL blnOn;
-
 	swStr.toLowerCase();
-	blnOn = (swStr == "0" || swStr == "off");
+	if (swStr == "0" || swStr == "off")
+	{
+		DevSoftSwitch(false); // Turn the switch off
+		return 1;
+	}
+	else if (swStr == "1" || swStr == "on")
+	{
+		DevSoftSwitch(true); // Turn the switch on
+		return 1;
+	}
+	*/
 
-	// Turn the switch on or off
-	DevSoftSwitch(blnOn);
+	//mysensors serial message
+	MyMessage msg;
+	if (theRadio.ProcessSend(swStr, msg)) //send message
+	{
+		SERIAL_LN("Sending message: from:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
+        msg.getSender(), msg.getDestination(), msg.getCommand(),
+        msg.getType(), msg.getSensor(), msg.getLength());
+
+		return updateDevStatusRow(msg); //update devstatus
+	}
 
 	return 0;
 }
@@ -1031,6 +1052,113 @@ bool SmartControllerClass::Change_Scenario(ScenarioRow_t row)
 	return true;
 }
 
+bool SmartControllerClass::updateDevStatusRow(MyMessage msg)
+{
+	//find row to update
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(msg.getDestination());
+	if (DevStatusRowPtr == NULL)
+	{
+		LOGE(LOGTAG_MSG, "Error updating DevStatus_Table, didn't find node_id %d", msg.getDestination());
+		return false;
+	}
+
+	switch (msg.getSensor()) //current possible values are S_CUSTOM and S_DIMMER
+	{
+	case S_CUSTOM:
+		if (msg.getType() == V_VAR1)
+		{
+			uint64_t payload = msg.getUInt64();
+
+			uint8_t ring_num = (payload >> (8 * 6)) & 0xff;
+			Hue_t ring_col;
+
+			ring_col.State = (payload >> (8 * 5)) & 0xff;
+			ring_col.CW = (payload >> (8 * 4)) & 0xff;
+			ring_col.WW = (payload >> (8 * 3)) & 0xff;
+			ring_col.R = (payload >> (8 * 2)) & 0xff;
+			ring_col.G = (payload >> (8 * 1)) & 0xff;
+			ring_col.B = (payload >> (8 * 0)) & 0xff;
+
+			switch (ring_num)
+			{
+			case 0: //all rings
+				if (ring_col.State == 0) { //if ring_num and state both equal 0, do not re-write colors, only turn rings off
+					DevStatusRowPtr->data.ring1.State = 0;
+					DevStatusRowPtr->data.ring2.State = 0;
+					DevStatusRowPtr->data.ring3.State = 0;
+				} else {
+					DevStatusRowPtr->data.ring1 = ring_col;
+					DevStatusRowPtr->data.ring2 = ring_col;
+					DevStatusRowPtr->data.ring3 = ring_col;
+				}
+				break;
+			case 1:
+				if (ring_col.State == 0) { //if state=0 don't change colors
+					DevStatusRowPtr->data.ring1.State = 0;
+				} else {
+					DevStatusRowPtr->data.ring1 = ring_col;
+				}
+				break;
+			case 2:
+				if (ring_col.State == 0) { //if state=0 don't change colors
+					DevStatusRowPtr->data.ring2.State = 0;
+				} else {
+					DevStatusRowPtr->data.ring2 = ring_col;
+				}
+				break;
+			case 3:
+				if (ring_col.State == 0) { //if state=0 don't change colors
+					DevStatusRowPtr->data.ring3.State = 0;
+				} else {
+					DevStatusRowPtr->data.ring3 = ring_col;
+				}
+				break;
+			}
+		}
+		else
+		{
+			LOGE(LOGTAG_MSG, "Error updating DevStatus_Table, invalid subtype for S_CUSTOM sensor");
+		}
+		break;
+
+	case S_DIMMER:
+		if (msg.getType() == V_STATUS) {
+			if (msg.getBool())
+			{
+				DevStatusRowPtr->data.ring1.State = 1;
+				DevStatusRowPtr->data.ring2.State = 1;
+				DevStatusRowPtr->data.ring3.State = 1;
+			}
+			else
+			{
+				DevStatusRowPtr->data.ring1.State = 0;
+				DevStatusRowPtr->data.ring2.State = 0;
+				DevStatusRowPtr->data.ring3.State = 0;
+			}
+		}
+		else if (msg.getType() == V_DIMMER) {
+			//do nothing, DevStatusRow_t has no brightness attribute to update
+		}
+		else {
+			LOGE(LOGTAG_MSG, "Error updating DevStatus_Table, invalid subtype for S_DIMMER sensor");
+		}
+		break;
+
+	default:
+		LOGE(LOGTAG_MSG, "Error updating DevStatus_Table, invalid MyMessage sensor type");
+		return false;
+	}
+
+	// ToDo: This (below) causes all changed DevStatus rows to be written to memory during SaveConfig().
+	// This is very bad for the flash memory in the long run, as the memory will wear down each time the
+	// user turns on or off the light
+	DevStatusRowPtr->data.flash_flag = UNSAVED; //required
+	DevStatusRowPtr->data.run_flag == EXECUTED; //redundant, already should be EXECUTED
+	theConfig.SetDSTChanged(true);
+
+	return true;
+}
+
 bool SmartControllerClass::Change_Sensor()
 {
   	//Possible subactions: GET
@@ -1204,7 +1332,7 @@ bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_u
 }
 
 //------------------------------------------------------------------
-// UID Search Functions (Search chain, then Flash)
+// Table Search Functions (Search chain, then Flash)
 //------------------------------------------------------------------
 ListNode<ScheduleRow_t> *SmartControllerClass::SearchSchedule(UC uid)
 {
@@ -1284,33 +1412,52 @@ ListNode<ScenarioRow_t>* SmartControllerClass::SearchScenario(UC uid)
 	return pObj;
 }
 
+ListNode<DevStatusRow_t>* SmartControllerClass::SearchDevStatus(UC dest_id)
+{
+	ListNode<DevStatusRow_t> *tmp = DevStatus_table.getRoot();
+	while (tmp != NULL)
+	{
+		if (tmp->data.node_id == dest_id) {
+			return tmp;
+		}
+		tmp = tmp->next;
+	}
+	//do not need to search in flash because whole table is always loaded
+
+	return NULL;
+}
+
 //------------------------------------------------------------------
 // Printing tables/working memory chains
 //------------------------------------------------------------------
-void SmartControllerClass::print_devStatus_row()
+void SmartControllerClass::print_devStatus_table(int row)
 {
-	switch (DevStatus_row.op_flag)
+	SERIAL_LN("==========================");
+	SERIAL_LN("==== DevStatus Row %d ====", row);
+
+	switch (DevStatus_table.get(row).op_flag)
 	{
 	case 0: SERIAL_LN("op_flag = GET"); break;
 	case 1: SERIAL_LN("op_flag = POST"); break;
 	case 2: SERIAL_LN("op_flag = PUT"); break;
 	case 3: SERIAL_LN("op_flag = DELETE"); break;
 	}
-	switch (DevStatus_row.flash_flag)
+	switch (Schedule_table.get(row).flash_flag)
 	{
 	case 0: SERIAL_LN("flash_flag = UNSAVED"); break;
 	case 1: SERIAL_LN("flash_flag = SAVED"); break;
 	}
-	switch (DevStatus_row.run_flag)
+	switch (Schedule_table.get(row).run_flag)
 	{
 	case 0: SERIAL_LN("run_flag = UNEXECUTED"); break;
 	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
 	}
-	SERIAL_LN("id = %d", DevStatus_row.id);
-	SERIAL_LN("type = %d", DevStatus_row.type);
-	SERIAL_LN("ring1 = %s", hue_to_string(DevStatus_row.ring1).c_str());
-	SERIAL_LN("ring2 = %s", hue_to_string(DevStatus_row.ring2).c_str());
-	SERIAL_LN("ring3 = %s", hue_to_string(DevStatus_row.ring3).c_str());
+	SERIAL_LN("uid = %d", DevStatus_table.get(row).uid);
+	SERIAL_LN("node_id = %d", DevStatus_table.get(row).node_id);
+	SERIAL_LN("type = %d", DevStatus_table.get(row).type);
+	SERIAL_LN("ring1 = %s", hue_to_string(DevStatus_table.get(row).ring1).c_str());
+	SERIAL_LN("ring2 = %s", hue_to_string(DevStatus_table.get(row).ring2).c_str());
+	SERIAL_LN("ring3 = %s", hue_to_string(DevStatus_table.get(row).ring3).c_str());
 }
 
 String SmartControllerClass::hue_to_string(Hue_t hue)
@@ -1419,6 +1566,7 @@ void SmartControllerClass::print_rule_table(int row)
 	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
 	}
 	SERIAL_LN("uid = %d", Rule_table.get(row).uid);
+	SERIAL_LN("node_id = %d", Rule_table.get(row).node_id);
 	SERIAL_LN("SCT_uid = %d", Rule_table.get(row).SCT_uid);
 	SERIAL_LN("SNT_uid = %d", Rule_table.get(row).SNT_uid);
 	SERIAL_LN("notif_uid = %d", Rule_table.get(row).notif_uid);

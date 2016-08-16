@@ -6,7 +6,7 @@
 /*** USER DEFINES:  ***/
 #define FAILURE_HANDLING
 #define SYS_SERIAL_DEBUG
-//#define SERIAL_DEBUG
+#define SERIAL_DEBUG
 //#define MAINLOOP_TIMER
 
 /**********************/

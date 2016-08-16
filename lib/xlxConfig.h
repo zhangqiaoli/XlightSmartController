@@ -11,12 +11,13 @@
 
 /*Note: if any of these structures are modified, the following print functions may need updating:
  - ConfigClass::print_config()
- - SmartControllerClass::print_devStatus_row()
+ - SmartControllerClass::print_devStatus_table()
  - SmartControllerClass::print_schedule_table()
  - SmartControllerClass::print_scenario_table()
  - SmartControllerClass::print_rule_table()
 */
 
+#define PACK //MSVS intellisense doesn't work when structs are packed
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------
@@ -27,7 +28,10 @@ typedef struct
   UC dst                      :1;           // daylight saving time flag
 } Timezone_t;
 
-typedef struct //__attribute__((packed))
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
   UC State                    :4;           // Component state
   UC CW                       :8;           // Brightness of cold white
@@ -55,23 +59,31 @@ typedef struct
 //------------------------------------------------------------------
 // Xlight Device Status Table Structures
 //------------------------------------------------------------------
-typedef struct //max 64 bytes
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
   OP_FLAG op_flag : 2;
   FLASH_FLAG flash_flag : 1;
   RUN_FLAG run_flag : 1;
-  UC id;                                    // ID, 1 based
-  UC type;                                  // Type of lamp
+  UC uid;						   // required
+  UC node_id;                      // Node ID (for RF communication), 1 based
+  UC type;                         // Type of lamp
   Hue_t ring1;
   Hue_t ring2;
   Hue_t ring3;
-} DevStatus_t;
+} DevStatusRow_t;
+
+#define DST_ROW_SIZE sizeof(DevStatusRow_t)
 
 //------------------------------------------------------------------
 // Xlight Schedule Table Structures
 //------------------------------------------------------------------
-
-typedef struct //__attribute__((packed)) //Schedule Table
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
   OP_FLAG op_flag			: 2;
   FLASH_FLAG flash_flag		: 1;
@@ -102,12 +114,16 @@ typedef struct    // Exact 12 bytes
 // Xlight Rule Table Structures
 //------------------------------------------------------------------
 
-typedef struct //__attribute__((packed))
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
 	OP_FLAG op_flag			 : 2;
 	FLASH_FLAG flash_flag	 : 1;
 	RUN_FLAG run_flag		 : 1;
 	UC uid                   : 8;
+	UC node_id				 : 8;
 	UC SCT_uid               : 8;
 	UC SNT_uid               : 8;
 	UC notif_uid             : 8;
@@ -121,7 +137,10 @@ typedef struct //__attribute__((packed))
 // Xlight Scenerio Table Structures
 //------------------------------------------------------------------
 
-typedef struct //__attribute__((packed))
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
 {
 	OP_FLAG op_flag				: 2;
 	FLASH_FLAG flash_flag		: 1;
