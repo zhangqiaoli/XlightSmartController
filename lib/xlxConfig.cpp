@@ -97,7 +97,7 @@ void ConfigClass::InitDevStatus()
 	first_row.run_flag = (RUN_FLAG)1;
 	first_row.uid = 0;
 	first_row.node_id = 1; //first light
-	first_row.type = 1; //todo: this this value correct?
+	first_row.type = devtypWRing3;  // White 3 rings
 	first_row.ring1 = whiteHue;
 	first_row.ring2 = whiteHue;
 	first_row.ring3 = whiteHue;
@@ -508,7 +508,7 @@ BOOL ConfigClass::LoadDeviceStatus()
 			{
 				if (theSys.DevStatus_table.add(DevStatusArray[i]))
 				{
-					SERIAL_LN("Loaded device status row for node_id:%d, uid:%d", DevStatusArray[i].node_id, DevStatusArray[i].uid);
+					LOGD(LOGTAG_MSG, "Loaded device status row for node_id:%d, uid:%d", DevStatusArray[i].node_id, DevStatusArray[i].uid);
 				}
 				else
 				{

@@ -186,27 +186,10 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 	}
 
 	if (bMsgReady) {
-		_times++;
-
-		// Determine the receiver addresse
-		uint8_t lv_sendTo = msg.getDestination();
-		SERIAL("to %d...", lv_sendTo);
-
-		sentOK = send(lv_sendTo, msg);
-		if (sentOK)
-		{
-			my_msg = msg;
-			_succ++;
-			SERIAL_LN("OK");
-			/*
-			if( lv_nMsgID == 1 ) {
-			radio.switch2MyNetwork();
-			SERIAL_LN("Switched to private network");
-			}*/
-		}
-		else {
-			SERIAL_LN("failed");
-		}
+		SERIAL("to %d...", msg.getDestination());
+		sentOK = ProcessSend();
+		my_msg = msg;
+		SERIAL_LN(sentOK ? "OK" : "failed");
 	}
 
 	return sentOK;
@@ -215,7 +198,23 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 bool RF24ServerClass::ProcessSend(String &strMsg)
 {
 	MyMessage tempMsg;
-	return ProcessSend(strMsg);
+	return ProcessSend(strMsg, tempMsg);
+}
+
+// ToDo: add message to queue instead of sending out directly
+bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
+{
+	if( !pMsg ) { pMsg = &msg; }
+
+	// Determine the receiver addresse
+	_times++;
+	if( send(pMsg->getDestination(), *pMsg) )
+	{
+		_succ++;
+		return true;
+	}
+
+	return false;
 }
 
 bool RF24ServerClass::ProcessReceive()
