@@ -17,7 +17,7 @@
  - SmartControllerClass::print_rule_table()
 */
 
-#define PACK //MSVS intellisense doesn't work when structs are packed
+//#define PACK //MSVS intellisense doesn't work when structs are packed
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------

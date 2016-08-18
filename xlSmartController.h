@@ -29,6 +29,7 @@ private:
 
   String hue_to_string(Hue_t hue);
   bool updateDevStatusRow(MyMessage msg);
+  bool ExecuteLightCommand(String mySerialStr);
 
 public:
   SmartControllerClass();
