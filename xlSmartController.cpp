@@ -71,9 +71,8 @@ void AlarmTimerTriggered(uint32_t tag)
 	//get SNT_uid from rule rows and find
 	ListNode<ScenarioRow_t> *ScenarioRowptr = theSys.SearchScenario(SNT_uid);
 
-	//Todo: search for notification table data
+	//ToDo: send rf
 
-	//ToDo: add action to command queue, send notif UID to cloud (to send to app)
 }
 
 //------------------------------------------------------------------
@@ -484,7 +483,7 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 			//turn each off (rf)
 
 			//change devstatus
-			//change brightness 
+			//change brightness
 		}
 		else
 		{
@@ -535,7 +534,7 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
 int SmartControllerClass::CldPowerSwitch(String swStr)
 {
 	//fast, simple control
-	
+
 	BOOL blnOn;
 	swStr.toLowerCase();
 	if (swStr == "0" || swStr == "off")
@@ -619,13 +618,7 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		const uint8_t G = (*m_jpCldCmd)["color"][4].as<uint8_t>();
 		const uint8_t B = (*m_jpCldCmd)["color"][5].as<uint8_t>();
 
-		uint64_t payload = (B / 16)* pow(16, 1)  +  (B % 16)* pow(16, 0) +
-                     (G / 16)* pow(16, 3)  +  (G % 16)* pow(16, 2) +
-                     (R / 16)* pow(16, 5)  +  (R % 16)* pow(16, 4) +
-                     (WW / 16)* pow(16, 7)  +  (WW % 16)* pow(16, 6) +
-                     (CW / 16)* pow(16, 9)  +  (CW % 16)* pow(16, 8) +
-                     (State / 16)* pow(16, 11)  +  (State % 16)* pow(16, 10) +
-                     (ring / 16)* pow(16, 13)  +  (ring % 16)* pow(16, 12);
+		uint64_t payload = CreateColorPayload(ring, State, CW, WW, R, G, B);
 
 		char buf[64];
 		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, payload);
@@ -648,6 +641,44 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		ExecuteLightCommand(strCmd);
 	}
 
+	//COMMAND 5: Change color with scenerio input
+	if (strCmd == CMD_SCENARIO) {
+		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("SNT_id")) {
+			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
+			return 0;
+		}
+		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+		const int SNT_id = (*m_jpCldCmd)["SNT_id"].as<int>();
+
+		//find hue data of the 3 rings
+		ListNode<ScenarioRow_t> *rowptr = SearchScenario(SNT_id);
+		if (rowptr)
+		{
+			uint64_t ring1_payload = CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
+			uint64_t ring2_payload = CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.CW, rowptr->data.ring2.WW, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
+			uint64_t ring3_payload = CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.CW, rowptr->data.ring3.WW, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
+
+			char buf[64];
+
+			sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring1_payload);
+			String ring1_cmd(buf);
+			ExecuteLightCommand(ring1_cmd);
+
+			sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring2_payload);
+			String ring2_cmd(buf);
+			ExecuteLightCommand(ring2_cmd);
+
+			sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring3_payload);
+			String ring3_cmd(buf);
+			ExecuteLightCommand(ring3_cmd);
+		}
+		else
+		{
+			LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", node_id, SNT_id);
+			return 0;
+		}
+	}
+
 	return 1;
 }
 
@@ -660,8 +691,6 @@ int SmartControllerClass::CldJSONConfig(String jsonData) //future actions
   int numRows = 0;
   bool bRowsKey = true;
 
-  //ToDo: for StaticJsonBuffer<num> to work, num must be much bigger than the value being read in. Figure out why this is. In the meanime
-  //  use 1000 instead for unit testing
 	int rc = ProcessJSONString(jsonData);
 	if (rc < 0) {
 		// Error input
@@ -1690,4 +1719,16 @@ String SmartControllerClass::hue_to_string(Hue_t hue)
 	out.concat(hue.B);
 
 	return out;
+}
+
+uint64_t SmartControllerClass::CreateColorPayload(uint8_t ring, uint8_t State, uint8_t CW, uint8_t WW, uint8_t R, uint8_t G, uint8_t B)
+{
+	uint64_t payload = (B / 16)* pow(16, 1)  +  (B % 16)* pow(16, 0) +
+								 		(G / 16)* pow(16, 3)  +  (G % 16)* pow(16, 2) +
+								 		(R / 16)* pow(16, 5)  +  (R % 16)* pow(16, 4) +
+								 		(WW / 16)* pow(16, 7)  +  (WW % 16)* pow(16, 6) +
+								 		(CW / 16)* pow(16, 9)  +  (CW % 16)* pow(16, 8) +
+								 		(State / 16)* pow(16, 11)  +  (State % 16)* pow(16, 10) +
+								 		(ring / 16)* pow(16, 13)  +  (ring % 16)* pow(16, 12);
+	return payload;
 }

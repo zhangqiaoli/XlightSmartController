@@ -29,7 +29,7 @@ private:
 
   String hue_to_string(Hue_t hue);
   bool updateDevStatusRow(MyMessage msg);
-  bool ExecuteLightCommand(String mySerialStr);
+  uint64_t CreateColorPayload(uint8_t ring, uint8_t State, uint8_t CW, uint8_t WW, uint8_t R, uint8_t G, uint8_t B);
 
 public:
   SmartControllerClass();
@@ -56,7 +56,8 @@ public:
   // Process all kinds of commands
   void ProcessCommands();
   void CollectData(UC tick);
-
+  bool ExecuteLightCommand(String mySerialStr);
+  
   // Device Control Functions
   int DevSoftSwitch(BOOL sw, UC dev = 0);
 

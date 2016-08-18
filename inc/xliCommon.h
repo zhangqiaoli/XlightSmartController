@@ -58,7 +58,7 @@ enum FLASH_FLAG {UNSAVED, SAVED};
 enum RUN_FLAG {UNEXECUTED, EXECUTED};
 
 //enum values for CldJSONCommand()
-enum COMMAND {CMD_SERIAL, CMD_POWER, CMD_COLOR, CMD_BRIGHTNESS};
+enum COMMAND {CMD_SERIAL, CMD_POWER, CMD_COLOR, CMD_BRIGHTNESS, CMD_SCENARIO};
 
 // Macros for UID identifiers
 #define CLS_RULE                  'r'
