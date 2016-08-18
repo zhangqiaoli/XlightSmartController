@@ -55,7 +55,8 @@ public:
   // Process all kinds of commands
   void ProcessCommands();
   void CollectData(UC tick);
-
+  bool ExecuteLightCommand(String mySerialStr);
+  
   // Device Control Functions
   int DevSoftSwitch(BOOL sw, UC dev = 0);
 
@@ -70,6 +71,7 @@ public:
 
   // Parsing Functions
   bool ParseCmdRow(JsonObject& data);
+  uint64_t CreateColorPayload(uint8_t ring, uint8_t State, uint8_t CW, uint8_t WW, uint8_t R, uint8_t G, uint8_t B);
 
   // Cloud Interface Action Types
   bool Change_Rule(RuleRow_t row);

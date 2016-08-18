@@ -66,14 +66,37 @@ void AlarmTimerTriggered(uint32_t tag)
 
 	// read UIDs from Rule row
 	uint8_t SNT_uid = RuleRowptr->data.SNT_uid;
-	uint8_t notif_uid = RuleRowptr->data.notif_uid;
+	uint8_t node_id = RuleRowptr->data.node_id;
 
 	//get SNT_uid from rule rows and find
-	ListNode<ScenarioRow_t> *ScenarioRowptr = theSys.SearchScenario(SNT_uid);
+	ListNode<ScenarioRow_t> *rowptr = theSys.SearchScenario(SNT_uid);
 
-	//Todo: search for notification table data
+	//ToDo: send rf
+	if (rowptr)
+	{
+		uint64_t ring1_payload = theSys.CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
+		uint64_t ring2_payload = theSys.CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.CW, rowptr->data.ring2.WW, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
+		uint64_t ring3_payload = theSys.CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.CW, rowptr->data.ring3.WW, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
 
-	//ToDo: add action to command queue, send notif UID to cloud (to send to app)
+		char buf[64];
+
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring1_payload);
+		String ring1_cmd(buf);
+		theSys.ExecuteLightCommand(ring1_cmd);
+
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring2_payload);
+		String ring2_cmd(buf);
+		theSys.ExecuteLightCommand(ring2_cmd);
+
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring3_payload);
+		String ring3_cmd(buf);
+		theSys.ExecuteLightCommand(ring3_cmd);
+	}
+	else
+	{
+		LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", node_id, SNT_uid);
+		return;
+	}
 }
 
 //------------------------------------------------------------------
@@ -459,6 +482,39 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 	// ToDo:
 	//SetStatus();
 
+	if (sw)
+	{
+		if (dev == 0)
+		{
+			//go through list of devices
+
+			//turn each on (rf)
+
+			//change devstatus
+			//change brightness indicatr
+		}
+		else
+		{
+			//turn off just dev
+		}
+	}
+	else
+	{
+		if (dev == 0)
+		{
+			//go through list of devices
+
+			//turn each off (rf)
+
+			//change devstatus
+			//change brightness
+		}
+		else
+		{
+			//turn off just dev
+		}
+	}
+
 	return 0;
 }
 
@@ -501,20 +557,8 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
 
 int SmartControllerClass::CldPowerSwitch(String swStr)
 {
-	//This sends data from cloud to appropriate function to change lamp color/on-off. Message comes in as MySensor serial input
-	//TESTING SAMPLES
-	// Set S_CUSTOM:
-    // all rings red: 1;23;1;1;24;1099528339456
-    // all rings CW/WW: 1;23;1;1;24;2199006478336
-    // all rings off: 1;23;1;1;24;16777215
-    // ring 1 red: 1;23;1;1;24;282574505050112
-  // Set S_DIMMER, V_STATUS on/off
-    // 	1;4;1;1;2;1
-  // Set S_DIMMER, V_DIMMER value 0-100
-    //  1;4;1;1;3;50
+	//fast, simple control
 
-	//fast, simple control (ToDo: delete this feature? )
-	/*
 	BOOL blnOn;
 	swStr.toLowerCase();
 	if (swStr == "0" || swStr == "off")
@@ -527,20 +571,7 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 		DevSoftSwitch(true); // Turn the switch on
 		return 1;
 	}
-	*/
 
-	//mysensors serial message
-	MyMessage msg;
-	if (theRadio.ProcessSend(swStr, msg)) //send message
-	{
-		SERIAL_LN("Sending message: from:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
-        msg.getSender(), msg.getDestination(), msg.getCommand(),
-        msg.getType(), msg.getSensor(), msg.getLength());
-
-		return updateDevStatusRow(msg); //update devstatus
-	}
-
-	return 0;
 }
 
 // Execute Operations, including SerialConsole commands
@@ -557,27 +588,125 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		return 1;
 	}
 
-	if (!(*m_jpCldCmd).containsKey("cmd") || !(*m_jpCldCmd).containsKey("data"))
+	if (!(*m_jpCldCmd).containsKey("cmd"))
   {
 		LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
 		return 0;
   }
 
-	const char* strCmd = (*m_jpCldCmd)["cmd"];
-	const char* strData = (*m_jpCldCmd)["data"];
-	if( stricmp(strCmd, "serial") == 0 ) {
+	const COMMAND strCmd = (COMMAND)(*m_jpCldCmd)["cmd"].as<int>();
+
+	//COMMAND 1: Use Serial Interface
+	if( strCmd == CMD_SERIAL) {
 		// Execute serial port command, and reflect results on cloud variable
+		if (!(*m_jpCldCmd).containsKey("data")) {
+			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
+			return 0;
+		}
+
 		if( !theConfig.IsCloudSerialEnabled() ) {
 			LOGN(LOGTAG_MSG, "Cloud serial command is not allowed. Check system config.");
 			return 0;
 		}
+		const char* strData = (*m_jpCldCmd)["data"];
 		theConsole.ExecuteCloudCommand(strData);
+	}
+
+	//COMMAND 2: Toggle light switch
+	if (strCmd == CMD_POWER) {
+		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("state")) {
+			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
+			return 0;
+		}
+		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+		const int state = (*m_jpCldCmd)["state"].as<int>();
+
+		char buf[64];
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_DIMMER, C_SET, 1, V_STATUS, state);
+		String strCmd(buf);
+		ExecuteLightCommand(strCmd);
+	}
+
+	//COMMAND 3: Change light color
+	if (strCmd == CMD_COLOR) {
+		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("ring") || !(*m_jpCldCmd).containsKey("color")) {
+			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
+			return 0;
+		}
+		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+		const uint8_t ring = (*m_jpCldCmd)["ring"].as<int>();
+		const uint8_t State = (*m_jpCldCmd)["color"][0].as<uint8_t>();
+		const uint8_t CW = (*m_jpCldCmd)["color"][1].as<uint8_t>();
+		const uint8_t WW = (*m_jpCldCmd)["color"][2].as<uint8_t>();
+		const uint8_t R = (*m_jpCldCmd)["color"][3].as<uint8_t>();
+		const uint8_t G = (*m_jpCldCmd)["color"][4].as<uint8_t>();
+		const uint8_t B = (*m_jpCldCmd)["color"][5].as<uint8_t>();
+
+		uint64_t payload = CreateColorPayload(ring, State, CW, WW, R, G, B);
+
+		char buf[64];
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, payload);
+		String strCmd(buf);
+		ExecuteLightCommand(strCmd);
+	}
+
+	//COMMAND 4: Change brightness
+	if (strCmd == CMD_BRIGHTNESS) {
+		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("value")) {
+			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
+			return 0;
+		}
+		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+		const int value = (*m_jpCldCmd)["value"].as<int>();
+
+		char buf[64];
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_DIMMER, C_SET, 1, V_DIMMER, value);
+		String strCmd(buf);
+		ExecuteLightCommand(strCmd);
+	}
+
+	//COMMAND 5: Change color with scenerio input
+	if (strCmd == CMD_SCENARIO) {
+		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("SNT_id")) {
+			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
+			return 0;
+		}
+		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+		const int SNT_uid = (*m_jpCldCmd)["SNT_id"].as<int>();
+
+		//find hue data of the 3 rings
+		ListNode<ScenarioRow_t> *rowptr = SearchScenario(SNT_uid);
+		if (rowptr)
+		{
+			uint64_t ring1_payload = CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
+			uint64_t ring2_payload = CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.CW, rowptr->data.ring2.WW, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
+			uint64_t ring3_payload = CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.CW, rowptr->data.ring3.WW, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
+
+			char buf[64];
+
+			sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring1_payload);
+			String ring1_cmd(buf);
+			ExecuteLightCommand(ring1_cmd);
+
+			sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring2_payload);
+			String ring2_cmd(buf);
+			ExecuteLightCommand(ring2_cmd);
+
+			sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring3_payload);
+			String ring3_cmd(buf);
+			ExecuteLightCommand(ring3_cmd);
+		}
+		else
+		{
+			LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", node_id, SNT_uid);
+			return 0;
+		}
 	}
 
 	return 1;
 }
 
-int SmartControllerClass::CldJSONConfig(String jsonData)
+int SmartControllerClass::CldJSONConfig(String jsonData) //future actions
 {
   //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
@@ -586,8 +715,6 @@ int SmartControllerClass::CldJSONConfig(String jsonData)
   int numRows = 0;
   bool bRowsKey = true;
 
-  //ToDo: for StaticJsonBuffer<num> to work, num must be much bigger than the value being read in. Figure out why this is. In the meanime
-  //  use 1000 instead for unit testing
 	int rc = ProcessJSONString(jsonData);
 	if (rc < 0) {
 		// Error input
@@ -1159,6 +1286,38 @@ bool SmartControllerClass::updateDevStatusRow(MyMessage msg)
 	return true;
 }
 
+//This function takes in a MyMessage serial input, and sends it to the specified light.
+//Upon success, also updates the devstatus table and brightness indicator
+bool SmartControllerClass::ExecuteLightCommand(String mySerialStr)
+{
+	//TESTING SAMPLES
+	// Set S_CUSTOM:
+	// all rings red: 1;23;1;1;24;1099528339456
+	// all rings CW/WW: 1;23;1;1;24;2199006478336
+	// all rings off: 1;23;1;1;24;16777215
+	// ring 1 red: 1;23;1;1;24;282574505050112
+	// Set S_DIMMER, V_STATUS on/off
+	// 	1;4;1;1;2;1
+	// Set S_DIMMER, V_DIMMER value 0-100
+	//  1;4;1;1;3;50
+
+	//mysensors serial message
+	MyMessage msg;
+	if (theRadio.ProcessSend(mySerialStr, msg)) //send message
+	{
+		SERIAL_LN("Sending message: from:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
+			msg.getSender(), msg.getDestination(), msg.getCommand(),
+			msg.getType(), msg.getSensor(), msg.getLength());
+
+		if (updateDevStatusRow(msg)) //update devstatus;
+		{
+			//ToDo: update brightness indicator
+			return true;
+		}
+	}
+	return false;
+}
+
 bool SmartControllerClass::Change_Sensor()
 {
   	//Possible subactions: GET
@@ -1460,30 +1619,6 @@ void SmartControllerClass::print_devStatus_table(int row)
 	SERIAL_LN("ring3 = %s", hue_to_string(DevStatus_table.get(row).ring3).c_str());
 }
 
-String SmartControllerClass::hue_to_string(Hue_t hue)
-{
-	String out = "";
-	out.concat("State:");
-	out.concat(hue.State);
-	out.concat("|");
-	out.concat("CW:");
-	out.concat(hue.CW);
-	out.concat("|");
-	out.concat("WW:");
-	out.concat(hue.WW);
-	out.concat("|");
-	out.concat("R:");
-	out.concat(hue.R);
-	out.concat("|");
-	out.concat("G:");
-	out.concat(hue.G);
-	out.concat("|");
-	out.concat("B:");
-	out.concat(hue.B);
-
-	return out;
-}
-
 void SmartControllerClass::print_schedule_table(int row)
 {
 	SERIAL_LN("====================");
@@ -1584,4 +1719,40 @@ void SmartControllerClass::Array2Hue(JsonArray& data, Hue_t& hue)
 	hue.R = data[3];
 	hue.G = data[4];
 	hue.B = data[5];
+}
+
+String SmartControllerClass::hue_to_string(Hue_t hue)
+{
+	String out = "";
+	out.concat("State:");
+	out.concat(hue.State);
+	out.concat("|");
+	out.concat("CW:");
+	out.concat(hue.CW);
+	out.concat("|");
+	out.concat("WW:");
+	out.concat(hue.WW);
+	out.concat("|");
+	out.concat("R:");
+	out.concat(hue.R);
+	out.concat("|");
+	out.concat("G:");
+	out.concat(hue.G);
+	out.concat("|");
+	out.concat("B:");
+	out.concat(hue.B);
+
+	return out;
+}
+
+uint64_t SmartControllerClass::CreateColorPayload(uint8_t ring, uint8_t State, uint8_t CW, uint8_t WW, uint8_t R, uint8_t G, uint8_t B)
+{
+	uint64_t payload = (B / 16)* pow(16, 1)  +  (B % 16)* pow(16, 0) +
+								 		(G / 16)* pow(16, 3)  +  (G % 16)* pow(16, 2) +
+								 		(R / 16)* pow(16, 5)  +  (R % 16)* pow(16, 4) +
+								 		(WW / 16)* pow(16, 7)  +  (WW % 16)* pow(16, 6) +
+								 		(CW / 16)* pow(16, 9)  +  (CW % 16)* pow(16, 8) +
+								 		(State / 16)* pow(16, 11)  +  (State % 16)* pow(16, 10) +
+								 		(ring / 16)* pow(16, 13)  +  (ring % 16)* pow(16, 12);
+	return payload;
 }
