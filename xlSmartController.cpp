@@ -66,13 +66,37 @@ void AlarmTimerTriggered(uint32_t tag)
 
 	// read UIDs from Rule row
 	uint8_t SNT_uid = RuleRowptr->data.SNT_uid;
-	uint8_t notif_uid = RuleRowptr->data.notif_uid;
+	uint8_t node_id = RuleRowptr->data.node_id;
 
 	//get SNT_uid from rule rows and find
-	ListNode<ScenarioRow_t> *ScenarioRowptr = theSys.SearchScenario(SNT_uid);
+	ListNode<ScenarioRow_t> *rowptr = theSys.SearchScenario(SNT_uid);
 
 	//ToDo: send rf
+	if (rowptr)
+	{
+		uint64_t ring1_payload = theSys.CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
+		uint64_t ring2_payload = theSys.CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.CW, rowptr->data.ring2.WW, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
+		uint64_t ring3_payload = theSys.CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.CW, rowptr->data.ring3.WW, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
 
+		char buf[64];
+
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring1_payload);
+		String ring1_cmd(buf);
+		theSys.ExecuteLightCommand(ring1_cmd);
+
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring2_payload);
+		String ring2_cmd(buf);
+		theSys.ExecuteLightCommand(ring2_cmd);
+
+		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_CUSTOM, C_SET, 1, V_STATUS, ring3_payload);
+		String ring3_cmd(buf);
+		theSys.ExecuteLightCommand(ring3_cmd);
+	}
+	else
+	{
+		LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", node_id, SNT_uid);
+		return;
+	}
 }
 
 //------------------------------------------------------------------
@@ -648,10 +672,10 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 			return 0;
 		}
 		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
-		const int SNT_id = (*m_jpCldCmd)["SNT_id"].as<int>();
+		const int SNT_uid = (*m_jpCldCmd)["SNT_id"].as<int>();
 
 		//find hue data of the 3 rings
-		ListNode<ScenarioRow_t> *rowptr = SearchScenario(SNT_id);
+		ListNode<ScenarioRow_t> *rowptr = SearchScenario(SNT_uid);
 		if (rowptr)
 		{
 			uint64_t ring1_payload = CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
@@ -674,7 +698,7 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		}
 		else
 		{
-			LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", node_id, SNT_id);
+			LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", node_id, SNT_uid);
 			return 0;
 		}
 	}
