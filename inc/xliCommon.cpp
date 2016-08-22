@@ -17,25 +17,37 @@ uint8_t h2i(const char c)
 }
 
 char* PrintUint64(char *buf, uint64_t value, bool bHex) {
-  if (buf != NULL) {
-    if( value > 0xFFFFFFFFLL ) {
-			uint32_t part1 = value >> 32;
-			uint32_t part2 = value & 0xFFFFFFFFLL;
-      if( bHex ) {
-        sprintf(buf, "0x%X%04X", part1, part2);
-      } else {
-        sprintf(buf, "%d%d", value);
-      }
-    } else {
-      if( bHex ) {
-        sprintf(buf, "0x%04X", value);
-      } else {
-        sprintf(buf, "%d", value);
-      }
-    }
-  }
-
-  return buf;
+	if (buf != NULL) {
+		if (value > 0xFFFFFFFFLL) {
+			if (bHex) {
+				uint32_t part1 = value >> 32;
+				uint32_t part2 = value & 0xFFFFFFFFLL;
+				sprintf(buf, "0x%X%04X", part1, part2);
+			}
+			else {
+				uint8_t digits[20];
+				uint64_t tmpV = value;
+				int len = 0;
+				while (tmpV > 0x00LL) {
+					digits[len++] = tmpV % 10;
+					tmpV /= 10;
+				}
+				for (int i = len - 1; i >= 0; i--) {
+					buf[len - 1 - i] = digits[i] + '0';
+				}
+				buf[len] = NULL;
+			}
+		}
+		else {
+			if (bHex) {
+				sprintf(buf, "0x%04X", value);
+			}
+			else {
+				sprintf(buf, "%d", value);
+			}
+		}
+	}
+	return buf;
 }
 
 char* PrintMacAddress(char *buf, const uint8_t *mac, char delim)
