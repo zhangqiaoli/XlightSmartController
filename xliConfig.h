@@ -55,7 +55,7 @@
 #define MAX_NODE_PER_CONTROLLER   64
 
 // Maximum JSON data length
-#define COMMAND_JSON_SIZE           64
-#define SENSORDATA_JSON_SIZE        196
+#define COMMAND_JSON_SIZE				64
+#define SENSORDATA_JSON_SIZE			196
 
 #endif /* xliConfig_h */

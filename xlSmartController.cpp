@@ -577,6 +577,8 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 /// Format: {type: '', cmd: ''}
 int SmartControllerClass::CldJSONCommand(String jsonCmd)
 {
+	SERIAL_LN("Received JSON cmd: %s", jsonCmd.c_str());
+
 	int rc = ProcessJSONString(jsonCmd);
 	if (rc < 0) {
 		// Error input
@@ -711,16 +713,20 @@ int SmartControllerClass::CldJSONConfig(String jsonData) //future actions
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
   //handle each for each respective Chain until end of incoming string
 
+	SERIAL_LN("Received JSON config message: %s", jsonData.c_str());
+
   int numRows = 0;
   bool bRowsKey = true;
 
 	int rc = ProcessJSONString(jsonData);
 	if (rc < 0) {
 		// Error input
-		LOGE(LOGTAG_MSG, "Error parsing json input: %s", jsonData.c_str());
+		LOGE(LOGTAG_MSG, "Error parsing json config message: %s", jsonData.c_str());
 		return 0;
 	} else if (rc > 0) {
 		// Wait for more...
+		//todo: temp, delete after
+		SERIAL_LN("AHHHHHHHHHHHHHHHHHHHH0 m_strCldCmd: %s", m_strCldCmd.c_str());
 		return 1;
 	}
 
