@@ -41,11 +41,12 @@ test(cloudinput)
 
   /// Format_3: Concatenate strings
   //// First string
-  theSys.CldJSONConfig("{'x0':'{\"op\":1, \"fl\":0, \"run\":0, \"uid\":\"s1\",\"ring1\":[1,8,8,8,8,8], '}");
-  //// Strings in middle
-  theSys.CldJSONConfig("{'x1': '\"ring2\":[1,8,8,8,8,8], \"ring3\":[1,8,8,8,8,8], '}");
-  theSys.CldJSONConfig("\"filter\":0}");
+  theSys.CldJSONConfig("{'x0': '{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"s4\",\"ring1\": '}");
+  //// String in middle
+  theSys.CldJSONConfig("{'x1': '[1,0,0,0,255,0],\"ring2\":[1,0,0,0,255,0], '}");
   //// Last string: same as Format_1 or Format_2
+  theSys.CldJSONConfig("\"ring3\":[1,0,0,0,255,0],\"brightness\":48,\"filter\":0}");
+
 
   //// Format_3 test case
   theSys.CldJSONCommand("{'x0': '{\"cmd\":\"serial\", '}");
@@ -56,20 +57,23 @@ test(cloudinput)
   theSys.CldJSONCommand("{'cmd':'serial', 'data':'show net'}");
 }
 
-test(cloudinthree)
+test(alarm_all_red)
 {
-  //// First string
-  theSys.CldJSONConfig("{'x0': '{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"s4\",\"ring1\": '}");
-  //// Strings in middle
-  theSys.CldJSONConfig("{'x1': '[1,0,0,0,255,0],\"ring2\":[1,0,0,0,255,0], '}");
-  theSys.CldJSONConfig("\"ring3\":[1,0,0,0,255,0],\"brightness\":48,\"filter\":0}");
+  // This sends a scenerio of all red rings, a schedule row to set a
+  // daily repeating alarm, and a rules row to execute it
 
-  String teststrCldCmd = "{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"s4\",\"ring1\":[1,0,0,0,255,0],\"ring2\":[1,0,0,0,255,0], ";
-  String inputstr = "\"ring3\":[1,0,0,0,255,0],\"brightness\":48,\"filter\":0} ";
+  //scenerio row uid = 0
+  theSys.CldJSONConfig("{'x0': '{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"s0\",\"ring1\": '}");
+  theSys.CldJSONConfig("{'x1': '[1,0,0,255,0,0],\"ring2\":[1,0,0,255,0,0], '}");
+  theSys.CldJSONConfig("\"ring3\":[1,0,0,255,0,0],\"brightness\":99}");
 
-  teststrCldCmd.concat(inputstr);
-  Serial.println(teststrCldCmd);
+  //schedule row uid = 1
+  theSys.CldJSONConfig("{'x0': '{\"op\":1, \"fl\":0, \"run\":0, \"uid\": \"a1\", \"isRepeat\":0, '}");
+  theSys.CldJSONConfig("\"weekdays\":2, \"hour\":20, \"minute\":18, \"alarm_id\":255}");
 
+  //rules row uid = 0
+  theSys.CldJSONConfig("{'x0': '{\"op\":1, \"fl\":0, \"run\":0, \"uid\": \"r0\", '}");
+  theSys.CldJSONConfig("\"node_id\":1, \"SCT_uid\":1, \"SNT_uid\":0, \"notif_uid\":0}");
 }
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -96,7 +100,7 @@ test(cloudinthree)
 	Test::exclude("*");
 	//Test::include("serialconsole");
   //Test::include("cloudinput");
-  Test::include("cloudinthree");
+  Test::include("alarm_all_red");
 
 	//Additional Setup
   for(int i = 10; i > 0; i--)
