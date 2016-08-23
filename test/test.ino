@@ -32,10 +32,7 @@ test(serialconsole)
   theSys.CldJSONCommand("{'cmd':'serial', 'data':'show net'}");
   theSys.CldJSONCommand("{'cmd':'serial', 'data':'ping'}");
   theSys.CldJSONCommand("{'cmd':'serial', 'data':'sys reset'}");
-<<<<<<< HEAD
-=======
 }
->>>>>>> ccbcd17481768c3986cf991f22a2ea871c1d568f
 
 test(cloudinput)
 {
@@ -129,7 +126,6 @@ test(cloudinthree)
   {
     Particle.function("RunUnitTests", start);
     flag = false;
-<<<<<<< HEAD
     Serial.begin(SERIALPORT_SPEED_DEFAULT);
 
   	//Test output location
@@ -161,39 +157,36 @@ test(cloudinthree)
   	}
 
     testOrderedList(false);
-=======
-    Serial.begin(9600);
 
-	//Test output location
-	Test::out = &Serial;
+  	//Test output location
+  	Test::out = &Serial;
 
-	//Test Selection (use ::exclude(char *pattern) and ::include(char *pattern))
-	Test::exclude("*");
-	//Test::include("serialconsole");
-  //Test::include("cloudinput");
-  Test::include("cloudinthree");
+  	//Test Selection (use ::exclude(char *pattern) and ::include(char *pattern))
+  	Test::exclude("*");
+  	//Test::include("serialconsole");
+    //Test::include("cloudinput");
+    Test::include("cloudinthree");
 
-	//Additional Setup
-  for(int i = 10; i > 0; i--)
-  {
-    Serial.println(i);
-    delay(500);
-  }
-  Serial.println ("starting setup functions");
-	//IntervalTimer sysTimer;
-	theSys.Init();
-	theConfig.LoadConfig();
-	theSys.InitPins();
-	theSys.InitRadio();
-	theSys.InitNetwork();
-	theSys.InitCloudObj();
-	theSys.InitSensors();
-  theConsole.Init();
-	theSys.Start();
-	while (Time.now() < 2000) {
-		Particle.process();
-	}
->>>>>>> ccbcd17481768c3986cf991f22a2ea871c1d568f
+  	//Additional Setup
+    for(int i = 10; i > 0; i--)
+    {
+      Serial.println(i);
+      delay(500);
+    }
+    Serial.println ("starting setup functions");
+  	//IntervalTimer sysTimer;
+  	theSys.Init();
+  	theConfig.LoadConfig();
+  	theSys.InitPins();
+  	theSys.InitRadio();
+  	theSys.InitNetwork();
+  	theSys.InitCloudObj();
+  	theSys.InitSensors();
+    theConsole.Init();
+  	theSys.Start();
+  	while (Time.now() < 2000) {
+  		Particle.process();
+  	}
   }
 
   void loop()
