@@ -375,9 +375,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
       CloudOutput("NodeID: %d (%s), Status: %d", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")), theSys.GetStatus());
   } else if (strnicmp(sTopic, "nlist", 5) == 0) {
       SERIAL_LN("**Node List count:%d, size:%d", theConfig.lstNodes.count(), theConfig.lstNodes.size());
-      for(int i=0; i < theConfig.lstNodes.count(); i++) {
-        SERIAL_LN("Index: %d - NodeID: %d", i, theConfig.lstNodes._pItems[i].nid);
-      }
+      theConfig.lstNodes.showList();
       CloudOutput("Nodelist count:%d, size:%d", theConfig.lstNodes.count(), theConfig.lstNodes.size());
 	} else if (strnicmp(sTopic, "ble", 3) == 0) {
       // ToDo: show BLE summay

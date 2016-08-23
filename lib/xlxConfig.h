@@ -103,6 +103,7 @@ typedef struct
 // Xlight NodeID List
 //------------------------------------------------------------------
 typedef struct    // Exact 12 bytes
+	__attribute__((packed))
 {
 	UC nid;
 	UC reserved;
@@ -160,7 +161,7 @@ class NodeListClass : public OrderdList<NodeIdRow_t>
 {
 public:
   bool m_isChanged;
-  
+
   NodeListClass(uint8_t maxl = 64, bool desc = false, uint8_t initlen = 8) : OrderdList(maxl, desc, initlen) {
     m_isChanged = false; };
   virtual int compare(NodeIdRow_t _first, NodeIdRow_t _second) {
@@ -176,6 +177,7 @@ public:
   int getFlashSize();
   bool loadList();
   bool saveList();
+  void showList();
 };
 
 //------------------------------------------------------------------

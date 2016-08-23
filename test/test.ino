@@ -156,7 +156,7 @@ test(cloudinthree)
   		Particle.process();
   	}
 
-    testOrderedList(false);
+    //testOrderedList(false);
 
   	//Test output location
   	Test::out = &Serial;
