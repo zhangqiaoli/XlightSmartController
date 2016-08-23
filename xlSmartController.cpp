@@ -1395,11 +1395,10 @@ bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uin
 	//Update that schedule row's alarm_id field with the newly created alarm's alarm_id
 	scheduleRow->data.alarm_id = alarm_id;
 	LOGI(LOGTAG_MSG, "Alarm %u created via UID:%c%d", alarm_id, CLS_RULE, tag);
-
-	//todo: delete later
-	SERIAL_LN("-----weekday %d", (int)scheduleRow->data.weekdays);
-	SERIAL_LN("-----hour %d", (int)scheduleRow->data.hour);
-	SERIAL_LN("-----min %d", (int)scheduleRow->data.minute);
+	LOGD(LOGTAG_MSG, "Alarm %u creation info:", alarm_id);
+	LOGD(LOGTAG_MSG, "-----weekday %d", (int)scheduleRow->data.weekdays);
+	LOGD(LOGTAG_MSG, "-----hour %d", (int)scheduleRow->data.hour);
+	LOGD(LOGTAG_MSG, "-----min %d", (int)scheduleRow->data.minute);
 
 	return true;
 }
