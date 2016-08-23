@@ -45,6 +45,66 @@ using namespace Flashee;
 ConfigClass theConfig = ConfigClass();
 
 //------------------------------------------------------------------
+// Xlight Node List Class
+//------------------------------------------------------------------
+int NodeListClass::getMemSize()
+{
+	return(sizeof(NodeIdRow_t) * _count);
+}
+
+int NodeListClass::getFlashSize()
+{
+	return(min(sizeof(NodeIdRow_t) * _size, MEM_NODELIST_LEN));
+}
+
+// Load node list from EEPROM
+bool NodeListClass::loadList()
+{
+	NodeIdRow_t lv_Node;
+	for(int i = 0; i < theConfig.GetNumNodes(); i++) {
+		int offset = MEM_NODELIST_OFFSET + i * sizeof(NodeIdRow_t);
+		if( offset > MEM_NODELIST_OFFSET + MEM_NODELIST_LEN - sizeof(NodeIdRow_t) ) break;
+
+		EEPROM.get(offset, lv_Node);
+		// Initialize two preset nodes
+		if( i == 0 ) {
+			if( lv_Node.nid != 1 ) {
+				lv_Node.nid == 1;
+				memset(lv_Node.identify, 0x00, sizeof(lv_Node.identify));
+				lv_Node.recentActive = 0;
+				m_isChanged = true;
+			}
+		} else if(  i == 1 && theConfig.GetNumNodes() == 2 ) {
+			if( lv_Node.nid != 64 ) {
+				lv_Node.nid == 64;
+				memset(lv_Node.identify, 0x00, sizeof(lv_Node.identify));
+				lv_Node.recentActive = 0;
+				m_isChanged = true;
+			}
+		}
+		if( add(&lv_Node) < 0 ) break;
+	}
+	saveList();
+	return true;
+}
+
+bool NodeListClass::saveList()
+{
+	if( m_isChanged ) {
+		m_isChanged = false;
+		/*
+		for(int i = 0; i < count(); i++) {
+			int offset = MEM_NODELIST_OFFSET + i * sizeof(NodeIdRow_t);
+			if( offset > MEM_NODELIST_OFFSET + MEM_NODELIST_LEN - sizeof(NodeIdRow_t) ) break;
+			EEPROM.put(offset, _pItems[i]);
+		}*/
+		EEPROM.put(MEM_NODELIST_OFFSET, _pItems);
+		theConfig.SetNumNodes(count());
+	}
+	return true;
+}
+
+//------------------------------------------------------------------
 // Xlight Config Class
 //------------------------------------------------------------------
 ConfigClass::ConfigClass()
@@ -849,9 +909,13 @@ BOOL ConfigClass::SaveRuleTable()
 // Load NodeID List
 BOOL ConfigClass::LoadNodeIDList()
 {
-	// ToDo:
-
-	return true;
+	BOOL rc = lstNodes.loadList();
+	if( rc ) {
+		LOGD(LOGTAG_MSG, "NodeList loaded - %d", lstNodes.count());
+	} else {
+		LOGW(LOGTAG_MSG, F("Failed to laod NodeList."));
+	}
+	return rc;
 }
 
 // Save NodeID List

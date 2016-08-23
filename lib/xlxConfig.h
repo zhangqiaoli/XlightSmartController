@@ -6,7 +6,7 @@
 #include "xliCommon.h"
 #include "xliMemoryMap.h"
 #include "TimeAlarms.h"
-
+#include "OrderedList.h"
 #include "flashee-eeprom.h"
 
 /*Note: if any of these structures are modified, the following print functions may need updating:
@@ -17,7 +17,7 @@
  - SmartControllerClass::print_rule_table()
 */
 
-//#define PACK //MSVS intellisense doesn't work when structs are packed
+#define PACK //MSVS intellisense doesn't work when structs are packed
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------
@@ -155,6 +155,29 @@ typedef struct
 #define SNT_ROW_SIZE	sizeof(ScenarioRow_t)
 #define MAX_SNT_ROWS	128
 
+// Node List Class
+class NodeListClass : public OrderdList<NodeIdRow_t>
+{
+public:
+  bool m_isChanged;
+  
+  NodeListClass(uint8_t maxl = 64, bool desc = false, uint8_t initlen = 8) : OrderdList(maxl, desc, initlen) {
+    m_isChanged = false; };
+  virtual int compare(NodeIdRow_t _first, NodeIdRow_t _second) {
+    if( _first.nid > _second.nid ) {
+      return 1;
+    } else if( _first.nid < _second.nid ) {
+      return -1;
+    } else {
+      return 0;
+    }
+  };
+  int getMemSize();
+  int getFlashSize();
+  bool loadList();
+  bool saveList();
+};
+
 //------------------------------------------------------------------
 // Xlight Configuration Class
 //------------------------------------------------------------------
@@ -255,6 +278,8 @@ public:
 
   UC GetNumNodes();
   BOOL SetNumNodes(UC num);
+
+  NodeListClass lstNodes;
 };
 
 //------------------------------------------------------------------
