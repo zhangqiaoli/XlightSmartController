@@ -55,6 +55,8 @@ MotionSensor senMotion(PIN_SEN_PIR);
 void AlarmTimerTriggered(uint32_t tag)
 {
 	uint8_t rule_uid = (uint8_t)tag;
+	SERIAL_LN("Rule %u Alarm Triggered", rule_uid);
+
 
 	//search Rule table for matching UID
 	ListNode<RuleRow_t> *RuleRowptr = theSys.Rule_table.search(rule_uid);
@@ -71,7 +73,6 @@ void AlarmTimerTriggered(uint32_t tag)
 	//get SNT_uid from rule rows and find
 	ListNode<ScenarioRow_t> *rowptr = theSys.SearchScenario(SNT_uid);
 
-	//ToDo: send rf
 	if (rowptr)
 	{
 		String ring1_payload = theSys.CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
@@ -725,8 +726,6 @@ int SmartControllerClass::CldJSONConfig(String jsonData) //future actions
 		return 0;
 	} else if (rc > 0) {
 		// Wait for more...
-		//todo: temp, delete after
-		SERIAL_LN("AHHHHHHHHHHHHHHHHHHHH0 m_strCldCmd: %s", m_strCldCmd.c_str());
 		return 1;
 	}
 
