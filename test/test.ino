@@ -16,20 +16,26 @@
 #include "xlxLogger.h"
 #include "xlxSerialConsole.h"
 
-test(example)
+//><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+// Intergration Tests
+//><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+test(serialconsole)
 {
   //String in ="";
   /// Format_1: Single row
   theSys.CldJSONConfig("{'op':1, 'fl':0, 'run':0, 'uid':'s1','ring1':[1,8,8,8,8,8], 'ring2':[1,8,8,8,8,8], 'ring3':[1,8,8,8,8,8], 'filter':0}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'?'}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'? show'}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'check rf'}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'check wifi'}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'show debug'}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'show net'}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'ping'}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'sys reset'}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'?'}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'? show'}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'check rf'}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'check wifi'}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'show debug'}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'show net'}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'ping'}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'sys reset'}");
+}
 
+test(cloudinput)
+{
   /// Format_2: Multiple rows
   //theSys.CldJSONConfig("{'rows':2, 'data': [{'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0101080808080800}, {'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0201080808080800}, {'op':1, 'fl':0, 'run':0, 'uid':'s1', 'hue':0x0301080808080800}]");
 
@@ -42,43 +48,29 @@ test(example)
   //// Last string: same as Format_1 or Format_2
 
   //// Format_3 test case
-  theSys.CldJSONCmd("{'x0': '{\"cmd\":\"serial\", '}");
-  theSys.CldJSONCmd("{'x1': '\"data\":\"check '}");
-  theSys.CldJSONCmd("wifi\"}");
+  theSys.CldJSONCommand("{'x0': '{\"cmd\":\"serial\", '}");
+  theSys.CldJSONCommand("{'x1': '\"data\":\"check '}");
+  theSys.CldJSONCommand("wifi\"}");
   //// Format_3 test case
-  theSys.CldJSONCmd("{'x0': ' '}");
-  theSys.CldJSONCmd("{'cmd':'serial', 'data':'show net'}");
+  theSys.CldJSONCommand("{'x0': ' '}");
+  theSys.CldJSONCommand("{'cmd':'serial', 'data':'show net'}");
 }
 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// CloudObjClass Tests
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+test(cloudinthree)
+{
+  //// First string
+  theSys.CldJSONConfig("{'x0': '{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"s4\",\"ring1\": '}");
+  //// Strings in middle
+  theSys.CldJSONConfig("{'x1': '[1,0,0,0,255,0],\"ring2\":[1,0,0,0,255,0], '}");
+  theSys.CldJSONConfig("\"ring3\":[1,0,0,0,255,0],\"brightness\":48,\"filter\":0}");
 
+  String teststrCldCmd = "{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"s4\",\"ring1\":[1,0,0,0,255,0],\"ring2\":[1,0,0,0,255,0], ";
+  String inputstr = "\"ring3\":[1,0,0,0,255,0],\"brightness\":48,\"filter\":0} ";
 
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// SmartControllerClass Tests
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  teststrCldCmd.concat(inputstr);
+  Serial.println(teststrCldCmd);
 
-
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// ConfigClass Tests
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// RF24InterfaceClass Tests
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// LoggerClass Tests
-//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-//><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
-// Intergration Tests
-//><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
-
+}
 
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Call Start Func to Init Tests
@@ -101,8 +93,10 @@ test(example)
 	Test::out = &Serial;
 
 	//Test Selection (use ::exclude(char *pattern) and ::include(char *pattern))
-	//Test::exclude("*");
-	//Test::include("SmartControllerClass_*");
+	Test::exclude("*");
+	//Test::include("serialconsole");
+  //Test::include("cloudinput");
+  Test::include("cloudinthree");
 
 	//Additional Setup
   for(int i = 10; i > 0; i--)
@@ -141,6 +135,6 @@ test(example)
 
     if (flag)
       Test::run();
-  }
+    }
 
 #endif
