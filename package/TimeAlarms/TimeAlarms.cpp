@@ -59,7 +59,7 @@ void AlarmClass::updateNextTrigger()
       }
       else if(Mode.alarmType == dtDailyAlarm)  //if this is a daily alarm
       {
-        if( value + previousMidnight(now_tz()) <= time)
+        if( value + previousMidnight(time) <= time)
         {
           nextTrigger = value + nextMidnight(time); // if time has passed then set for tomorrow
         }
@@ -70,7 +70,7 @@ void AlarmClass::updateNextTrigger()
       }
       else if(Mode.alarmType == dtWeeklyAlarm)  // if this is a weekly alarm
       {
-        if( (value + previousSunday(now_tz())) <= time)
+        if( (value + previousSunday(time)) <= time)
         {
           nextTrigger = value + nextSunday(time); // if day has passed then set for the next week.
         }
@@ -333,21 +333,21 @@ AlarmID_t TimeAlarmsClass::alarmRepeat(time_t value, OnTick_t onTickHandler){ //
     }
 
     // returns the absolute time of the next scheduled alarm, or 0 if none
-     time_t TimeAlarmsClass::getNextTrigger()
-     {
-     time_t nextTrigger = 0xffffffff;  // the max time value
-
-        for(uint8_t id = 0; id < dtNBR_ALARMS; id++)
+    time_t TimeAlarmsClass::getNextTrigger()
+    {
+      time_t nextTrigger = 0;
+      for(uint8_t id = 0; id < dtNBR_ALARMS; id++)
+      {
+        if(isAllocated(id) )
         {
-          if(isAllocated(id) )
-          {
-        	if(Alarm[id].nextTrigger <  nextTrigger)
-    		   nextTrigger = Alarm[id].nextTrigger;
+          if(Alarm[id].nextTrigger < nextTrigger || nextTrigger == 0) {
+            nextTrigger = Alarm[id].nextTrigger;
           }
-    	}
-        return nextTrigger == 0xffffffff ? 0 : nextTrigger;
-     }
-
+        }
+      }
+      return (nextTrigger > 0 ? nextTrigger - time_zone_cache : 0);
+    }
+    
     // attempt to create an alarm and return true if successful
     AlarmID_t TimeAlarmsClass::create( time_t value, OnTick_t onTickHandler, uint8_t isOneShot, dtAlarmPeriod_t alarmType, uint8_t isEnabled)
     {
