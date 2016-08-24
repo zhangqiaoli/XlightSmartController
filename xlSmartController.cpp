@@ -55,6 +55,8 @@ MotionSensor senMotion(PIN_SEN_PIR);
 void AlarmTimerTriggered(uint32_t tag)
 {
 	uint8_t rule_uid = (uint8_t)tag;
+	SERIAL_LN("Rule %u Alarm Triggered", rule_uid);
+
 
 	//search Rule table for matching UID
 	ListNode<RuleRow_t> *RuleRowptr = theSys.Rule_table.search(rule_uid);
@@ -71,7 +73,6 @@ void AlarmTimerTriggered(uint32_t tag)
 	//get SNT_uid from rule rows and find
 	ListNode<ScenarioRow_t> *rowptr = theSys.SearchScenario(SNT_uid);
 
-	//ToDo: send rf
 	if (rowptr)
 	{
 		String ring1_payload = theSys.CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
@@ -725,8 +726,6 @@ int SmartControllerClass::CldJSONConfig(String jsonData) //future actions
 		return 0;
 	} else if (rc > 0) {
 		// Wait for more...
-		//todo: temp, delete after
-		SERIAL_LN("AHHHHHHHHHHHHHHHHHHHH0 m_strCldCmd: %s", m_strCldCmd.c_str());
 		return 1;
 	}
 
@@ -805,6 +804,7 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			row.flash_flag = flash_flag;
 			row.run_flag = run_flag;
 			row.uid = uidNum;
+			row.node_id = data["node_uid"];
 			row.SCT_uid = data["SCT_uid"];
 			row.SNT_uid = data["SNT_uid"];
 			row.notif_uid = data["notif_uid"];
@@ -867,7 +867,7 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			row.weekdays = data["weekdays"];
 			row.isRepeat = data["isRepeat"];
 			row.hour = data["hour"];
-			row.min = data["min"];
+			row.minute = data["min"];
 			row.alarm_id = dtINVALID_ALARM_ID;
 
 			isSuccess = Change_Schedule(row);
@@ -1368,33 +1368,38 @@ bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uin
 	{
 		if (scheduleRow->data.weekdays > 0 && scheduleRow->data.weekdays <= 7) {
 			//repeat weekly on given weekday
-			alarm_id = Alarm.alarmRepeat((timeDayOfWeek_t)scheduleRow->data.weekdays, scheduleRow->data.hour, scheduleRow->data.min, 0, AlarmTimerTriggered);
+			alarm_id = Alarm.alarmRepeat((timeDayOfWeek_t)(int)scheduleRow->data.weekdays, (int)scheduleRow->data.hour, (int)scheduleRow->data.minute, 0, AlarmTimerTriggered);
 			Alarm.setAlarmTag(alarm_id, tag);
 		}
 		else if (scheduleRow->data.weekdays == 0)
 		{
 			//weekdays == 0 refers to daily repeat
-			time_t tmValue = AlarmHMS(scheduleRow->data.hour, scheduleRow->data.min, 0);
+			time_t tmValue = AlarmHMS((int)scheduleRow->data.hour, (int)scheduleRow->data.minute, 0);
 			alarm_id = Alarm.alarmRepeat(tmValue, AlarmTimerTriggered);
 			Alarm.setAlarmTag(alarm_id, tag);
 		}
 		else
 		{
-			LOGN(LOGTAG_MSG, "Cannot create Alarm via UID:%c%s. Incorrect weekday value.", CLS_RULE, tag);
+			LOGN(LOGTAG_MSG, "Cannot create Alarm via UID:%c%d. Incorrect weekday value.", CLS_RULE, tag);
 			return false;
 		}
 	}
 	else if (scheduleRow->data.isRepeat == 0) {
-		alarm_id = Alarm.alarmOnce((timeDayOfWeek_t)scheduleRow->data.weekdays, scheduleRow->data.hour, scheduleRow->data.min, 0, AlarmTimerTriggered);
+		alarm_id = Alarm.alarmOnce((timeDayOfWeek_t)(int)scheduleRow->data.weekdays, (int)scheduleRow->data.hour, (int)scheduleRow->data.minute, 0, AlarmTimerTriggered);
 		Alarm.setAlarmTag(alarm_id, tag);
 	}
 	else {
-		LOGN(LOGTAG_MSG, "Cannot create Alarm via UID:%c%s. Incorrect isRepeat value.", CLS_RULE, tag);
+		LOGN(LOGTAG_MSG, "Cannot create Alarm via UID:%c%d. Incorrect isRepeat value.", CLS_RULE, tag);
 		return false;
 	}
 	//Update that schedule row's alarm_id field with the newly created alarm's alarm_id
 	scheduleRow->data.alarm_id = alarm_id;
-	LOGI(LOGTAG_MSG, "Alarm created via UID:%c%s", CLS_RULE, tag);
+	LOGI(LOGTAG_MSG, "Alarm %u created via UID:%c%d", alarm_id, CLS_RULE, tag);
+	LOGD(LOGTAG_MSG, "Alarm %u creation info:", alarm_id);
+	LOGD(LOGTAG_MSG, "-----weekday %d", (int)scheduleRow->data.weekdays);
+	LOGD(LOGTAG_MSG, "-----hour %d", (int)scheduleRow->data.hour);
+	LOGD(LOGTAG_MSG, "-----min %d", (int)scheduleRow->data.minute);
+
 	return true;
 }
 
@@ -1654,7 +1659,7 @@ void SmartControllerClass::print_schedule_table(int row)
 	SERIAL_LN("weekdays = %d", Schedule_table.get(row).weekdays);
 	SERIAL_LN("isRepeat = %s", (Schedule_table.get(row).isRepeat ? "true" : "false"));
 	SERIAL_LN("hour = %d", Schedule_table.get(row).hour);
-	SERIAL_LN("min = %d", Schedule_table.get(row).min);
+	SERIAL_LN("min = %d", Schedule_table.get(row).minute);
 	SERIAL_LN("alarm_id = %u", Schedule_table.get(row).alarm_id);
 }
 

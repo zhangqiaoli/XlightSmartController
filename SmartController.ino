@@ -139,6 +139,7 @@ void loop()
 
   // Self-test & alarm trigger, also insert delay between each loop
   IF_MAINLOOP_TIMER( theSys.SelfCheck(RTE_DELAY_SELFCHECK), "SelfCheck" );
+
 }
 
 #endif
