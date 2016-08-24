@@ -171,12 +171,12 @@ int CloudObjClass::ProcessJSONString(String inStr)
 		if( m_strCldCmd.length() > 0 ) {
 
 			m_strCldCmd.concat(inStr);
-
+			String debugstr = m_strCldCmd;
 			StaticJsonBuffer<COMMAND_JSON_SIZE*3 * 8> lv_jBuf2; //buffer size must be larger than COMMAND_JSON_SIZE
 			m_jpCldCmd = &(lv_jBuf2.parseObject(const_cast<char*>(m_strCldCmd.c_str())));
-
 			m_strCldCmd = "";		// Already concatenated
 			if (!m_jpCldCmd->success()) {
+				SERIAL_LN("Could not parse the concatenated string: %s", debugstr.c_str());
 				return -1;
 			}
 		} else {
@@ -196,14 +196,13 @@ int CloudObjClass::ProcessJSONString(String inStr)
 		return 1;
   } else if( m_strCldCmd.length() > 0 ) {
 		m_strCldCmd.concat(inStr);
+		String debugstr = m_strCldCmd;
 		StaticJsonBuffer<COMMAND_JSON_SIZE * 8> lv_jBuf3;
 		m_jpCldCmd = &(lv_jBuf3.parseObject(const_cast<char*>(m_strCldCmd.c_str())));
 
-		//todo: temp, delete after
-		SERIAL_LN("AHHHHHHHHHHHHHHHHHHHH2 m_strCldCmd: %s", m_strCldCmd.c_str());
-
 		m_strCldCmd = "";		// Already concatenated
 		if (!m_jpCldCmd->success()) {
+			SERIAL_LN("Could not parse the string: %s", debugstr.c_str());
 			return -1;
 		}
   }

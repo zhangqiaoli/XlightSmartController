@@ -92,7 +92,7 @@ typedef struct
 	UC weekdays			    : 7;	  //values: 0-7
 	BOOL isRepeat		    : 1;	  //values: 0-1
 	UC hour				    : 5;    //values: 0-23
-	UC min				    : 6;    //values: 0-59
+	UC minute				: 6;    //values: 0-59
 	AlarmId alarm_id	    : 8;
 } ScheduleRow_t;
 
