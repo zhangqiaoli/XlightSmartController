@@ -198,6 +198,8 @@ private:
   Config_t m_config;
   Flashee::FlashDevice* P1Flash;
 
+  void UpdateTimeZone();
+
 public:
   ConfigClass();
   void InitConfig();

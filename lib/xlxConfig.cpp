@@ -249,6 +249,7 @@ BOOL ConfigClass::LoadConfig()
     }
     m_isLoaded = true;
     m_isChanged = false;
+		UpdateTimeZone();
   } else {
     LOGE(LOGTAG_MSG, F("Failed to load Sysconfig, too large."));
   }
@@ -393,6 +394,12 @@ BOOL ConfigClass::SetTimeZoneID(US tz)
   return true;
 }
 
+void ConfigClass::UpdateTimeZone()
+{
+	// Change System Timezone
+	Time.zone((float)GetTimeZoneOffset() / 60 + GetDaylightSaving());
+}
+
 UC ConfigClass::GetDaylightSaving()
 {
   return m_config.timeZone.dst;
@@ -408,6 +415,7 @@ BOOL ConfigClass::SetDaylightSaving(UC flag)
     m_config.timeZone.dst = flag;
     m_isChanged = true;
     theSys.m_tzString = GetTimeZoneJSON();
+		UpdateTimeZone();
   }
   return true;
 }
@@ -431,6 +439,8 @@ BOOL ConfigClass::SetTimeZoneOffset(SHORT offset)
       m_config.timeZone.offset = offset;
       m_isChanged = true;
       theSys.m_tzString = GetTimeZoneJSON();
+			// Change System Timezone
+			UpdateTimeZone();
     }
     return true;
   }

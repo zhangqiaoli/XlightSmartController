@@ -247,6 +247,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("--- Command: set <object value> ---"));
     SERIAL_LN(F("To change config"));
     SERIAL_LN(F("e.g. set tz -5"));
+    SERIAL_LN(F("e.g. set dst 1"));
+    SERIAL_LN(F("     , set daylight saving time"));
     SERIAL_LN(F("e.g. set nodeid [0..250]"));
     SERIAL_LN(F("e.g. set base [0|1]"));
     SERIAL_LN(F("e.g. set debug [log:level]"));
@@ -386,8 +388,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("");
 	} else if (strnicmp(sTopic, "time", 4) == 0) {
       time_t time = Time.now();
-      SERIAL_LN("Now is %s, zone: %d\n\r", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), -5);
-      CloudOutput("Local time %s, zone: %d", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), -5);
+      SERIAL_LN("Now is %s, %s\n\r", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), theSys.m_tzString.c_str());
+      CloudOutput("Local time %s, %s", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), theSys.m_tzString.c_str());
 	}
 	else if (strnicmp(sTopic, "var", 3) == 0) {
 		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
@@ -545,11 +547,28 @@ bool SerialConsoleClass::doSet(const char *cmd)
     if (strnicmp(sTopic, "tz", 2) == 0) {
       sParam1 = next();
       if( sParam1) {
-        // ToDo: set time zone
-        SERIAL_LN("Set Time Zone to %s\n\r", sParam1);
-        CloudOutput("Set Time Zone to %s", sParam1);
+        float fltTmp = atof(sParam1);
+        if( theConfig.SetTimeZoneOffset((SHORT)(fltTmp * 60)) ) {
+          SERIAL_LN("Set Time Zone to %f\n\r", fltTmp);
+          CloudOutput("Set Time Zone to %f", fltTmp);
+        } else {
+          SERIAL_LN("Failed to SetTimeZone:%s\n\r", sParam1);
+          CloudOutput("Failed to SetTimeZone:%s", sParam1);
+        }
         retVal = true;
       }
+    } else if (strnicmp(sTopic, "dst", 3) == 0) {
+      sParam1 = next();
+      if( atoi(sParam1) == 0 ) {
+        theConfig.SetDaylightSaving(0);
+        SERIAL_LN("Unset Daylight Saving Time\n\r");
+        CloudOutput("Daylight Saving Time: 0");
+      } else {
+        theConfig.SetDaylightSaving(1);
+        SERIAL_LN("Set Daylight Saving Time\n\r");
+        CloudOutput("Daylight Saving Time: 1");
+      }
+      retVal = true;
     } else if (strnicmp(sTopic, "nodeid", 6) == 0) {
       sParam1 = next();
       if( sParam1) {
