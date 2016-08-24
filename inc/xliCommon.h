@@ -70,6 +70,13 @@ enum COMMAND {CMD_SERIAL, CMD_POWER, CMD_COLOR, CMD_BRIGHTNESS, CMD_SCENARIO};
 #define CLS_TOPOLOGY              't'
 #define CLS_CONFIGURATION         'c'
 
+// Node type
+#define NODE_TYP_GW               'g'
+#define NODE_TYP_LAMP             'l'
+#define NODE_TYP_REMOTE           'r'
+#define NODE_TYP_SYSTEM           's'
+#define NODE_TYP_THIRDPARTY       't'
+
 // Sensor list: maximun 16 sensors
 typedef enum
 {

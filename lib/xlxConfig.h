@@ -178,6 +178,7 @@ public:
   bool loadList();
   bool saveList();
   void showList();
+  UC requestNodeID(char type, UC identify[6]);
 };
 
 //------------------------------------------------------------------
