@@ -81,6 +81,45 @@ test(alarm_all_red)
 //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
   bool flag;
 
+  void testOrderedList(bool desc) {
+    SERIAL_LN("testOrderedList()");
+    NodeListClass lstTest(32, desc);
+    NodeIdRow_t lv_Node;
+    lv_Node.nid = 1;
+    lv_Node.recentActive = Time.now();
+    SERIAL_LN("Add node:%d at %d", lv_Node.nid, lstTest.add(&lv_Node));
+    lv_Node.nid = 2;
+    lv_Node.recentActive = Time.now() + lv_Node.nid;
+    SERIAL_LN("Add node:%d at %d", lv_Node.nid, lstTest.add(&lv_Node));
+    lv_Node.nid = 6;
+    lv_Node.recentActive = Time.now() + lv_Node.nid;
+    SERIAL_LN("Add node:%d at %d", lv_Node.nid, lstTest.add(&lv_Node));
+    lv_Node.nid = 4;
+    lv_Node.recentActive = Time.now() + lv_Node.nid;
+    SERIAL_LN("Add node:%d at %d", lv_Node.nid, lstTest.add(&lv_Node));
+    lv_Node.nid = 3;
+    lv_Node.recentActive = Time.now() + lv_Node.nid;
+    SERIAL_LN("Add node:%d at %d", lv_Node.nid, lstTest.add(&lv_Node));
+
+    SERIAL_LN("Node List - count:%d, size:%d", lstTest.count(), lstTest.size());
+    lv_Node.nid = 2;
+    lv_Node.recentActive = 123456;
+    lstTest.update(&lv_Node);
+    lv_Node.recentActive = 0;
+    if( lstTest.get(&lv_Node) >= 0 ) {
+      SERIAL_LN("Node:%d, value:%d", lv_Node.nid, lv_Node.recentActive);
+    }
+
+    for(int i=0; i < lstTest.count(); i++) {
+      SERIAL_LN("Index: %d - node:%d", i, lstTest._pItems[i].nid);
+    }
+
+    lv_Node.nid = 3;
+    if( lstTest.remove(&lv_Node) ) {
+      SERIAL_LN("One node:%d removed, Node List - count:%d, size:%d", lv_Node.nid, lstTest.count(), lstTest.size());
+    }
+  }
+
   int start(String input)
   {
     flag = true;
@@ -91,10 +130,10 @@ test(alarm_all_red)
   {
     Particle.function("RunUnitTests", start);
     flag = false;
-    Serial.begin(9600);
+    Serial.begin(SERIALPORT_SPEED_DEFAULT);
 
-	//Test output location
-	Test::out = &Serial;
+  	//Test output location
+  	Test::out = &Serial;
 
 	//Test Selection (use ::exclude(char *pattern) and ::include(char *pattern))
 	Test::exclude("*");
@@ -102,26 +141,58 @@ test(alarm_all_red)
   //Test::include("cloudinput");
   Test::include("alarm_all_red");
 
-	//Additional Setup
-  for(int i = 10; i > 0; i--)
-  {
-    Serial.println(i);
-    delay(500);
-  }
-  Serial.println ("starting setup functions");
-	//IntervalTimer sysTimer;
-	theSys.Init();
-	theConfig.LoadConfig();
-	theSys.InitPins();
-	theSys.InitRadio();
-	theSys.InitNetwork();
-	theSys.InitCloudObj();
-	theSys.InitSensors();
-  theConsole.Init();
-	theSys.Start();
-	while (Time.now() < 2000) {
-		Particle.process();
-	}
+	   //Additional Setup
+    for(int i = 10; i > 0; i--)
+    {
+      Serial.println(i);
+      delay(500);
+    }
+    Serial.println ("starting setup functions");
+  	//IntervalTimer sysTimer;
+  	theSys.Init();
+  	theConfig.LoadConfig();
+  	theSys.InitPins();
+  	theSys.InitRadio();
+  	theSys.InitNetwork();
+  	theSys.InitCloudObj();
+  	theSys.InitSensors();
+    theConsole.Init();
+  	theSys.Start();
+  	while (Time.now() < 2000) {
+  		Particle.process();
+  	}
+
+    //testOrderedList(false);
+
+  	//Test output location
+  	Test::out = &Serial;
+
+  	//Test Selection (use ::exclude(char *pattern) and ::include(char *pattern))
+  	Test::exclude("*");
+  	//Test::include("serialconsole");
+    //Test::include("cloudinput");
+    Test::include("cloudinthree");
+
+  	//Additional Setup
+    for(int i = 10; i > 0; i--)
+    {
+      Serial.println(i);
+      delay(500);
+    }
+    Serial.println ("starting setup functions");
+  	//IntervalTimer sysTimer;
+  	theSys.Init();
+  	theConfig.LoadConfig();
+  	theSys.InitPins();
+  	theSys.InitRadio();
+  	theSys.InitNetwork();
+  	theSys.InitCloudObj();
+  	theSys.InitSensors();
+    theConsole.Init();
+  	theSys.Start();
+  	while (Time.now() < 2000) {
+  		Particle.process();
+  	}
   }
 
   void loop()
