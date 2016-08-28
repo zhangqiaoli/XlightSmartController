@@ -37,7 +37,7 @@
 // Running Time Environment Parameters
 #define RTE_DELAY_PUBLISH         500
 #define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
-#define RTE_DELAY_SELFCHECK       500         // Self-check interval
+#define RTE_DELAY_SELFCHECK       100         // Self-check interval
 
 // Number of ticks on System Timer
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess

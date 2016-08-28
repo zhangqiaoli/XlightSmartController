@@ -219,6 +219,8 @@ bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
 
 bool RF24ServerClass::ProcessReceive()
 {
+	if( !isValid() ) return false;
+	
   bool sentOK = false;
   uint8_t to = 0;
   uint8_t pipe;

@@ -340,13 +340,13 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 	Alarm.delay(ms);
 
 	// Save config if it was changed
-	if (++tickSaveConfig > 10) {
+	if (++tickSaveConfig > 5000 / ms) {	// once per 5 seconds
 		tickSaveConfig = 0;
 		theConfig.SaveConfig();
 	}
 
   // Check RF module
-  if (++tickCheckRadio > 60) {
+  if (++tickCheckRadio > 30000 / ms) { // once per 30 seconds
 		tickCheckRadio = 0;
     if( !IsRFGood() ) {
       if( CheckRF() ) {
@@ -385,7 +385,7 @@ BOOL SmartControllerClass::IsWANGood()
 void SmartControllerClass::ProcessCommands()
 {
 	// Check and process RF2.4 messages
-	//m_cmRF24.CheckMessageBuffer();
+	theRadio.ProcessReceive();
 
 	// Process Console Command
   theConsole.processCommand();

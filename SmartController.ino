@@ -113,7 +113,7 @@ void setup()
   theSys.Start();
 
 	// Wait the system started
-	while( Time.now() < 2000 ) {
+	while( millis() < 2000 ) {
 		Particle.process();
 	}
 }
