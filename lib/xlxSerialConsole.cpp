@@ -251,10 +251,13 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("     , set daylight saving time"));
     SERIAL_LN(F("e.g. set nodeid [0..250]"));
     SERIAL_LN(F("e.g. set base [0|1]"));
+    SERIAL_LN(F("     , to enable or disable base network"));
+    SERIAL_LN(F("e.g. set csc [0|1]"));
+    SERIAL_LN(F("     , to enable or disable Cloud Serial Command"));
     SERIAL_LN(F("e.g. set debug [log:level]"));
     SERIAL_LN(F("     , where log is [serial|flash|syslog|cloud|all"));
     SERIAL_LN(F("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r"));
-    CloudOutput(F("set tz|nodeid|base|debug"));
+    CloudOutput(F("set tz|dst|nodeid|base|csc|debug"));
   } else if(strTopic.equals("sys")) {
     SERIAL_LN(F("--- Command: sys <mode> ---"));
     SERIAL_LN(F("To control the system status, where <mode> could be:"));
@@ -581,6 +584,14 @@ bool SerialConsoleClass::doSet(const char *cmd)
         theRadio.enableBaseNetwork(atoi(sParam1) > 0);
         SERIAL_LN("Base RF network is %s\n\r", (theRadio.isBaseNetworkEnabled() ? "enabled" : "disabled"));
         CloudOutput("Base RF network is %s", (theRadio.isBaseNetworkEnabled() ? "enabled" : "disabled"));
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "csc", 3) == 0) {
+      sParam1 = next();
+      if( sParam1) {
+        theConfig.SetCloudSerialEnabled(atoi(sParam1) > 0);
+        SERIAL_LN("Cloud Serial Command is %s\n\r", (theConfig.IsCloudSerialEnabled() ? "enabled" : "disabled"));
+        CloudOutput("Cloud Serial Command is %s", (theConfig.IsCloudSerialEnabled() ? "enabled" : "disabled"));
         retVal = true;
       }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {

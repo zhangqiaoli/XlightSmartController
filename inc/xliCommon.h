@@ -120,5 +120,18 @@ uint8_t h2i(const char c);
 char* PrintUint64(char *buf, uint64_t value, bool bHex = true);
 char* PrintMacAddress(char *buf, const uint8_t *mac, char delim = ':');
 uint64_t StringToUInt64(const char *strData);
+inline time_t tmConvert_t(US YYYY, UC MM, UC DD, UC hh, UC mm, UC ss)  // inlined for speed
+{
+  struct tm t;
+  t.tm_year = YYYY-1900;
+  t.tm_mon = MM - 1;
+  t.tm_mday = DD;
+  t.tm_hour = hh;
+  t.tm_min = mm;
+  t.tm_sec = ss;
+  t.tm_isdst = 0;  // not used
+  time_t t_of_day = mktime(&t);
+  return t_of_day;
+};
 
 #endif /* xliCommon_h */

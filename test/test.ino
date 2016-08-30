@@ -24,15 +24,15 @@ test(serialconsole)
   //String in ="";
   /// Format_1: Single row
   theSys.CldJSONConfig("{'op':1, 'fl':0, 'run':0, 'uid':'s1','ring1':[1,8,8,8,8,8], 'ring2':[1,8,8,8,8,8], 'ring3':[1,8,8,8,8,8], 'filter':0}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'?'}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'? show'}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'check rf'}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'check wifi'}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'show debug'}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'show net'}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'ping'}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'sys reset'}");
-}
+  theSys.CldJSONCommand("{'cmd':0, 'data':'?'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'? show'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'check rf'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'check wifi'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'show debug'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'show net'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'ping'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'sys reset'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'show time'}");}
 
 test(cloudinput)
 {

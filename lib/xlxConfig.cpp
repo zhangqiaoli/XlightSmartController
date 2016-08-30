@@ -68,20 +68,20 @@ bool NodeListClass::loadList()
 		EEPROM.get(offset, lv_Node);
 		// Initialize two preset nodes
 		if( i == 0 ) {
-			if( lv_Node.nid != 1 ) {
-				lv_Node.nid = 1;
+			if( lv_Node.nid != NODEID_MAINDEVICE ) {
+				lv_Node.nid = NODEID_MAINDEVICE;
 				memset(lv_Node.identify, 0x00, sizeof(lv_Node.identify));
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
 		} else if(  i == 1 && theConfig.GetNumNodes() == 2 ) {
-			if( lv_Node.nid != 64 ) {
-				lv_Node.nid = 64;
+			if( lv_Node.nid != NODEID_MIN_REMOTE ) {
+				lv_Node.nid = NODEID_MIN_REMOTE;
 				memset(lv_Node.identify, 0x00, sizeof(lv_Node.identify));
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
-		} else if( lv_Node.nid == 255 || lv_Node.nid == 0 ) {
+		} else if( lv_Node.nid == NODEID_DUMMY || lv_Node.nid == 0 ) {
 			theConfig.SetNumNodes(count());
 			break;
 		}
@@ -155,7 +155,6 @@ ConfigClass::ConfigClass()
   m_isSCTChanged = false;
   m_isRTChanged = false;
   m_isSNTChanged = false;
-	m_isNIDChanged = false;
   InitConfig();
 }
 
@@ -171,7 +170,7 @@ void ConfigClass::InitConfig()
   strcpy(m_config.ProductName, XLA_PRODUCT_NAME);
   strcpy(m_config.Token, XLA_TOKEN);
   m_config.indBrightness = 0;
-  m_config.typeMainDevice = 1;
+  m_config.typeMainDevice = (UC)devtypWRing3;
   m_config.numDevices = 1;
   m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
   m_config.enableCloudSerialCmd = false;
@@ -353,12 +352,12 @@ void ConfigClass::SetSNTChanged(BOOL flag)
 
 BOOL ConfigClass::IsNIDChanged()
 {
-	return m_isNIDChanged;
+	return lstNodes.m_isChanged;
 }
 
 void ConfigClass::SetNIDChanged(BOOL flag)
 {
-	m_isNIDChanged = flag;
+	lstNodes.m_isChanged = flag;
 }
 
 UC ConfigClass::GetVersion()
@@ -961,7 +960,7 @@ BOOL ConfigClass::LoadNodeIDList()
 	if( rc ) {
 		LOGD(LOGTAG_MSG, "NodeList loaded - %d", lstNodes.count());
 	} else {
-		LOGW(LOGTAG_MSG, F("Failed to laod NodeList."));
+		LOGW(LOGTAG_MSG, F("Failed to load NodeList."));
 	}
 	return rc;
 }
@@ -969,10 +968,13 @@ BOOL ConfigClass::LoadNodeIDList()
 // Save NodeID List
 BOOL ConfigClass::SaveNodeIDList()
 {
-	if ( m_isNIDChanged )
-	{
-		// ToDo: save Node ID list
-	}
+	if( !IsNIDChanged() ) return true;
 
-	return false;
+	BOOL rc = lstNodes.saveList();
+	if( rc ) {
+		LOGI(LOGTAG_MSG, F("NodeList saved."));
+	} else {
+		LOGW(LOGTAG_MSG, F("Failed to save NodeList."));
+	}
+	return rc;
 }

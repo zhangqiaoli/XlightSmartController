@@ -5,7 +5,7 @@
 
 /*** USER DEFINES:  ***/
 #define FAILURE_HANDLING
-#define SYS_SERIAL_DEBUG
+//#define SYS_SERIAL_DEBUG
 #define SERIAL_DEBUG
 //#define MAINLOOP_TIMER
 
@@ -57,5 +57,14 @@
 // Maximum JSON data length
 #define COMMAND_JSON_SIZE				64
 #define SENSORDATA_JSON_SIZE			196
+
+// NodeID Convention
+#define NODEID_GATEWAY          0
+#define NODEID_MAINDEVICE       1
+#define NODEID_MIN_DEVCIE       8
+#define NODEID_MAX_DEVCIE       63
+#define NODEID_MIN_REMOTE       64
+#define NODEID_MAX_REMOTE       127
+#define NODEID_DUMMY            255
 
 #endif /* xliConfig_h */

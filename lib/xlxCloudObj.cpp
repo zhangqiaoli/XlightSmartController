@@ -61,8 +61,7 @@ void CloudObjClass::InitCloudObj()
   Particle.function(CLF_PowerSwitch, &CloudObjClass::CldPowerSwitch, this);
   Particle.function(CLF_JSONCommand, &CloudObjClass::CldJSONCommand, this);
   Particle.function(CLF_JSONConfig, &CloudObjClass::CldJSONConfig, this);
-
-  Particle.function(CLF_SetTimeZone, &CloudObjClass::CldSetTimeZone, this);
+  Particle.function(CLF_SetCurTime, &CloudObjClass::CldSetCurrentTime, this);
 #endif
 }
 

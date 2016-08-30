@@ -29,7 +29,6 @@
 #define CLF_PowerSwitch         "PowerSwitch"     // Can also be a Particle Object
 #define CLF_JSONCommand         "JSONCommand"     // Can also be a Particle Object
 #define CLF_JSONConfig          "JSONConfig"      // Can also be a Particle Object
-#define CLF_SetHue              "SetHue"
 #define CLF_SetCurTime          "SetCurTime"
 
 // Publish topics, notes:
@@ -76,6 +75,7 @@ public:
   virtual int CldPowerSwitch(String swStr) = 0;
   virtual int CldJSONCommand(String jsonCmd) = 0;
   virtual int CldJSONConfig(String jsonData) = 0;
+  virtual int CldSetCurrentTime(String tmStr) = 0;
   int ProcessJSONString(String inStr);
 
   BOOL UpdateTemperature(float value);

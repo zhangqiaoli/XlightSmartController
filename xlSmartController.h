@@ -56,7 +56,7 @@ public:
   void ProcessCommands();
   void CollectData(UC tick);
   bool ExecuteLightCommand(String mySerialStr);
-  
+
   // Device Control Functions
   int DevSoftSwitch(BOOL sw, UC dev = 0);
 
@@ -68,6 +68,7 @@ public:
   int CldPowerSwitch(String swStr);
   int CldJSONCommand(String jsonCmd);
   int CldJSONConfig(String jsonData);
+  int CldSetCurrentTime(String tmStr);
 
   // Parsing Functions
   bool ParseCmdRow(JsonObject& data);

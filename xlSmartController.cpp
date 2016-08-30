@@ -480,41 +480,12 @@ void SmartControllerClass::CollectData(UC tick)
 ///   dev: device id or 0 (all devices under this controller)
 int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 {
+	String strCmd = String::format("%d;%d;%d;%d;%d;%d", dev, S_DIMMER, C_SET, 1, V_STATUS, (sw ? 1:0));
+	ExecuteLightCommand(strCmd);
+
+	//ToDo: if dev = 0, go through list of devices
 	// ToDo:
 	//SetStatus();
-
-	if (sw)
-	{
-		if (dev == 0)
-		{
-			//go through list of devices
-
-			//turn each on (rf)
-
-			//change devstatus
-			//change brightness indicatr
-		}
-		else
-		{
-			//turn off just dev
-		}
-	}
-	else
-	{
-		if (dev == 0)
-		{
-			//go through list of devices
-
-			//turn each off (rf)
-
-			//change devstatus
-			//change brightness
-		}
-		else
-		{
-			//turn off just dev
-		}
-	}
 
 	return 0;
 }
@@ -531,10 +502,11 @@ void SmartControllerClass::FastProcess()
 //------------------------------------------------------------------
 // Cloud interface implementation
 //------------------------------------------------------------------
+// Format: {"id":90, "offset":-300, "dst":1}
 int SmartControllerClass::CldSetTimeZone(String tzStr)
 {
 	// Parse JSON string
-	StaticJsonBuffer<COMMAND_JSON_SIZE> jsonBuf;
+	StaticJsonBuffer<COMMAND_JSON_SIZE * 8> jsonBuf;
 	JsonObject& root = jsonBuf.parseObject((char *)tzStr.c_str());
 	if (!root.success())
 		return -1;
@@ -556,26 +528,81 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
 	return 0;
 }
 
+// Format:
+/// 1. Date: YYYY-MM-DD
+/// 2. Time: hh:mm:ss
+/// 3. Date and time: YYYY-MM-DD hh:mm:ss
+int SmartControllerClass::CldSetCurrentTime(String tmStr)
+{
+	US _YYYY = Time.year();
+	UC _MM = Time.month();
+	UC _DD = Time.day();
+	UC _hh = Time.hour();
+	UC _mm = Time.minute();
+	UC _ss = Time.second();
+
+	int nPos, nPos2, nPos3;
+	String strTime = "";
+	nPos = tmStr.indexOf('-');
+	if( nPos > 0 ) {
+		_YYYY = (US)(tmStr.substring(0, nPos).toInt());
+		if( _YYYY < 1970 || _YYYY > 2100 ) return 1;
+		nPos2 = tmStr.indexOf('-', nPos + 1);
+		if( nPos2 < nPos + 1 ) return 2;
+		_MM = (UC)(tmStr.substring(nPos + 1, nPos2).toInt());
+		if( _MM <= 0 || _MM > 12 ) return 2;
+		nPos3 = tmStr.indexOf(' ', nPos2 + 1);
+		if( nPos3 < nPos2 + 1 ) {
+			_DD = (UC)(tmStr.substring(nPos2 + 1).toInt());
+		} else {
+			_DD = (UC)(tmStr.substring(nPos2 + 1, nPos3).toInt());
+			strTime = tmStr.substring(nPos3 + 1);
+		}
+		if( _DD <= 0 || _DD > 31 ) return 3;
+	} else {
+		strTime = tmStr;
+	}
+
+	strTime.trim();
+	nPos = strTime.indexOf(':');
+	if( nPos > 0 ) {
+		_hh = (UC)(strTime.substring(0, nPos).toInt());
+		if( _hh > 24 ) return 4;
+		nPos2 = strTime.indexOf(':', nPos + 1);
+		if( nPos2 < nPos + 1 ) return 5;
+		_mm = (UC)(strTime.substring(nPos + 1, nPos2).toInt());
+		if( _mm > 59 ) return 5;
+		_ss = (UC)(strTime.substring(nPos2 + 1).toInt());
+		if( _ss > 59 ) return 6;
+	}
+
+	time_t myTime = tmConvert_t(_YYYY, _MM, _DD, _hh, _mm, _ss);
+	Time.setTime(myTime);
+	LOGI(LOGTAG_EVENT, "setTime to %d-%d-%d %d:%d:%d", _YYYY, _MM, _DD, _hh, _mm, _ss);
+	return 0;
+}
+
+// Format: "dev:sw", where
+/// dev = node id, or 0 for all devices, default is 1 (the main lamp)
+/// sw = 0/off or 1/on
 int SmartControllerClass::CldPowerSwitch(String swStr)
 {
 	//fast, simple control
-
-	BOOL blnOn;
+	UC bytDev = 1;		// Default value
+	BOOL blnOn = false;
 	swStr.toLowerCase();
-	if (swStr == "0" || swStr == "off")
-	{
-		DevSoftSwitch(false); // Turn the switch off
-		return 1;
+	int nPos = swStr.indexOf(':');
+	if( nPos > 0 ) {
+		bytDev = (uint8_t)(swStr.substring(0, nPos).toInt());
+		if( bytDev > NODEID_MAX_DEVCIE ) return 1;
 	}
-	else if (swStr == "1" || swStr == "on")
-	{
-		DevSoftSwitch(true); // Turn the switch on
-		return 1;
-	}
+	String strOn = swStr.substring(nPos + 1);
+	blnOn = (strOn == "1" || strOn == "on");
+	return DevSoftSwitch(blnOn, bytDev);
 }
 
 // Execute Operations, including SerialConsole commands
-/// Format: {type: '', cmd: ''}
+/// Format: {cmd: '', data: ''}
 int SmartControllerClass::CldJSONCommand(String jsonCmd)
 {
 	SERIAL_LN("Received JSON cmd: %s", jsonCmd.c_str());
@@ -909,6 +936,11 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 				LOGI(LOGTAG_MSG, "UID:%s write row to Scenario_t OK", uidWhole);
 				return 1;
 			}
+			break;
+		}
+		case CLS_CONFIGURATION:		// Sys Config
+		{
+			// ToDo:
 			break;
 		}
 		default:

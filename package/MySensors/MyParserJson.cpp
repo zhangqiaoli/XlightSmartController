@@ -40,7 +40,7 @@ bool MyParserJson::parse(MyMessage &message, char *inputString) {
 	uint8_t ack = 0;
 
 	// Extract command data coming with the JSON string
-  StaticJsonBuffer<MAX_MESSAGE_LENGTH*2> jsonBuf;
+  StaticJsonBuffer<MAX_MESSAGE_LENGTH*8> jsonBuf;
   JsonObject& root = jsonBuf.parseObject((char *)inputString);
   if( !root.success() )
     return false;
