@@ -134,14 +134,16 @@ BOOL CloudObjClass::UpdateMotion(bool value)
 void CloudObjClass::UpdateJSONData()
 {
   if( m_jpData->success() ) {
-    char buf[SENSORDATA_JSON_SIZE];
-    m_jpData->printTo(buf, SENSORDATA_JSON_SIZE);
-    m_jsonData = buf;
-
-    // Publish sensor data
+    char buf[256];
+    m_jpData->printTo(buf, 256);
+    String strTemp = buf;
+    if( m_jsonData != strTemp ) {
+      m_jsonData = strTemp;
+      // Publish sensor data
 #ifdef USE_PARTICLE_CLOUD
-    Particle.publish(CLT_NAME_SensorData, m_jsonData, CLT_TTL_SensorData, PRIVATE);
+      Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_SensorData, PRIVATE);
 #endif
+    }
   }
 }
 

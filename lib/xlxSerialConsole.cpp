@@ -420,7 +420,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
     SERIAL_LN("");
     SERIAL_LN("mConfig.typeMainDevice = \t\t%d", theConfig.GetMainDeviceType());
     SERIAL_LN("mConfig.numDevices = \t\t\t%d", theConfig.GetNumDevices());
-    SERIAL_LN("mConfig.numNodes = \t\t\t%d", theConfig.GetNumNodes());
+    SERIAL_LN("mConfig.numNodes = \t\t\t%d\n\r", theConfig.GetNumNodes());
   } else if (strnicmp(sTopic, "flag", 4) == 0) {
 		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
 		SERIAL_LN("theSys.m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
