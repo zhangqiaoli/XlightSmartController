@@ -54,7 +54,15 @@ test(cloudinput)
   theSys.CldJSONCommand("wifi\"}");
   //// Format_3 test case
   theSys.CldJSONCommand("{'x0': ' '}");
-  theSys.CldJSONCommand("{'cmd':'serial', 'data':'show net'}");
+  theSys.CldJSONCommand("{'cmd':0, 'data':'show net'}");
+
+  // SetTimeZone & SetCurrentTime
+  theSys.CldSetTimeZone("{'id':90, 'offset':-300, 'dst':1}");
+  theSys.CldSetTimeZone("{'id':88, 'offset':-240, 'dst':0}");
+  theSys.CldSetCurrentTime("2016-08-30 14:30:30");
+  theSys.CldSetCurrentTime("2016-08-31");
+  theSys.CldSetCurrentTime("15:31:31");
+  theSys.CldSetCurrentTime("sync");
 }
 
 test(alarm_all_red)

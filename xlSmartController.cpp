@@ -506,25 +506,29 @@ void SmartControllerClass::FastProcess()
 int SmartControllerClass::CldSetTimeZone(String tzStr)
 {
 	// Parse JSON string
-	StaticJsonBuffer<COMMAND_JSON_SIZE * 8> jsonBuf;
-	JsonObject& root = jsonBuf.parseObject((char *)tzStr.c_str());
+	StaticJsonBuffer<COMMAND_JSON_SIZE * 8> lv_jBuf;
+	JsonObject& root = lv_jBuf.parseObject(const_cast<char*>(tzStr.c_str()));
 	if (!root.success())
 		return -1;
 	if (root.size() != 3)  // Expected 3 KVPs
 		return -1;
+	if(!root.containsKey("id")) return 1;
+	if(!root.containsKey("offset")) return 2;
+	if(!root.containsKey("dst")) return 3;
 
 	// Set timezone id
-	if (!theConfig.SetTimeZoneID((US)root["id"]))
+	if (!theConfig.SetTimeZoneID((US)root["id"].as<int>()))
 		return 1;
 
 	// Set timezone offset
-	if (!theConfig.SetTimeZoneOffset((SHORT)root["offset"]))
+	if (!theConfig.SetTimeZoneOffset((SHORT)root["offset"].as<int>()))
 		return 2;
 
 	// Set timezone dst
-	if (!theConfig.SetTimeZoneOffset((UC)root["dst"]))
+	if (!theConfig.SetDaylightSaving((UC)root["dst"].as<int>()))
 		return 3;
 
+	LOGI(LOGTAG_EVENT, "setTimeZone to %d;%d;%d", root["id"].as<int>(), root["offset"].as<int>(), root["dst"].as<int>());
 	return 0;
 }
 
@@ -532,8 +536,18 @@ int SmartControllerClass::CldSetTimeZone(String tzStr)
 /// 1. Date: YYYY-MM-DD
 /// 2. Time: hh:mm:ss
 /// 3. Date and time: YYYY-MM-DD hh:mm:ss
+/// 4. "" or "sync": synchronize with could
 int SmartControllerClass::CldSetCurrentTime(String tmStr)
 {
+	// synchronize with cloud
+	tmStr.trim();
+	tmStr.toLowerCase();
+	if(tmStr.length() == 0 || tmStr == "sync") {
+		Particle.syncTime();
+		LOGI(LOGTAG_EVENT, "Time synchronized");
+		return 0;
+	}
+
 	US _YYYY = Time.year();
 	UC _MM = Time.month();
 	UC _DD = Time.day();
@@ -577,6 +591,7 @@ int SmartControllerClass::CldSetCurrentTime(String tmStr)
 	}
 
 	time_t myTime = tmConvert_t(_YYYY, _MM, _DD, _hh, _mm, _ss);
+	myTime -= theConfig.GetTimeZoneDSTOffset() * 60;	// Convert to local time
 	Time.setTime(myTime);
 	LOGI(LOGTAG_EVENT, "setTime to %d-%d-%d %d:%d:%d", _YYYY, _MM, _DD, _hh, _mm, _ss);
 	return 0;

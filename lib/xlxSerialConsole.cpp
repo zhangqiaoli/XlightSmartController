@@ -249,6 +249,10 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("e.g. set tz -5"));
     SERIAL_LN(F("e.g. set dst 1"));
     SERIAL_LN(F("     , set daylight saving time"));
+    SERIAL_LN(F("e.g. set time sync"));
+    SERIAL_LN(F("     , synchronize time with cloud"));
+    SERIAL_LN(F("e.g. set time hh:mm:ss"));
+    SERIAL_LN(F("e.g. set date YYYY-MM-DD"));
     SERIAL_LN(F("e.g. set nodeid [0..250]"));
     SERIAL_LN(F("e.g. set base [0|1]"));
     SERIAL_LN(F("     , to enable or disable base network"));
@@ -572,6 +576,14 @@ bool SerialConsoleClass::doSet(const char *cmd)
         CloudOutput("Daylight Saving Time: 1");
       }
       retVal = true;
+    } else if (strnicmp(sTopic, "time", 4) == 0) {
+      sParam1 = next();
+      String strTemp = sParam1;
+      retVal = (theSys.CldSetCurrentTime(strTemp) == 0);
+    } else if (strnicmp(sTopic, "date", 4) == 0) {
+      sParam1 = next();
+      String strTemp = sParam1;
+      retVal = (theSys.CldSetCurrentTime(strTemp) == 0);
     } else if (strnicmp(sTopic, "nodeid", 6) == 0) {
       sParam1 = next();
       if( sParam1) {
