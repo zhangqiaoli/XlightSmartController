@@ -68,7 +68,7 @@ public:
   int CldPowerSwitch(String swStr);
   int CldJSONCommand(String jsonCmd);
   int CldJSONConfig(String jsonData);
-  int CldSetCurrentTime(String tmStr);
+  int CldSetCurrentTime(String tmStr = "");
 
   // Parsing Functions
   bool ParseCmdRow(JsonObject& data);

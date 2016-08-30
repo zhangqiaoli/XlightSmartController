@@ -155,6 +155,7 @@ ConfigClass::ConfigClass()
   m_isSCTChanged = false;
   m_isRTChanged = false;
   m_isSNTChanged = false;
+	m_lastTimeSync = millis();
   InitConfig();
 }
 
@@ -174,6 +175,7 @@ void ConfigClass::InitConfig()
   m_config.numDevices = 1;
   m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
   m_config.enableCloudSerialCmd = false;
+	m_config.enableDailyTimeSync = true;
 }
 
 void ConfigClass::InitDevStatus()
@@ -500,6 +502,46 @@ void ConfigClass::SetCloudSerialEnabled(BOOL sw)
 		m_config.enableCloudSerialCmd = sw;
 		m_isChanged = true;
 	}
+}
+
+BOOL ConfigClass::ConfigClass::IsDailyTimeSyncEnabled()
+{
+	return m_config.enableDailyTimeSync;
+}
+
+void ConfigClass::SetDailyTimeSyncEnabled(BOOL sw)
+{
+	if( sw != m_config.enableDailyTimeSync ) {
+		m_config.enableDailyTimeSync = sw;
+		m_isChanged = true;
+	}
+}
+
+void ConfigClass::DoTimeSync()
+{
+	// Request time synchronization from the Particle Cloud
+	Particle.syncTime();
+	m_lastTimeSync = millis();
+	LOGI(LOGTAG_EVENT, "Time synchronized");
+}
+
+BOOL ConfigClass::CloudTimeSync(BOOL _force)
+{
+	if( _force ) {
+		DoTimeSync();
+		return true;
+	} else if( theConfig.IsDailyTimeSyncEnabled() ) {
+		if( (millis() - m_lastTimeSync) / 1000 > SECS_PER_DAY ) {
+			DoTimeSync();
+			return true;
+		}
+	}
+	return false;
+}
+
+US ConfigClass::GetSensorBitmap()
+{
+	return m_config.sensorBitmap;
 }
 
 BOOL ConfigClass::IsSensorEnabled(sensors_t sr)

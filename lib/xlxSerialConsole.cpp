@@ -117,6 +117,7 @@ const StateMachine_t fsmMain[] = {
   {consoleSys,        consoleRoot,    "safe",             gc_doSysSub},
   {consoleSys,        consoleRoot,    "dfu",              gc_doSysSub},
   {consoleSys,        consoleRoot,    "update",           gc_doSysSub},
+  {consoleSys,        consoleRoot,    "sync",             gc_doSysSub},
   {consoleSys,        consoleRoot,    "base",             gc_doSysSub},
   {consoleSys,        consoleRoot,    "private",          gc_doSysSub},
   /// Workflow
@@ -247,10 +248,10 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("--- Command: set <object value> ---"));
     SERIAL_LN(F("To change config"));
     SERIAL_LN(F("e.g. set tz -5"));
-    SERIAL_LN(F("e.g. set dst 1"));
+    SERIAL_LN(F("e.g. set dst [0|1]"));
     SERIAL_LN(F("     , set daylight saving time"));
     SERIAL_LN(F("e.g. set time sync"));
-    SERIAL_LN(F("     , synchronize time with cloud"));
+    SERIAL_LN(F("     , synchronize time with Cloud"));
     SERIAL_LN(F("e.g. set time hh:mm:ss"));
     SERIAL_LN(F("e.g. set date YYYY-MM-DD"));
     SERIAL_LN(F("e.g. set nodeid [0..250]"));
@@ -258,10 +259,12 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("     , to enable or disable base network"));
     SERIAL_LN(F("e.g. set csc [0|1]"));
     SERIAL_LN(F("     , to enable or disable Cloud Serial Command"));
+    SERIAL_LN(F("e.g. set cdts [0|1]"));
+    SERIAL_LN(F("     , to enable or disable Cloud Daily Time Sync"));
     SERIAL_LN(F("e.g. set debug [log:level]"));
     SERIAL_LN(F("     , where log is [serial|flash|syslog|cloud|all"));
     SERIAL_LN(F("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r"));
-    CloudOutput(F("set tz|dst|nodeid|base|csc|debug"));
+    CloudOutput(F("set tz|dst|nodeid|base|csc|cdts|debug"));
   } else if(strTopic.equals("sys")) {
     SERIAL_LN(F("--- Command: sys <mode> ---"));
     SERIAL_LN(F("To control the system status, where <mode> could be:"));
@@ -272,6 +275,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   setup:   setup Wi-Fi crediential"));
     SERIAL_LN(F("   dfu:     enter DFU mode"));
     SERIAL_LN(F("   update:  update firmware"));
+    SERIAL_LN(F("   sync <object>: object synchronize with Cloud"));
+    SERIAL_LN(F("e.g. sys sync time"));
     SERIAL_LN(F("e.g. sys reset\n\r"));
     CloudOutput(F("sys base|private|reset|safe|setup|dfu|update"));
   } else {
@@ -397,12 +402,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
       time_t time = Time.now();
       SERIAL_LN("Now is %s, %s\n\r", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), theSys.m_tzString.c_str());
       CloudOutput("Local time %s, %s", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), theSys.m_tzString.c_str());
-	}
-	else if (strnicmp(sTopic, "var", 3) == 0) {
-		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
-		SERIAL_LN("theSys.m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
-		SERIAL_LN("theSys.m_isLAN = \t\t\t%s", (theSys.IsLANGood() ? "true" : "false"));
-		SERIAL_LN("theSys.m_isWAN = \t\t\t%s", (theSys.IsWANGood() ? "true" : "false"));
+	} else if (strnicmp(sTopic, "var", 3) == 0) {
 		SERIAL_LN("theSys.mSysID = \t\t\t%s", theSys.m_SysID.c_str());
 		SERIAL_LN("theSys.m_SysVersion = \t\t\t%s", theSys.m_SysVersion.c_str());
 		SERIAL_LN("theSys.m_devStatus = \t\t\t%d", theSys.m_devStatus);
@@ -410,18 +410,33 @@ bool SerialConsoleClass::doShow(const char *cmd)
 		SERIAL_LN("theSys.m_jsonData = \t\t\t%s", theSys.m_jsonData.c_str());
     SERIAL_LN("theSys.m_strCldCmd = \t\t%s\n\r", theSys.m_strCldCmd.c_str());
 		SERIAL_LN("theSys.m_lastMsg = \t\t\t%s", theSys.m_lastMsg.c_str());
-		SERIAL_LN("theSys.m_temperature = \t\t\t%.3f", theSys.m_temperature);
-		SERIAL_LN("theSys.m_humidity = \t\t\t%.3f", theSys.m_humidity);
+    SERIAL_LN("");
+    SERIAL_LN("mConfig.sensorBitmap = \t\t\t0x%02X", theConfig.GetSensorBitmap());
+    SERIAL_LN("mConfig.indBrightness = \t\t%d", theConfig.GetBrightIndicator());
+		SERIAL_LN("theSys.m_temperature = \t\t\t%.2f", theSys.m_temperature);
+		SERIAL_LN("theSys.m_humidity = \t\t\t%.2f", theSys.m_humidity);
 		SERIAL_LN("theSys.m_brightness = \t\t\t%u", theSys.m_brightness);
 		SERIAL_LN("theSys.m_motion = \t\t\t%s", (theSys.m_motion ? "true" : "false"));
-		SERIAL_LN("");
+    SERIAL_LN("");
+    SERIAL_LN("mConfig.typeMainDevice = \t\t%d", theConfig.GetMainDeviceType());
+    SERIAL_LN("mConfig.numDevices = \t\t\t%d", theConfig.GetNumDevices());
+    SERIAL_LN("mConfig.numNodes = \t\t\t%d", theConfig.GetNumNodes());
+  } else if (strnicmp(sTopic, "flag", 4) == 0) {
+		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
+		SERIAL_LN("theSys.m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
+		SERIAL_LN("theSys.m_isLAN = \t\t\t%s", (theSys.IsLANGood() ? "true" : "false"));
+		SERIAL_LN("theSys.m_isWAN = \t\t\t%s", (theSys.IsWANGood() ? "true" : "false"));
+    SERIAL_LN("");
+    SERIAL_LN("mConfig.enableCloudSerialCmd = \t\t%s", (theConfig.IsCloudSerialEnabled() ? "true" : "false"));
+    SERIAL_LN("mConfig.enableDailyTimeSync = \t\t%s", (theConfig.IsDailyTimeSyncEnabled() ? "true" : "false"));
+    SERIAL_LN("");
 		SERIAL_LN("theConfig.m_isLoaded = \t\t\t%s", (theConfig.IsConfigLoaded() ? "true" : "false"));
 		SERIAL_LN("theConfig.m_isChanged = \t\t%s", (theConfig.IsConfigChanged() ? "true" : "false"));
 		SERIAL_LN("theConfig.m_isDSTChanged = \t\t%s", (theConfig.IsDSTChanged() ? "true" : "false"));
 		SERIAL_LN("theConfig.m_isSCTChanged = \t\t%s", (theConfig.IsSCTChanged() ? "true" : "false"));
 		SERIAL_LN("theConfig.m_isRTChanged = \t\t%s", (theConfig.IsRTChanged() ? "true" : "false"));
-		SERIAL_LN("theConfig.m_isSNTChanged = \t\t%s\n\r", (theConfig.IsSNTChanged() ? "true" : "false"));
-
+		SERIAL_LN("theConfig.m_isSNTChanged = \t\t%s", (theConfig.IsSNTChanged() ? "true" : "false"));
+    SERIAL_LN("theConfig.IsNIDChanged = \t\t%s\n\r", (theConfig.IsNIDChanged() ? "true" : "false"));
 	} else if (strnicmp(sTopic, "table", 5) == 0) {
 		SERIAL_LN("DST_ROW_SIZE: \t\t\t\t%u", DST_ROW_SIZE);
 		SERIAL_LN("RT_ROW_SIZE: \t\t\t\t%u", RT_ROW_SIZE);
@@ -606,6 +621,14 @@ bool SerialConsoleClass::doSet(const char *cmd)
         CloudOutput("Cloud Serial Command is %s", (theConfig.IsCloudSerialEnabled() ? "enabled" : "disabled"));
         retVal = true;
       }
+    } else if (strnicmp(sTopic, "cdts", 4) == 0) {
+      sParam1 = next();
+      if( sParam1) {
+        theConfig.SetDailyTimeSyncEnabled(atoi(sParam1) > 0);
+        SERIAL_LN("Cloud Daily TimeSync is %s\n\r", (theConfig.IsDailyTimeSyncEnabled() ? "enabled" : "disabled"));
+        CloudOutput("Cloud Daily TimeSync is %s", (theConfig.IsDailyTimeSyncEnabled() ? "enabled" : "disabled"));
+        retVal = true;
+      }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {
       sParam1 = next();
       if( sParam1) {
@@ -659,6 +682,18 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
     }
     else if (strnicmp(sTopic, "update", 6) == 0) {
       // ToDo: to OTA
+    }
+    else if (strnicmp(sTopic, "sync", 4) == 0) {
+      sParam1 = next();
+      if(sParam1) {
+        if( stricmp(sParam1, "time") == 0 ) {
+          theSys.CldSetCurrentTime();
+        } else {
+          // ToDo: other synchronization
+        }
+      } else {
+        return false;
+      }
     }
     else if (strnicmp(sTopic, "base", 4) == 0) {
       // Switch to Base Network

@@ -239,7 +239,7 @@ void SmartControllerClass::InitSensors()
 	indicatorBrightness.configPin(2, PIN_LED_LEVEL_B2);
 	indicatorBrightness.setLevel(theConfig.GetBrightIndicator());
 
-	//PIR
+	// PIR
 	if (theConfig.IsSensorEnabled(sensorPIR)) {
 		senMotion.begin();
 		LOGD(LOGTAG_MSG, F("Motion sensor works."));
@@ -333,8 +333,8 @@ BOOL SmartControllerClass::CheckBLE()
 
 BOOL SmartControllerClass::SelfCheck(UL ms)
 {
-	static UC tickSaveConfig = 0;				// must be static
-	static UC tickCheckRadio = 0;				// must be static
+	static US tickSaveConfig = 0;				// must be static
+	static US tickCheckRadio = 0;				// must be static
 
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);
@@ -345,14 +345,18 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 		theConfig.SaveConfig();
 	}
 
-  // Check RF module
-  if (++tickCheckRadio > 30000 / ms) { // once per 30 seconds
+  // Slow Checking: once per 30 seconds
+  if (++tickCheckRadio > 30000 / ms) { // Check RF module
 		tickCheckRadio = 0;
     if( !IsRFGood() ) {
       if( CheckRF() ) {
         LOGN(LOGTAG_MSG, F("RF24 module recovered."));
       }
     }
+
+		// Daily Cloud Synchronization
+		/// TimeSync
+		theConfig.CloudTimeSync(false);
   }
 
 	// ToDo:add any other potential problems to check
@@ -543,8 +547,7 @@ int SmartControllerClass::CldSetCurrentTime(String tmStr)
 	tmStr.trim();
 	tmStr.toLowerCase();
 	if(tmStr.length() == 0 || tmStr == "sync") {
-		Particle.syncTime();
-		LOGI(LOGTAG_EVENT, "Time synchronized");
+		theConfig.CloudTimeSync();
 		return 0;
 	}
 

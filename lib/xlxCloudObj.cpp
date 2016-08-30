@@ -36,6 +36,7 @@ CloudObjClass::CloudObjClass()
   m_temperature = 0.0;
   m_humidity = 0.0;
   m_brightness = 0;
+  m_motion = false;
   m_jpRoot = &(m_jBuf.createObject());
   m_strCldCmd = "";
 }

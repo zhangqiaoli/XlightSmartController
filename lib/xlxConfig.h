@@ -52,7 +52,9 @@ typedef struct
   char Organization[24];                    // Organization name
   char ProductName[24];                     // Product name
   char Token[64];                           // Token
-  BOOL enableCloudSerialCmd;                // Whether enable cloud serial command
+  BOOL enableCloudSerialCmd   :1;           // Whether enable cloud serial command
+  BOOL enableDailyTimeSync    :1;           // Whether enable daily time synchronization
+  BOOL Reservered_bool        :6;           // Reservered for boolean flags
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
 } Config_t;
 
@@ -193,11 +195,13 @@ private:
   BOOL m_isSCTChanged;      // Schedule Table Change Flag
   BOOL m_isRTChanged;		    // Rules Table Change Flag
   BOOL m_isSNTChanged;	 	  // Scenerio Table Change Flag
+  UL m_lastTimeSync;
 
   Config_t m_config;
   Flashee::FlashDevice* P1Flash;
 
   void UpdateTimeZone();
+  void DoTimeSync();
 
 public:
   ConfigClass();
@@ -268,6 +272,11 @@ public:
   BOOL IsCloudSerialEnabled();
   void SetCloudSerialEnabled(BOOL sw = true);
 
+  BOOL IsDailyTimeSyncEnabled();
+  void SetDailyTimeSyncEnabled(BOOL sw = true);
+  BOOL CloudTimeSync(BOOL _force = true);
+
+  US GetSensorBitmap();
   BOOL IsSensorEnabled(sensors_t sr);
   void SetSensorEnabled(sensors_t sr, BOOL sw = true);
 
