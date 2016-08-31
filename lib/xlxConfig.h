@@ -180,7 +180,7 @@ public:
   bool loadList();
   bool saveList();
   void showList();
-  UC requestNodeID(char type, UC identify[6]);
+  UC requestNodeID(char type, uint64_t identify);
 };
 
 //------------------------------------------------------------------

@@ -119,17 +119,17 @@ void NodeListClass::showList()
 }
 
 // Get a new NodeID
-UC NodeListClass::requestNodeID(char type, UC identify[6])
+UC NodeListClass::requestNodeID(char type, uint64_t identify)
 {
 	UC nodeID = 0;		// error
 	switch( type ) {
 	case NODE_TYP_LAMP:
-		// 8 - 63
+		// 1, 8 - 63
 		// ToDo:
 		break;
 
 	case NODE_TYP_REMOTE:
-		// 65 - 127
+		// 64 - 127
 		// ToDo:
 		break;
 

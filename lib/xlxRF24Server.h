@@ -19,7 +19,6 @@ public:
   bool ProcessSend(String &strMsg); //overloaded
   bool ProcessSend(MyMessage *pMsg = NULL);
   bool ProcessReceive();
-  uint8_t GetNextAvailableNodeId();
 
   unsigned long _times;
   unsigned long _succ;

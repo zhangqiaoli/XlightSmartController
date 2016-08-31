@@ -255,14 +255,20 @@ bool RF24ServerClass::ProcessReceive()
   {
     case C_INTERNAL:
       if( msg.getType() == I_ID_REQUEST && msg.getSender() == AUTO ) {
-        // On ID Request message
+        // On ID Request message:
         /// Get new ID
-        UC newID = GetNextAvailableNodeId();
+				char cNodeType = (char)msg.getSensor();
+				uint64_t nIdentify = msg.getUInt64();
+        UC newID = theConfig.lstNodes.requestNodeID(cNodeType, nIdentify);
         UC replyTo = msg.getSender();
         /// Send response message
         msg.build(getAddress(), replyTo, newID, C_INTERNAL, I_ID_RESPONSE, false);
-        msg.set(getMyNetworkID());
-        SERIAL("Now sending NodeId response message to %d with new NodeID:%d, NetworkID:%s...", replyTo, newID, PrintUint64(strDisplay, getMyNetworkID()));
+				if( newID > 0 ) {
+	        msg.set(getMyNetworkID());
+	        LOGN(LOGTAG_EVENT, "Allocated NodeID:%d type:%c to %s", newID, cNodeType, PrintUint64(strDisplay, nIdentify));
+				} else {
+					LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentify));
+				}
         _times++;
         sentOK = send(replyTo, msg, pipe);
         if( sentOK ) {
@@ -271,13 +277,13 @@ bool RF24ServerClass::ProcessReceive()
         } else {
           SERIAL_LN("failed");
         }
-      } else if( msg.getType() == I_ID_RESPONSE ) {
-        if( msg.getSensor() > MAX_DEVICE_PER_CONTROLLER ) {
-            SERIAL_LN("Node Table is full!");
+      } else if( msg.getType() == I_ID_RESPONSE && getAddress() == AUTO ) {
+				uint8_t lv_nodeID = msg.getSensor();
+        if( lv_nodeID == NODEID_GATEWAY || lv_nodeID == NODEID_DUMMY ) {
+          LOGE(LOGTAG_MSG, F("Failed to get NodeID"));
         } else {
 					uint64_t lv_networkID = msg.getUInt64();
-          uint8_t lv_nodeID = msg.getSensor();
-          SERIAL_LN("Get NodeId: %d, networkId: %s", lv_nodeID, PrintUint64(strDisplay, lv_networkID));
+          LOGI(LOGTAG_DATA, "Get NodeId: %d, networkId: %s", lv_nodeID, PrintUint64(strDisplay, lv_networkID));
           setAddress(lv_nodeID, lv_networkID);
         }
       }
@@ -288,16 +294,4 @@ bool RF24ServerClass::ProcessReceive()
   }
 
   return true;
-}
-
-// Just for testing now
-uint8_t RF24ServerClass::GetNextAvailableNodeId()
-{
-  // ToDo: maintain a ID table (e.g. DevStatusRow_t[n])
-  static uint8_t nextID = 0;
-  if( ++nextID > MAX_DEVICE_PER_CONTROLLER ) {
-    nextID = 1;
-  }
-
-  return nextID;
 }
