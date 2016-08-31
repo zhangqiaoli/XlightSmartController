@@ -229,7 +229,7 @@ void SmartControllerClass::InitSensors()
 
 	// Light
 	if (theConfig.IsSensorEnabled(sensorALS)) {
-		senLight.begin(SEN_LIGHT_MIN, SEN_LIGHT_MAX);
+		senLight.begin(SEN_LIGHT_MAX, SEN_LIGHT_MIN);	// Reversed threshold
 		LOGD(LOGTAG_MSG, F("Light sensor works."));
 	}
 

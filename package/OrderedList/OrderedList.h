@@ -169,7 +169,7 @@ int OrderdList<T>::update(T *_pT) {
 	return pos;
 }
 
-// Add a new item
+// Add a new item, update if item exists
 template<typename T>
 int OrderdList<T>::add(T *_pT) {
   int pos = search(_pT, true);

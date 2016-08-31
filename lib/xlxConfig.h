@@ -104,14 +104,33 @@ typedef struct
 //------------------------------------------------------------------
 // Xlight NodeID List
 //------------------------------------------------------------------
+#define LEN_NODE_IDENTIFY     6
 typedef struct    // Exact 12 bytes
 	__attribute__((packed))
 {
 	UC nid;
 	UC reserved;
-  UC identify[6];
+  UC identify[LEN_NODE_IDENTIFY];
   UL recentActive;
 } NodeIdRow_t;
+
+inline BOOL isIdentifyEmpty(UC *pId)
+{ return( pId[0] | pId[1] | pId[2] | pId[3] | pId[4] | pId[5] ); };
+
+inline void copyIdentify(UC *pId, uint64_t *pData)
+{ memcpy(pId, pData, LEN_NODE_IDENTIFY); };
+
+inline BOOL isIdentifyEqual(UC *pId1, UC *pId2)
+{
+  for( int i = 0; i < 6; i++ ) { if(pId1[i] != pId2[i]) return false; }
+  return true;
+};
+
+inline BOOL isIdentifyEqual(UC *pId1, uint64_t *pData)
+{
+  UC pId2[6]; copyIdentify(pId2, pData);
+  return isIdentifyEqual(pId1, pId2);
+};
 
 //------------------------------------------------------------------
 // Xlight Rule Table Structures

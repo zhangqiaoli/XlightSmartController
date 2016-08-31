@@ -122,10 +122,19 @@ void NodeListClass::showList()
 UC NodeListClass::requestNodeID(char type, uint64_t identify)
 {
 	UC nodeID = 0;		// error
+	NodeIdRow_t lv_Node;
 	switch( type ) {
 	case NODE_TYP_LAMP:
 		// 1, 8 - 63
-		// ToDo:
+		/// Check Main DeviceID
+		lv_Node.nid = NODEID_MAINDEVICE;
+		if( get(&lv_Node) >= 0 ) {
+			if( isIdentifyEmpty(lv_Node.identify) || isIdentifyEqual(lv_Node.identify, &identify) ) {
+				nodeID = NODEID_MAINDEVICE;
+			} else {
+
+			}
+		}
 		break;
 
 	case NODE_TYP_REMOTE:
@@ -138,6 +147,15 @@ UC NodeListClass::requestNodeID(char type, uint64_t identify)
 
 	default:
 		break;
+	}
+
+	// Add or Update
+	if( nodeID > 0 ) {
+		lv_Node.nid = nodeID;
+		copyIdentify(lv_Node.identify, &identify);
+		lv_Node.recentActive = Time.now();
+		add(&lv_Node);
+		m_isChanged = true;
 	}
 	return nodeID;
 }
