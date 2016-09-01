@@ -165,7 +165,7 @@ void SmartControllerClass::InitNetwork()
 	{
 		if (IsWANGood())
 		{
-			LOGN(LOGTAG_MSG, F("WAN is working."));
+			LOGN(LOGTAG_EVENT, F("WAN is working."));
 			SetStatus(STATUS_NWS);
 
 			// Initialize Logger: syslog & cloud log
@@ -175,7 +175,7 @@ void SmartControllerClass::InitNetwork()
 		}
 		else if (GetStatus() == STATUS_BMW && IsLANGood())
 		{
-			LOGN(LOGTAG_MSG, F("LAN is working."));
+			LOGN(LOGTAG_EVENT, F("LAN is working."));
 			SetStatus(STATUS_DIS);
 		}
 	}
@@ -310,16 +310,29 @@ BOOL SmartControllerClass::CheckRF()
 	return m_isRF;
 }
 
-BOOL SmartControllerClass::CheckNetwork()
+// Check Wi-Fi module and connection
+BOOL SmartControllerClass::CheckWiFi()
 {
-	// Check Wi-Fi module
 	if( WiFi.RSSI() > 0 ) {
+		m_isWAN = false;
+		m_isLAN = false;
 		LOGE(LOGTAG_MSG, F("Wi-Fi chip error!"));
 		return false;
 	}
 
 	if( !WiFi.ready() ) {
-		LOGE(LOGTAG_MSG, F("Wi-Fi module error!"));
+		m_isWAN = false;
+		m_isLAN = false;
+		LOGE(LOGTAG_EVENT, F("Wi-Fi module error!"));
+		return false;
+	}
+	return true;
+}
+
+BOOL SmartControllerClass::CheckNetwork()
+{
+	// Check Wi-Fi module
+	if( !CheckWiFi() ) {
 		return false;
 	}
 
@@ -350,10 +363,11 @@ BOOL SmartControllerClass::CheckBLE()
 	return true;
 }
 
-BOOL SmartControllerClass::SelfCheck(UL ms)
+BOOL SmartControllerClass::SelfCheck(US ms)
 {
 	static US tickSaveConfig = 0;				// must be static
 	static US tickCheckRadio = 0;				// must be static
+	static UC tickAcitveCheck = 0;
 
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);
@@ -365,13 +379,20 @@ BOOL SmartControllerClass::SelfCheck(UL ms)
 	}
 
   // Slow Checking: once per 30 seconds
-  if (++tickCheckRadio > 30000 / ms) { // Check RF module
+  if (++tickCheckRadio > 30000 / ms) {
+		// Check RF module
+		++tickAcitveCheck;
 		tickCheckRadio = 0;
     if( !IsRFGood() ) {
       if( CheckRF() ) {
         LOGN(LOGTAG_MSG, F("RF24 module recovered."));
       }
     }
+
+		// Check Network
+		if( !IsWANGood() || tickAcitveCheck % 5 == 0 ) {
+			InitNetwork();
+		}
 
 		// Daily Cloud Synchronization
 		/// TimeSync

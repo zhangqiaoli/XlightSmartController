@@ -45,9 +45,10 @@ public:
   void ResetSerialPort();
 
   BOOL CheckRF();
+  BOOL CheckWiFi();
   BOOL CheckNetwork();
   BOOL CheckBLE();
-  BOOL SelfCheck(UL ms);
+  BOOL SelfCheck(US ms);
   BOOL IsRFGood();
   BOOL IsBLEGood();
   BOOL IsLANGood();

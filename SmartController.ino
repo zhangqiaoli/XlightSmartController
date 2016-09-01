@@ -97,6 +97,11 @@ void setup()
   // Initialization Radio Interfaces
   theSys.InitRadio();
 
+	// Wait the system started
+	while( millis() < 5000 ) {
+		Particle.process();
+	}
+
   // Initialization network Interfaces
   theSys.InitNetwork();
 
@@ -111,11 +116,6 @@ void setup()
 
   // System Starts
   theSys.Start();
-
-	// Wait the system started
-	while( millis() < 2000 ) {
-		Particle.process();
-	}
 }
 
 // Notes: approximate RTE_DELAY_SELFCHECK ms per loop
