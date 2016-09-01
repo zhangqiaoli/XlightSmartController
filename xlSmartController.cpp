@@ -160,24 +160,36 @@ void SmartControllerClass::InitRadio()
 /// check LAN & WAN
 void SmartControllerClass::InitNetwork()
 {
+	BOOL oldWAN = IsWANGood();
+	BOOL oldLAN = IsLANGood();
+
 	// Check WAN and LAN
-	if( CheckNetwork() )
+	CheckNetwork();
+
+	if (IsWANGood())
 	{
-		if (IsWANGood())
-		{
+		if( !oldWAN ) {	// Only log when status changed
 			LOGN(LOGTAG_EVENT, F("WAN is working."));
 			SetStatus(STATUS_NWS);
-
-			// Initialize Logger: syslog & cloud log
-			// ToDo: substitude network parameters
-			//theLog.InitSysLog();
-			//theLog.InitCloud();
 		}
-		else if (GetStatus() == STATUS_BMW && IsLANGood())
-		{
+
+		// Initialize Logger: syslog & cloud log
+		// ToDo: substitude network parameters
+		//theLog.InitSysLog();
+		//theLog.InitCloud();
+	}
+	else if (IsLANGood())
+	{
+		if( !oldLAN ) {	// Only log when status changed
 			LOGN(LOGTAG_EVENT, F("LAN is working."));
 			SetStatus(STATUS_DIS);
 		}
+	}
+	else if (IsRFGood()) {
+		SetStatus(STATUS_BMW);
+	}
+	else {
+		SetStatus(STATUS_ERR);
 	}
 }
 
