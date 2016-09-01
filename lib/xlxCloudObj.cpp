@@ -133,12 +133,15 @@ BOOL CloudObjClass::UpdateMotion(bool value)
 // Compose JSON Data String
 void CloudObjClass::UpdateJSONData()
 {
+  static UL lastTick = millis();
+
   if( m_jpData->success() ) {
     char buf[256];
     m_jpData->printTo(buf, 256);
     String strTemp = buf;
-    if( m_jsonData != strTemp ) {
+    if( m_jsonData != strTemp || (millis() - lastTick) / 1000 >= RTE_DELAY_PUBLISH ) {
       m_jsonData = strTemp;
+      lastTick = millis();
       // Publish sensor data
 #ifdef USE_PARTICLE_CLOUD
       Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_SensorData, PRIVATE);

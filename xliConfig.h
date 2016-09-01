@@ -35,7 +35,7 @@
 // System level working constants
 //------------------------------------------------------------------
 // Running Time Environment Parameters
-#define RTE_DELAY_PUBLISH         500
+#define RTE_DELAY_PUBLISH         60          // Maximum publish data refresh time in seconds
 #define RTE_DELAY_SYSTIMER        50          // System Timer interval, can be very fast, e.g. 50 means 25ms
 #define RTE_DELAY_SELFCHECK       100         // Self-check interval
 
