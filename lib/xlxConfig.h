@@ -200,6 +200,9 @@ public:
   bool saveList();
   void showList();
   UC requestNodeID(char type, uint64_t identify);
+
+protected:
+  UC getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identify);
 };
 
 //------------------------------------------------------------------

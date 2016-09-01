@@ -121,28 +121,24 @@ void NodeListClass::showList()
 // Get a new NodeID
 UC NodeListClass::requestNodeID(char type, uint64_t identify)
 {
+	// Must provide identify
+	if( identify == 0 ) return 0;
+
 	UC nodeID = 0;		// error
-	NodeIdRow_t lv_Node;
 	switch( type ) {
 	case NODE_TYP_LAMP:
 		// 1, 8 - 63
 		/// Check Main DeviceID
-		lv_Node.nid = NODEID_MAINDEVICE;
-		if( get(&lv_Node) >= 0 ) {
-			if( isIdentifyEmpty(lv_Node.identify) || isIdentifyEqual(lv_Node.identify, &identify) ) {
-				nodeID = NODEID_MAINDEVICE;
-			} else {
-
-			}
-		}
+		nodeID = getAvailableNodeId(NODEID_MAINDEVICE, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identify);
 		break;
 
 	case NODE_TYP_REMOTE:
 		// 64 - 127
-		// ToDo:
+		nodeID = getAvailableNodeId(NODEID_MIN_REMOTE, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identify);
 		break;
 
 	case NODE_TYP_THIRDPARTY:
+		// ToDo: support thirdparty device in the future
 		break;
 
 	default:
@@ -151,13 +147,67 @@ UC NodeListClass::requestNodeID(char type, uint64_t identify)
 
 	// Add or Update
 	if( nodeID > 0 ) {
+		NodeIdRow_t lv_Node;
 		lv_Node.nid = nodeID;
 		copyIdentify(lv_Node.identify, &identify);
 		lv_Node.recentActive = Time.now();
+		UC oldCnt = count();
 		add(&lv_Node);
+		if( count() > oldCnt && nodeID <= NODEID_MAX_DEVCIE ) {
+			// Functional device added
+			theConfig.SetNumDevices(theConfig.GetNumDevices() + 1);
+		}
+		theConfig.SetNumNodes(count());
 		m_isChanged = true;
 	}
 	return nodeID;
+}
+
+UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identify)
+{
+	UC oldestNode;
+	UL oldestTime;
+	NodeIdRow_t lv_Node;
+	if( defaultID > 0 ) {
+		lv_Node.nid = defaultID;
+		if( get(&lv_Node) < 0 ) {
+			return 0;
+		} else if( isIdentifyEmpty(lv_Node.identify) || isIdentifyEqual(lv_Node.identify, &identify) ) {
+			// DefaultID is available
+			return defaultID;
+		} else {
+			oldestNode = defaultID;
+			oldestTime = lv_Node.recentActive;
+		}
+	} else {
+		oldestNode = 0;
+		oldestTime = Time.now();
+	}
+
+	// Stage 1: Check Identify and reuse if possible
+	for(int i = 0; i < count(); i++) {
+		if( _pItems[i].nid > maxID ) break;
+		if( _pItems[i].nid < minID ) continue;
+
+		if( isIdentifyEqual(_pItems[i].identify, &identify) ) {
+			// Return matched item
+			return _pItems[i].nid;
+		} else if( oldestNode == 0 || oldestTime > _pItems[i].recentActive ) {
+			// Update inactive record
+			oldestNode = _pItems[i].nid;
+			oldestTime = _pItems[i].recentActive;
+		}
+	}
+
+	// Stage 2: Otherwise, get a unused NodeID from corresponding segment
+	for( UC nodeID = minID; nodeID <= maxID; nodeID++ ) {
+		lv_Node.nid = nodeID;
+		// Seek unused NodeID
+		if( get(&lv_Node) < 0 ) return nodeID;
+	}
+
+	// Stage 3: Otherwise, overwrite the longest inactive entry within the segment
+	return oldestNode;
 }
 
 //------------------------------------------------------------------

@@ -122,13 +122,17 @@ void setup()
 /// If you need more accurate and faster timer, do it with sysTimer
 void loop()
 {
+	static UL lastTick = millis();
   static UC tick = 0;
 
   // Process commands
   IF_MAINLOOP_TIMER( theSys.ProcessCommands(), "ProcessCommands" );
 
   // Collect data
-  IF_MAINLOOP_TIMER( theSys.CollectData(tick++), "CollectData" );
+	if( millis() - lastTick >= 1000 ) {
+		lastTick = millis();
+  	IF_MAINLOOP_TIMER( theSys.CollectData(tick++), "CollectData" );
+	}
 
 	// Act on new Rules in Rules chain
 	IF_MAINLOOP_TIMER( theSys.ReadNewRules(), "ReadNewRules" );

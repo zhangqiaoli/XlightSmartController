@@ -39,7 +39,7 @@
 #define SERIALPORT_SPEED_HIGH     115200
 #define SERIALPORT_SPEED_DEFAULT  SERIALPORT_SPEED_HIGH
 
-// Sensor Read Speed (in ticks)
+// Sensor Read Speed (in seconds)
 #define SEN_DHT_SPEED_LOW         30
 #define SEN_DHT_SPEED_NORMAL      5
 #define SEN_DHT_SPEED_HIGH        2
