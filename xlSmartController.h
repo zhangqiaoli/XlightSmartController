@@ -41,7 +41,7 @@ public:
 
   BOOL Start();
   UC GetStatus();
-  void SetStatus(UC st);
+  BOOL SetStatus(UC st);
 
   BOOL CheckRF();
   BOOL CheckNetwork();

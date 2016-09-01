@@ -277,17 +277,24 @@ UC SmartControllerClass::GetStatus()
 	return (UC)m_devStatus;
 }
 
-void SmartControllerClass::SetStatus(UC st)
+BOOL SmartControllerClass::SetStatus(UC st)
 {
+	if( st > STATUS_ERR ) return false;
 	LOGN(LOGTAG_STATUS, F("System status changed from %d to %d"), m_devStatus, st);
-	if ((UC)m_devStatus != st)
+	if ((UC)m_devStatus != st) {
 		m_devStatus = st;
+	}
+	return true;
 }
 
 BOOL SmartControllerClass::CheckRF()
 {
 	// RF Server begins
 	m_isRF = theRadio.ServerBegin();
+	if( m_isRF ) {
+		// Test RF Power Level, change it if setting is not default value
+		theConfig.GetRFPowerLevel(true);
+	}
 	return m_isRF;
 }
 

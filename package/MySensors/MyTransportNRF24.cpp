@@ -191,3 +191,19 @@ uint8_t MyTransportNRF24::receive(void* data) {
 void MyTransportNRF24::powerDown() {
 	rf24.powerDown();
 }
+
+uint8_t MyTransportNRF24::getPALevel(bool read)
+{
+	if( read ) {
+		_paLevel = rf24.getPALevel();
+	}
+	return _paLevel;
+}
+
+void MyTransportNRF24::setPALevel(uint8_t level)
+{
+	if( _paLevel != level )	{
+		_paLevel = level;
+		rf24.setPALevel(level);
+	}
+}

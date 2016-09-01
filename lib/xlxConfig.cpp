@@ -37,6 +37,7 @@
 #include "xliPinMap.h"
 #include "xlxLogger.h"
 #include "xliMemoryMap.h"
+#include "xlxRF24Server.h"
 #include "xlSmartController.h"
 
 using namespace Flashee;
@@ -272,6 +273,7 @@ void ConfigClass::InitConfig()
   m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
   m_config.enableCloudSerialCmd = false;
 	m_config.enableDailyTimeSync = true;
+	m_config.rfPowerLevel = RF24_PA_LEVEL_GW;
 }
 
 void ConfigClass::InitDevStatus()
@@ -333,7 +335,8 @@ BOOL ConfigClass::LoadConfig()
       || m_config.numDevices > MAX_DEVICE_PER_CONTROLLER
 			|| m_config.numNodes > MAX_NODE_PER_CONTROLLER
       || m_config.typeMainDevice == devtypUnknown
-      || m_config.typeMainDevice >= devtypDummy )
+      || m_config.typeMainDevice >= devtypDummy
+			|| m_config.rfPowerLevel > RF24_PA_MAX )
     {
       InitConfig();
       m_isChanged = true;
@@ -640,6 +643,15 @@ US ConfigClass::GetSensorBitmap()
 	return m_config.sensorBitmap;
 }
 
+void ConfigClass::SetSensorBitmap(US bits)
+{
+	if( bits != m_config.sensorBitmap )
+  {
+    m_config.sensorBitmap = bits;
+    m_isChanged = true;
+  }
+}
+
 BOOL ConfigClass::IsSensorEnabled(sensors_t sr)
 {
     return(BITTEST(m_config.sensorBitmap, sr));
@@ -653,11 +665,7 @@ void ConfigClass::SetSensorEnabled(sensors_t sr, BOOL sw)
   } else {
     bits = BITUNSET(m_config.sensorBitmap, sr);
   }
-  if( bits != m_config.sensorBitmap )
-  {
-    m_config.sensorBitmap = bits;
-    m_isChanged = true;
-  }
+	SetSensorBitmap(bits);
 }
 
 UC ConfigClass::GetBrightIndicator()
@@ -733,6 +741,28 @@ BOOL ConfigClass::SetNumNodes(UC num)
     return true;
   }
   return false;
+}
+
+
+UC ConfigClass::GetRFPowerLevel(BOOL read)
+{
+	UC level = theRadio.getPALevel(read);
+	if( level != m_config.rfPowerLevel ) {
+		SetRFPowerLevel(level);
+	}
+	return m_config.rfPowerLevel;
+}
+
+BOOL ConfigClass::SetRFPowerLevel(UC level)
+{
+	if( level > RF24_PA_MAX ) level = RF24_PA_MAX;
+	if( level != m_config.rfPowerLevel ) {
+		m_config.rfPowerLevel = level;
+		theRadio.setPALevel(level);
+		m_isChanged = true;
+		return true;
+	}
+	return false;
 }
 
 // Load Device Status

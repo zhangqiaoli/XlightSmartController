@@ -246,26 +246,49 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("e.g. send 0;1;1;0;0;23.5\n\r"));
     CloudOutput(F("send <message> or <NodeId:MessageId>"));
   } else if(strTopic.equals("set")) {
-    SERIAL_LN(F("--- Command: set <object value> ---"));
-    SERIAL_LN(F("To change config"));
-    SERIAL_LN(F("e.g. set tz -5"));
-    SERIAL_LN(F("e.g. set dst [0|1]"));
-    SERIAL_LN(F("     , set daylight saving time"));
-    SERIAL_LN(F("e.g. set time sync"));
-    SERIAL_LN(F("     , synchronize time with Cloud"));
-    SERIAL_LN(F("e.g. set time hh:mm:ss"));
-    SERIAL_LN(F("e.g. set date YYYY-MM-DD"));
-    SERIAL_LN(F("e.g. set nodeid [0..250]"));
-    SERIAL_LN(F("e.g. set base [0|1]"));
-    SERIAL_LN(F("     , to enable or disable base network"));
-    SERIAL_LN(F("e.g. set csc [0|1]"));
-    SERIAL_LN(F("     , to enable or disable Cloud Serial Command"));
-    SERIAL_LN(F("e.g. set cdts [0|1]"));
-    SERIAL_LN(F("     , to enable or disable Cloud Daily Time Sync"));
-    SERIAL_LN(F("e.g. set debug [log:level]"));
-    SERIAL_LN(F("     , where log is [serial|flash|syslog|cloud|all"));
-    SERIAL_LN(F("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r"));
-    CloudOutput(F("set tz|dst|nodeid|base|csc|cdts|debug"));
+    char *sObj = next();
+    if( sObj ) {
+      if (strnicmp(sObj, "flag", 4) == 0) {
+        SERIAL_LN(F("--- Command: set flag <flag name> [0|1] ---"));
+        SERIAL_LN(F("<flag name>: csc, cdts"));
+        SERIAL_LN(F("e.g. set flag csc [0|1]"));
+        SERIAL_LN(F("     , enable or disable Cloud Serial Command"));
+        SERIAL_LN(F("e.g. set flag cdts [0|1]"));
+        SERIAL_LN(F("     , enable or disable Cloud Daily Time Sync"));
+        CloudOutput(F("set flag csc|cdts"));
+      } else if (strnicmp(sObj, "var", 3) == 0) {
+        SERIAL_LN(F("--- Command: set var <var name> <value> ---"));
+        SERIAL_LN(F("<var name>: senmap, devst, rfpl"));
+        SERIAL_LN(F("e.g. set var senmap 23"));
+        SERIAL_LN(F("     , set Sensor Bitmap to 0x17"));
+        SERIAL_LN(F("e.g. set var devst 5"));
+        SERIAL_LN(F("     , set Device Status to sleep mode"));
+        SERIAL_LN(F("e.g. set var rfpl [0..3]"));
+        SERIAL_LN(F("     , set RF Power Level to min(0), low(1), high(2) or max(3)"));
+        CloudOutput(F("set var senmap|devst|rfpl"));
+      }
+    } else {
+      SERIAL_LN(F("--- Command: set <object value> ---"));
+      SERIAL_LN(F("To change config"));
+      SERIAL_LN(F("e.g. set tz -5"));
+      SERIAL_LN(F("e.g. set dst [0|1]"));
+      SERIAL_LN(F("     , set daylight saving time"));
+      SERIAL_LN(F("e.g. set time sync"));
+      SERIAL_LN(F("     , synchronize time with Cloud"));
+      SERIAL_LN(F("e.g. set time hh:mm:ss"));
+      SERIAL_LN(F("e.g. set date YYYY-MM-DD"));
+      SERIAL_LN(F("e.g. set nodeid [0..250]"));
+      SERIAL_LN(F("e.g. set base [0|1]"));
+      SERIAL_LN(F("     , to enable or disable base network"));
+      SERIAL_LN(F("set flag <flag name> [0|1]"));
+      SERIAL_LN(F("     , to set system flag value, use '? set flag' for detail"));
+      SERIAL_LN(F("set var <var name> <value>"));
+      SERIAL_LN(F("     , to set value of variable, use '? set var' for detail"));
+      SERIAL_LN(F("e.g. set debug [log:level]"));
+      SERIAL_LN(F("     , where log is [serial|flash|syslog|cloud|all"));
+      SERIAL_LN(F("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r"));
+      CloudOutput(F("set tz|dst|nodeid|base|flag|var|debug"));
+    }
   } else if(strTopic.equals("sys")) {
     SERIAL_LN(F("--- Command: sys <mode> ---"));
     SERIAL_LN(F("To control the system status, where <mode> could be:"));
@@ -414,9 +437,10 @@ bool SerialConsoleClass::doShow(const char *cmd)
     SERIAL_LN("theSys.m_strCldCmd = \t\t%s\n\r", theSys.m_strCldCmd.c_str());
 		SERIAL_LN("theSys.m_lastMsg = \t\t\t%s", theSys.m_lastMsg.c_str());
     SERIAL_LN("");
-    SERIAL_LN("mConfig.sensorBitmap = \t\t\t0x%02X", theConfig.GetSensorBitmap());
+    SERIAL_LN("mConfig.sensorBitmap = \t\t\t0x%04X", theConfig.GetSensorBitmap());
     SERIAL_LN("mConfig.indBrightness = \t\t%d", theConfig.GetBrightIndicator());
-		SERIAL_LN("theSys.m_temperature = \t\t\t%.2f", theSys.m_temperature);
+		SERIAL_LN("mConfig.rfPowerLevel = \t\t\t%d", theConfig.GetRFPowerLevel(false));
+    SERIAL_LN("theSys.m_temperature = \t\t\t%.2f", theSys.m_temperature);
 		SERIAL_LN("theSys.m_humidity = \t\t\t%.2f", theSys.m_humidity);
 		SERIAL_LN("theSys.m_brightness = \t\t\t%u", theSys.m_brightness);
 		SERIAL_LN("theSys.m_motion = \t\t\t%s", (theSys.m_motion ? "true" : "false"));
@@ -567,7 +591,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
   bool retVal = false;
 
   char *sTopic = next();
-  char *sParam1;
+  char *sParam1, *sParam2;
   if( sTopic ) {
     if (strnicmp(sTopic, "tz", 2) == 0) {
       sParam1 = next();
@@ -616,20 +640,60 @@ bool SerialConsoleClass::doSet(const char *cmd)
         CloudOutput("Base RF network is %s", (theRadio.isBaseNetworkEnabled() ? "enabled" : "disabled"));
         retVal = true;
       }
-    } else if (strnicmp(sTopic, "csc", 3) == 0) {
-      sParam1 = next();
+    } else if (strnicmp(sTopic, "flag", 4) == 0) {
+      // Change flag value
+      sParam1 = next();   // Get flag name
       if( sParam1) {
-        theConfig.SetCloudSerialEnabled(atoi(sParam1) > 0);
-        SERIAL_LN("Cloud Serial Command is %s\n\r", (theConfig.IsCloudSerialEnabled() ? "enabled" : "disabled"));
-        CloudOutput("Cloud Serial Command is %s", (theConfig.IsCloudSerialEnabled() ? "enabled" : "disabled"));
+        sParam2 = next();   // Get flag value
+        if( sParam2 ) {
+          if (strnicmp(sParam1, "csc", 3) == 0) {
+            theConfig.SetCloudSerialEnabled(atoi(sParam2) > 0);
+            SERIAL_LN("Cloud Serial Command is %s\n\r", (theConfig.IsCloudSerialEnabled() ? "enabled" : "disabled"));
+            CloudOutput("Cloud Serial Command is %s", (theConfig.IsCloudSerialEnabled() ? "enabled" : "disabled"));
+            retVal = true;
+          } else if (strnicmp(sParam1, "cdts", 4) == 0) {
+            theConfig.SetDailyTimeSyncEnabled(atoi(sParam2) > 0);
+            SERIAL_LN("Cloud Daily TimeSync is %s\n\r", (theConfig.IsDailyTimeSyncEnabled() ? "enabled" : "disabled"));
+            CloudOutput("Cloud Daily TimeSync is %s", (theConfig.IsDailyTimeSyncEnabled() ? "enabled" : "disabled"));
+            retVal = true;
+          }
+        } else {
+          SERIAL_LN("Require flag value, use '? set flag' for detail\n\r");
+          retVal = true;
+        }
+      } else {
+        SERIAL_LN("Require flag name and value, use '? set flag' for detail\n\r");
         retVal = true;
       }
-    } else if (strnicmp(sTopic, "cdts", 4) == 0) {
-      sParam1 = next();
+    } else if (strnicmp(sTopic, "var", 3) == 0) {
+      // Change variable value
+      sParam1 = next();   // Get variable name
       if( sParam1) {
-        theConfig.SetDailyTimeSyncEnabled(atoi(sParam1) > 0);
-        SERIAL_LN("Cloud Daily TimeSync is %s\n\r", (theConfig.IsDailyTimeSyncEnabled() ? "enabled" : "disabled"));
-        CloudOutput("Cloud Daily TimeSync is %s", (theConfig.IsDailyTimeSyncEnabled() ? "enabled" : "disabled"));
+        sParam2 = next();   // Get variable value
+        if( sParam2 ) {
+          if (strnicmp(sParam1, "senmap", 6) == 0) {
+            theConfig.SetSensorBitmap((US)atoi(sParam2));
+            SERIAL_LN("SensorBitmap is 0x%04X\n\r", theConfig.GetSensorBitmap());
+            CloudOutput("SensorBitmap is 0x%04X", theConfig.GetSensorBitmap());
+            retVal = true;
+          } else if (strnicmp(sParam1, "devst", 5) == 0) {
+            if( !theSys.SetStatus((UC)atoi(sParam2)) ) {
+              SERIAL_LN("Failed to set Device Status: %s\n\r", sParam2);
+              CloudOutput("Failed to set DevStatus %s", sParam2);
+            }
+            retVal = true;
+          } else if (strnicmp(sParam1, "rfpl", 4) == 0) {
+            theConfig.SetRFPowerLevel((UC)atoi(sParam2));
+            SERIAL_LN("RF PowerLevel: %d\n\r", theRadio.getPALevel(false));
+            CloudOutput("RF PowerLevel: %d", theRadio.getPALevel(false));
+            retVal = true;
+          }
+        } else {
+          SERIAL_LN("Require var value, use '? set var' for detail\n\r");
+          retVal = true;
+        }
+      } else {
+        SERIAL_LN("Require var name and value, use '? set var' for detail\n\r");
         retVal = true;
       }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {

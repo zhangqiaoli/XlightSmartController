@@ -48,6 +48,8 @@ public:
 	bool available(uint8_t *to, uint8_t *pipe = NULL);
 	uint8_t receive(void* data);
 	void powerDown();
+	uint8_t getPALevel(bool read = true);
+	void setPALevel(uint8_t level);
 
 	// SBS added 2016-06-28
 	uint64_t getCurrentNetworkID() const;

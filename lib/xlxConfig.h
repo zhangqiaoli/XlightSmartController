@@ -54,8 +54,10 @@ typedef struct
   char Token[64];                           // Token
   BOOL enableCloudSerialCmd   :1;           // Whether enable cloud serial command
   BOOL enableDailyTimeSync    :1;           // Whether enable daily time synchronization
-  BOOL Reservered_bool        :6;           // Reservered for boolean flags
+  BOOL Reserved_bool          :6;           // Reserved for boolean flags
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
+  UC rfPowerLevel             :2;           // RF Power Level 0..3
+  UC Reserved1                :6;           // Reserved bits
 } Config_t;
 
 //------------------------------------------------------------------
@@ -303,6 +305,7 @@ public:
   BOOL CloudTimeSync(BOOL _force = true);
 
   US GetSensorBitmap();
+  void SetSensorBitmap(US bits);
   BOOL IsSensorEnabled(sensors_t sr);
   void SetSensorEnabled(sensors_t sr, BOOL sw = true);
 
@@ -317,6 +320,9 @@ public:
 
   UC GetNumNodes();
   BOOL SetNumNodes(UC num);
+
+  UC GetRFPowerLevel(BOOL read = true);
+  BOOL SetRFPowerLevel(UC level);
 
   NodeListClass lstNodes;
 };
