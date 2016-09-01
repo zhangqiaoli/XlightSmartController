@@ -118,6 +118,7 @@ const StateMachine_t fsmMain[] = {
   {consoleSys,        consoleRoot,    "dfu",              gc_doSysSub},
   {consoleSys,        consoleRoot,    "update",           gc_doSysSub},
   {consoleSys,        consoleRoot,    "sync",             gc_doSysSub},
+  {consoleSys,        consoleRoot,    "clear",            gc_doSysSub},
   {consoleSys,        consoleRoot,    "base",             gc_doSysSub},
   {consoleSys,        consoleRoot,    "private",          gc_doSysSub},
   /// Workflow
@@ -276,9 +277,11 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   dfu:     enter DFU mode"));
     SERIAL_LN(F("   update:  update firmware"));
     SERIAL_LN(F("   sync <object>: object synchronize with Cloud"));
+    SERIAL_LN(F("   clear <object>: clear object, such as nodeid"));
     SERIAL_LN(F("e.g. sys sync time"));
+    SERIAL_LN(F("e.g. sys clear nodeid 1"));
     SERIAL_LN(F("e.g. sys reset\n\r"));
-    CloudOutput(F("sys base|private|reset|safe|setup|dfu|update"));
+    CloudOutput(F("sys base|private|reset|safe|setup|dfu|update|sync|clear"));
   } else {
     SERIAL_LN(F("Available Commands:"));
     SERIAL_LN(F("    check, show, ping, do, test, send, set, sys, help or ?"));
@@ -690,6 +693,26 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
           theSys.CldSetCurrentTime();
         } else {
           // ToDo: other synchronization
+        }
+      } else {
+        return false;
+      }
+    }
+    else if (strnicmp(sTopic, "clear", 5) == 0) {
+      sParam1 = next();
+      if(sParam1) {
+        if( stricmp(sParam1, "nodeid") == 0 ) {
+          sParam1 = next();   // id
+          if(sParam1) {
+            if( !theConfig.lstNodes.clearNodeId((UC)atoi(sParam1)) ) {
+              SERIAL_LN("Failed to clear NodeID:%s", sParam1);
+              CloudOutput("Failed to clear NodeID:%s", sParam1);
+            }
+          } else {
+            return false;
+          }
+        } else {
+          // ToDo: other clearance
         }
       } else {
         return false;

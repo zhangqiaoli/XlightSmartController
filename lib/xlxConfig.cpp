@@ -70,14 +70,14 @@ bool NodeListClass::loadList()
 		if( i == 0 ) {
 			if( lv_Node.nid != NODEID_MAINDEVICE ) {
 				lv_Node.nid = NODEID_MAINDEVICE;
-				memset(lv_Node.identify, 0x00, sizeof(lv_Node.identify));
+				resetIdentify(lv_Node.identify);
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
 		} else if(  i == 1 && theConfig.GetNumNodes() == 2 ) {
 			if( lv_Node.nid != NODEID_MIN_REMOTE ) {
 				lv_Node.nid = NODEID_MIN_REMOTE;
-				memset(lv_Node.identify, 0x00, sizeof(lv_Node.identify));
+				resetIdentify(lv_Node.identify);
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
@@ -208,6 +208,34 @@ UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t 
 
 	// Stage 3: Otherwise, overwrite the longest inactive entry within the segment
 	return oldestNode;
+}
+
+BOOL NodeListClass::clearNodeId(UC nodeID)
+{
+	if( nodeID == NODEID_GATEWAY || nodeID == NODEID_DUMMY ) return false;
+
+	NodeIdRow_t lv_Node;
+	if( nodeID == NODEID_MAINDEVICE || NODEID_MAINDEVICE == NODEID_MIN_REMOTE ) {
+		// Update with black item
+		lv_Node.nid = nodeID;
+		resetIdentify(lv_Node.identify);
+		lv_Node.recentActive = 0;
+		update(&lv_Node);
+	} else if ( nodeID < NODEID_MIN_DEVCIE ) {
+		return false;
+	} else {
+		// remove item
+		lv_Node.nid = nodeID;
+		remove(&lv_Node);
+		if( nodeID >= NODEID_MIN_DEVCIE && nodeID <= NODEID_MAX_DEVCIE ) {
+			theConfig.SetNumDevices(theConfig.GetNumDevices() - 1);
+		}
+		theConfig.SetNumNodes(count());
+	}
+
+	m_isChanged = true;
+	LOGN(LOGTAG_EVENT, "NodeID:%d is cleared", nodeID);
+	return true;
 }
 
 //------------------------------------------------------------------

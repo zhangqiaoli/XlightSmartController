@@ -120,6 +120,9 @@ inline BOOL isIdentifyEmpty(UC *pId)
 inline void copyIdentify(UC *pId, uint64_t *pData)
 { memcpy(pId, pData, LEN_NODE_IDENTIFY); };
 
+inline void resetIdentify(UC *pId)
+{ memset(pId, 0x00, LEN_NODE_IDENTIFY); };
+
 inline BOOL isIdentifyEqual(UC *pId1, UC *pId2)
 {
   for( int i = 0; i < 6; i++ ) { if(pId1[i] != pId2[i]) return false; }
@@ -200,6 +203,7 @@ public:
   bool saveList();
   void showList();
   UC requestNodeID(char type, uint64_t identify);
+  BOOL clearNodeId(UC nodeID);
 
 protected:
   UC getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identify);
