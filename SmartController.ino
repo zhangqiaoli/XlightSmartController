@@ -97,6 +97,10 @@ void setup()
   // Initialization Radio Interfaces
   theSys.InitRadio();
 
+	// Initiaze Cloud Variables & Functions
+	///It is fine to call this function when the cloud is disconnected - Objects will be registered next time the cloud is connected
+  theSys.InitCloudObj();
+
 	// Wait the system started
 	while( millis() < 5000 ) {
 		Particle.process();
@@ -104,9 +108,6 @@ void setup()
 
   // Initialization network Interfaces
   theSys.InitNetwork();
-
-  // Initiaze Cloud Variables & Functions
-  theSys.InitCloudObj();
 
   // Initialize Sensors
   theSys.InitSensors();
