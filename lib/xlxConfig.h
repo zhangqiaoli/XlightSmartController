@@ -321,7 +321,7 @@ public:
   UC GetNumNodes();
   BOOL SetNumNodes(UC num);
 
-  UC GetRFPowerLevel(BOOL read = true);
+  UC GetRFPowerLevel();
   BOOL SetRFPowerLevel(UC level);
 
   NodeListClass lstNodes;

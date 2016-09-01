@@ -292,8 +292,8 @@ BOOL SmartControllerClass::CheckRF()
 	// RF Server begins
 	m_isRF = theRadio.ServerBegin();
 	if( m_isRF ) {
-		// Test RF Power Level, change it if setting is not default value
-		theConfig.GetRFPowerLevel(true);
+		// Change it if setting is not default value
+		theRadio.setPALevel(theConfig.GetRFPowerLevel());
 	}
 	return m_isRF;
 }

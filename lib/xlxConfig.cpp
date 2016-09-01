@@ -744,12 +744,8 @@ BOOL ConfigClass::SetNumNodes(UC num)
 }
 
 
-UC ConfigClass::GetRFPowerLevel(BOOL read)
+UC ConfigClass::GetRFPowerLevel()
 {
-	UC level = theRadio.getPALevel(read);
-	if( level != m_config.rfPowerLevel ) {
-		SetRFPowerLevel(level);
-	}
 	return m_config.rfPowerLevel;
 }
 
