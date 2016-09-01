@@ -115,11 +115,11 @@ SmartControllerClass::SmartControllerClass()
 void SmartControllerClass::Init()
 {
   // Open Serial Port
-  Serial.begin(SERIALPORT_SPEED_DEFAULT);
+  TheSerial.begin(SERIALPORT_SPEED_DEFAULT);
 
 #ifdef SYS_SERIAL_DEBUG
 	// Wait Serial connection so that we can see the starting information
-	while(!Serial.available()) { Particle.process(); }
+	while(!TheSerial.available()) { Particle.process(); }
 	SERIAL_LN(F("SmartController is starting..."));
 #endif
 
@@ -269,6 +269,11 @@ BOOL SmartControllerClass::Start()
 			theConfig.GetOrganization().c_str(), theConfig.GetProductName().c_str(), theConfig.GetVersion());
 	LOGI(LOGTAG_MSG, "System Info: %s-%s",
 			GetSysID().c_str(), GetSysVersion().c_str());
+
+#ifndef SYS_SERIAL_DEBUG
+	ResetSerialPort();
+#endif
+
 	return true;
 }
 
@@ -285,6 +290,13 @@ BOOL SmartControllerClass::SetStatus(UC st)
 		m_devStatus = st;
 	}
 	return true;
+}
+
+// Close and reopen serial port to avoid buffer overrun
+void SmartControllerClass::ResetSerialPort()
+{
+	TheSerial.end();
+	TheSerial.begin(SERIALPORT_SPEED_DEFAULT);
 }
 
 BOOL SmartControllerClass::CheckRF()

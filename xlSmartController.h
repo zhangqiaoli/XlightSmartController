@@ -42,6 +42,7 @@ public:
   BOOL Start();
   UC GetStatus();
   BOOL SetStatus(UC st);
+  void ResetSerialPort();
 
   BOOL CheckRF();
   BOOL CheckNetwork();

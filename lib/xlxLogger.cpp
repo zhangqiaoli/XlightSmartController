@@ -102,7 +102,7 @@ void LoggerClass::WriteLog(UC level, const char *tag, const char *msg, ...)
   // Send message to serial port
   if( level <= m_level[LOGDEST_SERIAL] )
   {
-    Serial.println(buf);
+    TheSerial.println(buf);
   }
 
   // Output Log to Particle cloud variable

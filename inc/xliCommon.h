@@ -35,7 +35,9 @@
 
 // Serial Port Speed
 #define SERIALPORT_SPEED_LOW      9600
+#define SERIALPORT_SPEED_14400    14400
 #define SERIALPORT_SPEED_MID      19200
+#define SERIALPORT_SPEED_57600    57600
 #define SERIALPORT_SPEED_HIGH     115200
 #define SERIALPORT_SPEED_DEFAULT  SERIALPORT_SPEED_HIGH
 
@@ -105,12 +107,15 @@ typedef enum
   devtypDummy
 } devicetype_t;
 
+// Specify system serial port, could be Serial, Serial1 or Seria2
+#define TheSerial       Serial
+
 #ifndef SERIAL
-#define SERIAL        Serial.printf
+#define SERIAL          TheSerial.printf
 #endif
 
 #ifndef SERIAL_LN
-#define SERIAL_LN     Serial.printlnf
+#define SERIAL_LN       TheSerial.printlnf
 #endif
 
 //--------------------------------------------------

@@ -138,7 +138,7 @@ test(alarm_all_red)
   {
     Particle.function("RunUnitTests", start);
     flag = false;
-    Serial.begin(SERIALPORT_SPEED_DEFAULT);
+    TheSerial.begin(SERIALPORT_SPEED_DEFAULT);
 
   	//Test output location
   	Test::out = &Serial;
@@ -152,10 +152,10 @@ test(alarm_all_red)
 	   //Additional Setup
     for(int i = 10; i > 0; i--)
     {
-      Serial.println(i);
+      TheSerial.println(i);
       delay(500);
     }
-    Serial.println ("starting setup functions");
+    TheSerial.println ("starting setup functions");
   	//IntervalTimer sysTimer;
   	theSys.Init();
   	theConfig.LoadConfig();
@@ -184,7 +184,7 @@ test(alarm_all_red)
   	//Additional Setup
     for(int i = 10; i > 0; i--)
     {
-      Serial.println(i);
+      TheSerial.println(i);
       delay(500);
     }
     Serial.println ("starting setup functions");
@@ -205,7 +205,7 @@ test(alarm_all_red)
 
   void loop()
   {
-    //Serial.print (".");
+    //TheSerial.print (".");
     static UC tick = 0;
 
     IF_MAINLOOP_TIMER( theSys.ProcessCommands(), "ProcessCommands" );

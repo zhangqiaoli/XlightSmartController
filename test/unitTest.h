@@ -1027,7 +1027,7 @@ static void exclude(const char *pattern);
 Simple usage:
 
     void setup() {
-      Serial.begin(9600);
+      TheSerial.begin(9600);
     }
 
     void loop() {
@@ -1544,7 +1544,7 @@ bool isMore<const char*>(const char* const &a, const char* const &b)
  */
 void unit_test_setup()
 {
-    Serial.begin(9600);
+    TheSerial.begin(9600);
     _runner.begin();
 }
 
@@ -1554,8 +1554,8 @@ bool _enterDFU = false;
 bool isStartRequested(bool runImmediately) {
     if (runImmediately || requestStart)
         return true;
-    if (Serial.available()) {
-        char c = Serial.read();
+    if (TheSerial.available()) {
+        char c = TheSerial.read();
         if (c=='t') {
             return true;
         }
@@ -1574,7 +1574,7 @@ void unit_test_loop(bool runImmediately=false)
         //System.bootloader();
 
     if (!_runner.isStarted() && isStartRequested(runImmediately)) {
-        Serial.println("Running tests");
+        TheSerial.println("Running tests");
         _runner.start();
     }
 

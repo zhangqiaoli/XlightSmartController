@@ -95,14 +95,14 @@ bool SerialCommand::readSerial()
 {
 	// If we're using the Hardware port, check it.   Otherwise check the user-created SoftwareSerial Port
 	#ifdef SERIALCOMMAND_HARDWAREONLY
-	while (Serial.available() > 0)
+	while (TheSerial.available() > 0)
 	#else
-	while ((usingSoftwareSerial==0 && Serial.available() > 0) || (usingSoftwareSerial==1 && SoftSerial->available() > 0) )
+	while ((usingSoftwareSerial==0 && TheSerial.available() > 0) || (usingSoftwareSerial==1 && SoftSerial->available() > 0) )
 	#endif
 	{
 		if (!usingSoftwareSerial) {
 			// Hardware serial port
-			inChar=Serial.read();   // Read single available character, there may be more waiting
+			inChar=TheSerial.read();   // Read single available character, there may be more waiting
 		} else {
 			#ifndef SERIALCOMMAND_HARDWAREONLY
 			// SoftwareSerial port

@@ -121,6 +121,7 @@ const StateMachine_t fsmMain[] = {
   {consoleSys,        consoleRoot,    "clear",            gc_doSysSub},
   {consoleSys,        consoleRoot,    "base",             gc_doSysSub},
   {consoleSys,        consoleRoot,    "private",          gc_doSysSub},
+  {consoleSys,        consoleRoot,    "serial",           gc_doSysSub},
   /// Workflow
   {consoleSys,        consoleWF_YesNo,   "setup",         gc_doSysSetupWiFi},
   /// Menu default
@@ -299,12 +300,13 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   setup:   setup Wi-Fi crediential"));
     SERIAL_LN(F("   dfu:     enter DFU mode"));
     SERIAL_LN(F("   update:  update firmware"));
+    SERIAL_LN(F("   serial reset: reset serial port"));
     SERIAL_LN(F("   sync <object>: object synchronize with Cloud"));
     SERIAL_LN(F("   clear <object>: clear object, such as nodeid"));
     SERIAL_LN(F("e.g. sys sync time"));
     SERIAL_LN(F("e.g. sys clear nodeid 1"));
     SERIAL_LN(F("e.g. sys reset\n\r"));
-    CloudOutput(F("sys base|private|reset|safe|setup|dfu|update|sync|clear"));
+    CloudOutput(F("sys base|private|reset|safe|setup|dfu|update|serial|sync|clear"));
   } else {
     SERIAL_LN(F("Available Commands:"));
     SERIAL_LN(F("    check, show, ping, do, test, send, set, sys, help or ?"));
@@ -395,11 +397,11 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("  MAC address: %s", PrintMacAddress(strDisplay, mac));
       if( WiFi.ready() ) {
         SERIAL("  IP Address: ");
-        Serial.println(WiFi.localIP());
+        TheSerial.println(WiFi.localIP());
         SERIAL("  Subnet Mask: ");
-        Serial.println(WiFi.subnetMask());
+        TheSerial.println(WiFi.subnetMask());
         SERIAL("  Gateway IP: ");
-        Serial.println(WiFi.gatewayIP());
+        TheSerial.println(WiFi.gatewayIP());
         SERIAL_LN("  SSID: %s", WiFi.SSID());
       }
       SERIAL_LN("");
@@ -750,6 +752,19 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
     else if (strnicmp(sTopic, "update", 6) == 0) {
       // ToDo: to OTA
     }
+    else if (strnicmp(sTopic, "serial", 6) == 0) {
+      sParam1 = next();
+      if(sParam1) {
+        if( stricmp(sParam1, "reset") == 0 ) {
+          theSys.ResetSerialPort();
+        } else {
+          return false;
+        }
+      } else {
+        SERIAL_LN("Serial speed:%d\r\n", SERIALPORT_SPEED_DEFAULT);
+        CloudOutput("Serial speed:%d", SERIALPORT_SPEED_DEFAULT);
+      }
+    }
     else if (strnicmp(sTopic, "sync", 4) == 0) {
       sParam1 = next();
       if(sParam1) {
@@ -769,7 +784,7 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
           sParam1 = next();   // id
           if(sParam1) {
             if( !theConfig.lstNodes.clearNodeId((UC)atoi(sParam1)) ) {
-              SERIAL_LN("Failed to clear NodeID:%s", sParam1);
+              SERIAL_LN("Failed to clear NodeID:%s\n\r", sParam1);
               CloudOutput("Failed to clear NodeID:%s", sParam1);
             }
           } else {
@@ -898,7 +913,7 @@ bool SerialConsoleClass::PingAddress(const char *sAddress)
   // Ping 4 times
   int pingStartTime = millis();
   SERIAL("Pinging %s (", sAddress);
-  Serial.print(ipAddr);
+  TheSerial.print(ipAddr);
   SERIAL(")...");
   int myByteCount = WiFi.ping(ipAddr, 3);
   int elapsedTime = millis() - pingStartTime;
@@ -934,7 +949,7 @@ bool SerialConsoleClass::String2IP(const char *sAddress, IPAddress &ipAddr)
   if( bHost ) {
     ipAddr = WiFi.resolve(sAddress);
     //IF_SERIAL_DEBUG(SERIAL("Resoled %s is ", sAddress));
-    //IF_SERIAL_DEBUG(Serial.println(ipAddr));
+    //IF_SERIAL_DEBUG(TheSerial.println(ipAddr));
   } else if( lv_len > 6 ) {
     // Split IP segments
     UC ipSeg[4];
