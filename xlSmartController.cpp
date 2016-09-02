@@ -289,6 +289,13 @@ BOOL SmartControllerClass::Start()
 	return true;
 }
 
+void SmartControllerClass::Restart()
+{
+	SetStatus(STATUS_RST);
+	delay(1000);
+	System.reset();
+}
+
 UC SmartControllerClass::GetStatus()
 {
 	return (UC)m_devStatus;
@@ -402,7 +409,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
     }
 
 		// Check Network
-		if( !IsWANGood() || tickAcitveCheck % 5 == 0 ) {
+		if( !IsWANGood() || tickAcitveCheck % 5 == 0 || GetStatus() == STATUS_DIS ) {
 			InitNetwork();
 		}
 
@@ -410,6 +417,12 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 		/// TimeSync
 		theConfig.CloudTimeSync(false);
   }
+
+	// Check System Status
+	if( GetStatus() == STATUS_ERR ) {
+		LOGE(LOGTAG_MSG, "System is about to reset due to STATUS_ERR...");
+		Restart();
+	}
 
 	// ToDo:add any other potential problems to check
 	//...

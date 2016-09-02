@@ -43,6 +43,7 @@ public:
   UC GetStatus();
   BOOL SetStatus(UC st);
   void ResetSerialPort();
+  void Restart();
 
   BOOL CheckRF();
   BOOL CheckWiFi();

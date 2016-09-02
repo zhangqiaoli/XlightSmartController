@@ -734,8 +734,7 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
     if (strnicmp(sTopic, "reset", 5) == 0) {
       SERIAL_LN(F("System is about to reset..."));
       CloudOutput("System is about to reset");
-      delay(500);
-      System.reset();
+      theSys.Restart();
     }
     else if (strnicmp(sTopic, "safe", 4) == 0) {
       SERIAL_LN(F("System is about to enter safe mode..."));
