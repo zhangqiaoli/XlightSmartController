@@ -117,7 +117,7 @@ typedef struct    // Exact 12 bytes
 } NodeIdRow_t;
 
 inline BOOL isIdentifyEmpty(UC *pId)
-{ return( pId[0] | pId[1] | pId[2] | pId[3] | pId[4] | pId[5] ); };
+{ return(pId[0] || pId[1] || pId[2] || pId[3] || pId[4] || pId[5]); };
 
 inline void copyIdentify(UC *pId, uint64_t *pData)
 { memcpy(pId, pData, LEN_NODE_IDENTIFY); };

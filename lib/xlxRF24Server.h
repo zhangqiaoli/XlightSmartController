@@ -12,7 +12,7 @@ public:
   RF24ServerClass(uint8_t ce=RF24_CE_PIN, uint8_t cs=RF24_CS_PIN, uint8_t paLevel=RF24_PA_LEVEL_GW);
 
   bool ServerBegin();
-  uint64_t GetNetworkID();
+  uint64_t GetNetworkID(bool _full = false);
   void SetRole_Gateway();
   bool ChangeNodeID(const uint8_t bNodeID);
   bool ProcessSend(String &strMsg, MyMessage &my_msg);

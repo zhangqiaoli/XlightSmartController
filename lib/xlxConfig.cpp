@@ -113,9 +113,12 @@ bool NodeListClass::saveList()
 
 void NodeListClass::showList()
 {
+	char strDisplay[64];
 	UL lv_now = Time.now();
 	for(int i=0; i < _count; i++) {
-		SERIAL_LN("Index: %d - NodeID: %d, actived %d seconds ago", i, _pItems[i].nid, (_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1));
+		SERIAL_LN("No.%d - NodeID: %d (%s) actived %ds ago", i,
+		    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identify),
+				(_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1));
 	}
 }
 
@@ -173,7 +176,7 @@ UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t 
 		lv_Node.nid = defaultID;
 		if( get(&lv_Node) < 0 ) {
 			return 0;
-		} else if( isIdentifyEmpty(lv_Node.identify) || isIdentifyEqual(lv_Node.identify, &identify) ) {
+		} else if( lv_Node.recentActive == 0 || isIdentifyEmpty(lv_Node.identify) || isIdentifyEqual(lv_Node.identify, &identify) ) {
 			// DefaultID is available
 			return defaultID;
 		} else {

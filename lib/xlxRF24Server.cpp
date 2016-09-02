@@ -72,14 +72,16 @@ bool RF24ServerClass::ServerBegin()
 }
 
 // Make NetworkID with the right 4 bytes of device MAC address
-uint64_t RF24ServerClass::GetNetworkID()
+uint64_t RF24ServerClass::GetNetworkID(bool _full)
 {
   uint64_t netID = 0;
 
   byte mac[6];
   WiFi.macAddress(mac);
-  for (int i=2; i<6; i++) {
+	int i = (_full ? 0 : 2);
+  for (; i<6; i++) {
     netID += mac[i];
+		if( _full && i == 5 ) break;
     netID <<= 8;
   }
 
@@ -146,9 +148,10 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 			SERIAL_LN("Controller can not request node ID\n\r");
 		}
 		else {
+			UC deviceType = (getAddress() == 3 ? NODE_TYP_REMOTE : NODE_TYP_LAMP);
 			ChangeNodeID(AUTO);
-			msg.build(AUTO, BASESERVICE_ADDRESS, NODE_SENSOR_ID, C_INTERNAL, I_ID_REQUEST, false);
-			msg.set("DTIT-is-great");     // Optional Key
+			msg.build(AUTO, BASESERVICE_ADDRESS, deviceType, C_INTERNAL, I_ID_REQUEST, false);
+			msg.set(GetNetworkID(true));		// identify: could be MAC, serial id, etc
 			bMsgReady = true;
 			SERIAL("Now sending request node id message...");
 		}
