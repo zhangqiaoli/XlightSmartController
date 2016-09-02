@@ -5,21 +5,19 @@
 
 #include "application.h"
 
+#define MOTION_BUF_SIZE			5
 class MotionSensor {
 private:
 	uint8_t _pin;
-	uint8_t _type;
-	bool firstreading;
-	unsigned long _lastreadtime;
-
-	bool pirState = 0;
-	uint16_t _lastValue;
-	bool _motion = 0;
+	bool _buf[MOTION_BUF_SIZE];
+	uint8_t _index;
+	uint8_t _sum;
 
 	bool read();
+	void clearBuf();
 
 public:
-	MotionSensor(uint8_t pin, uint8_t type = 0);
+	MotionSensor(uint8_t pin);
 	void begin();
 	bool getMotion();
 };

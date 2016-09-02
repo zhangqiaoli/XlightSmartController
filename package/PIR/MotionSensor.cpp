@@ -26,55 +26,39 @@
 
 #include "MotionSensor.h"
 
-MotionSensor::MotionSensor(uint8_t pin, uint8_t type)
+MotionSensor::MotionSensor(uint8_t pin)
 {
 	_pin = pin;
-	_type = type;
-	firstreading = true;
+	clearBuf();
+}
+
+void MotionSensor::clearBuf()
+{
+	_index = 0;
+	_sum = 0;
+	memset(_buf, 0x00, sizeof(_buf));
 }
 
 void MotionSensor::begin()
 {
 	pinMode(_pin, INPUT);
-	_lastreadtime = 0;
-	_lastValue = 0;
+	clearBuf();
 }
 
 bool MotionSensor::getMotion()
 {
-	bool isMotionDetected = read();
-	return isMotionDetected;
+	read();
+	// Pool for result
+	return(_sum > MOTION_BUF_SIZE / 2);
 }
 
 bool MotionSensor::read()
 {
-	unsigned long currenttime;
+	bool pirState = (digitalRead(_pin) == HIGH);
+	// Replace the buffer tail element and get moving avarage
+	_sum =  _sum - _buf[_index] + pirState;
+	_buf[_index++] = pirState;
+	_index %= MOTION_BUF_SIZE;
 
-	currenttime = millis();
-	if (currenttime < _lastreadtime)
-	{
-		_lastreadtime = 0;
-	}
-	if (firstreading || ((currenttime - _lastreadtime) >= 1000))
-	{
-	_lastValue = analogRead(_pin);
-		if (_lastValue == 1) {
-			if (pirState == 0) {
-				// we have just turned on
-				_motion = 1;
-				pirState = 1;
-			}
-		}
-		else {
-			if (pirState == 1) {
-				_motion = 0;
-				pirState = 0;
-			}
-		}
-
-		firstreading = false;
-		_lastreadtime = millis();
-	}
-
-	return _motion;
+	return pirState;
 }
