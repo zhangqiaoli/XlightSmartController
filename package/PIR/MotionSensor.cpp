@@ -5,6 +5,7 @@
 * Copyright (C) 2015-2016 DTIT
 * Full contributor list:
 *   Baoshi Sun <bs.sun@datatellit.com>
+*   Umar Bhutta <umar.bh@datatellit.com>
 *
 * Documentation:
 * Support Forum:
@@ -20,7 +21,7 @@
 *
 * DESCRIPTION
 * 1. support PIR motion sensor (3 pin)
-*
+* 2. use moving avarage algorithm to calculate result
 *
 **/
 
