@@ -88,7 +88,7 @@ public:
 protected:
   void InitCloudObj();
 
-  StaticJsonBuffer<SENSORDATA_JSON_SIZE> m_jBuf;
+  StaticJsonBuffer<512> m_jBuf;
   JsonObject *m_jpRoot;
   JsonObject *m_jpData;
   JsonObject *m_jpCldCmd;

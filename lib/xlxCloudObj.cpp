@@ -136,8 +136,8 @@ void CloudObjClass::UpdateJSONData()
   static UL lastTick = millis();
 
   if( m_jpData->success() ) {
-    char buf[256];
-    m_jpData->printTo(buf, 256);
+    char buf[512];
+    m_jpData->printTo(buf, 512);
     String strTemp = buf;
     if( m_jsonData != strTemp || (millis() - lastTick) / 1000 >= RTE_DELAY_PUBLISH ) {
       m_jsonData = strTemp;
