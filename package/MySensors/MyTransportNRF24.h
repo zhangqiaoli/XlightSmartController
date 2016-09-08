@@ -62,6 +62,7 @@ public:
 	// SBS added 2016-07-22
 	void enableBaseNetwork(bool sw = true);
 	bool isBaseNetworkEnabled() { return _bBaseNetworkEnabled; };
+	uint16_t getBaseNetworkDuration();
 
 private:
 	RF24 rf24;
@@ -75,6 +76,7 @@ private:
 
 	// SBS added 2016-07-22
 	bool _bBaseNetworkEnabled;
+	uint32_t _baseStartTick;
 };
 
 #endif

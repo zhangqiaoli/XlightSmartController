@@ -29,7 +29,7 @@ MyTransportNRF24::MyTransportNRF24(uint8_t ce, uint8_t cs, uint8_t paLevel)
 	_myNetworkID = 0;
 	_currentNetworkID = 0;
 	_bValid = false;
-	_bBaseNetworkEnabled = true;
+	enableBaseNetwork();
 }
 
 bool MyTransportNRF24::init() {
@@ -134,7 +134,14 @@ void MyTransportNRF24::PrintRFDetails() {
 
 // SBS added 2016-07-22
 void MyTransportNRF24::enableBaseNetwork(bool sw) {
+	if(sw) { _baseStartTick = millis(); }
 	_bBaseNetworkEnabled = sw;
+}
+
+uint16_t MyTransportNRF24::getBaseNetworkDuration() {
+	if( !isBaseNetworkEnabled() ) return 0;
+	if( millis() <= _baseStartTick ) return 0;
+	return (millis() - _baseStartTick) / 1000;
 }
 
 bool MyTransportNRF24::send(uint8_t to, const void* data, uint8_t len, uint8_t pipe) {
