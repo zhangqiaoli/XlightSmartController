@@ -430,6 +430,19 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 	return true;
 }
 
+BOOL SmartControllerClass::CheckRFBaseNetEnableDur()
+{
+	if( theConfig.GetMaxBaseNetworkDur() > 0 ) {
+		if( theRadio.getBaseNetworkDuration() > theConfig.GetMaxBaseNetworkDur() ) {
+			theRadio.enableBaseNetwork(false);
+			LOGI(LOGTAG_MSG, F("RF base network enable timeout, disable it automatically"));
+			return true;
+		}
+	}
+
+	return false;
+}
+
 BOOL SmartControllerClass::IsRFGood()
 {
 	return (m_isRF && theRadio.isValid());

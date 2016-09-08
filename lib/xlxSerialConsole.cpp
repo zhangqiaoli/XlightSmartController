@@ -281,6 +281,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN(F("e.g. set nodeid [0..250]"));
       SERIAL_LN(F("e.g. set base [0|1]"));
       SERIAL_LN(F("     , to enable or disable base network"));
+      SERIAL_LN(F("e.g. set maxebn <duration>"));
+      SERIAL_LN(F("     , to set maximum base network enable duration"));
       SERIAL_LN(F("set flag <flag name> [0|1]"));
       SERIAL_LN(F("     , to set system flag value, use '? set flag' for detail"));
       SERIAL_LN(F("set var <var name> <value>"));
@@ -449,7 +451,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
     SERIAL_LN("");
     SERIAL_LN("mConfig.typeMainDevice = \t\t%d", theConfig.GetMainDeviceType());
     SERIAL_LN("mConfig.numDevices = \t\t\t%d", theConfig.GetNumDevices());
-    SERIAL_LN("mConfig.numNodes = \t\t\t%d\n\r", theConfig.GetNumNodes());
+    SERIAL_LN("mConfig.numNodes = \t\t\t%d", theConfig.GetNumNodes());
+    SERIAL_LN("mConfig.maxBaseNetworkDuration = \t%d\n\r", theConfig.GetMaxBaseNetworkDur());
   } else if (strnicmp(sTopic, "flag", 4) == 0) {
 		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
 		SERIAL_LN("theSys.m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
@@ -642,6 +645,16 @@ bool SerialConsoleClass::doSet(const char *cmd)
         CloudOutput("Base RF network is %s", (theRadio.isBaseNetworkEnabled() ? "enabled" : "disabled"));
         retVal = true;
       }
+    } else if (strnicmp(sTopic, "maxebn", 6) == 0) {
+      sParam1 = next();
+      US nDur = MAX_BASE_NETWORK_DUR;
+      if( sParam1 ) {
+        nDur = (US)atoi(sParam1);
+      }
+      theConfig.SetMaxBaseNetworkDur(nDur);
+      SERIAL_LN("Max Base RF network duration set %d\n\r", nDur);
+      CloudOutput("Max Base RF network duration set %d", nDur);
+      retVal = true;
     } else if (strnicmp(sTopic, "flag", 4) == 0) {
       // Change flag value
       sParam1 = next();   // Get flag name
@@ -798,11 +811,6 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
     }
     else if (strnicmp(sTopic, "base", 4) == 0) {
       // Switch to Base Network
-      sParam1 = next();
-      int nDur = 60;
-      if( sParam1 ) {
-        nDur = atoi(sParam1);
-      }
       theRadio.switch2BaseNetwork();
       SERIAL_LN(F("Switched to base network\n\r"));
       CloudOutput(F("Switched to base network"));

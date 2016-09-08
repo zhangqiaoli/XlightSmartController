@@ -133,6 +133,9 @@ void loop()
 	if( millis() - lastTick >= 1000 ) {
 		lastTick = millis();
   	IF_MAINLOOP_TIMER( theSys.CollectData(tick++), "CollectData" );
+
+		// Check Max Base RF network enable duration
+		theSys.CheckRFBaseNetEnableDur();
 	}
 
 	// Act on new Rules in Rules chain

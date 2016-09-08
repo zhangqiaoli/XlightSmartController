@@ -50,6 +50,7 @@ public:
   BOOL CheckNetwork();
   BOOL CheckBLE();
   BOOL SelfCheck(US ms);
+  BOOL CheckRFBaseNetEnableDur();
   BOOL IsRFGood();
   BOOL IsBLEGood();
   BOOL IsLANGood();

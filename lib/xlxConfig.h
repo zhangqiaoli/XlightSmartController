@@ -58,6 +58,7 @@ typedef struct
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
   UC rfPowerLevel             :2;           // RF Power Level 0..3
   UC Reserved1                :6;           // Reserved bits
+  US maxBaseNetworkDuration;
 } Config_t;
 
 //------------------------------------------------------------------
@@ -320,6 +321,9 @@ public:
 
   UC GetNumNodes();
   BOOL SetNumNodes(UC num);
+
+  US GetMaxBaseNetworkDur();
+  BOOL SetMaxBaseNetworkDur(US dur);
 
   UC GetRFPowerLevel();
   BOOL SetRFPowerLevel(UC level);

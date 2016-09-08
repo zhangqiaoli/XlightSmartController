@@ -139,7 +139,7 @@ void MyTransportNRF24::enableBaseNetwork(bool sw) {
 }
 
 uint16_t MyTransportNRF24::getBaseNetworkDuration() {
-	if( !isBaseNetworkEnabled() ) return 0;
+	if( getCurrentNetworkID() == RF24_BASE_RADIO_ID || !isBaseNetworkEnabled() ) return 0;
 	if( millis() <= _baseStartTick ) return 0;
 	return (millis() - _baseStartTick) / 1000;
 }

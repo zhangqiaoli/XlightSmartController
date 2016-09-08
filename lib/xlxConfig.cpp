@@ -277,6 +277,7 @@ void ConfigClass::InitConfig()
   m_config.enableCloudSerialCmd = false;
 	m_config.enableDailyTimeSync = true;
 	m_config.rfPowerLevel = RF24_PA_LEVEL_GW;
+	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
 }
 
 void ConfigClass::InitDevStatus()
@@ -746,6 +747,20 @@ BOOL ConfigClass::SetNumNodes(UC num)
   return false;
 }
 
+US ConfigClass::GetMaxBaseNetworkDur()
+{
+	return m_config.maxBaseNetworkDuration;
+}
+
+BOOL ConfigClass::SetMaxBaseNetworkDur(US dur)
+{
+	if( dur != m_config.maxBaseNetworkDuration ) {
+		m_config.maxBaseNetworkDuration = dur;
+		m_isChanged = true;
+		return true;
+	}
+	return false;
+}
 
 UC ConfigClass::GetRFPowerLevel()
 {

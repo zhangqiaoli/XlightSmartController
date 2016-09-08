@@ -54,6 +54,9 @@
 // Maximum number of nodes under one controller
 #define MAX_NODE_PER_CONTROLLER   64
 
+// Default value for maxBaseNetworkDuration (in seconds)
+#define MAX_BASE_NETWORK_DUR    120
+
 // Maximum JSON data length
 #define COMMAND_JSON_SIZE				64
 #define SENSORDATA_JSON_SIZE			196
