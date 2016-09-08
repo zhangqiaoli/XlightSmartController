@@ -55,7 +55,7 @@
 #define MAX_NODE_PER_CONTROLLER   64
 
 // Default value for maxBaseNetworkDuration (in seconds)
-#define MAX_BASE_NETWORK_DUR    120
+#define MAX_BASE_NETWORK_DUR    180
 
 // Maximum JSON data length
 #define COMMAND_JSON_SIZE				64
