@@ -71,14 +71,14 @@ bool NodeListClass::loadList()
 		if( i == 0 ) {
 			if( lv_Node.nid != NODEID_MAINDEVICE ) {
 				lv_Node.nid = NODEID_MAINDEVICE;
-				resetIdentify(lv_Node.identify);
+				resetIdentity(lv_Node.identity);
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
 		} else if(  i == 1 && theConfig.GetNumNodes() == 2 ) {
 			if( lv_Node.nid != NODEID_MIN_REMOTE ) {
 				lv_Node.nid = NODEID_MIN_REMOTE;
-				resetIdentify(lv_Node.identify);
+				resetIdentity(lv_Node.identity);
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
@@ -117,28 +117,28 @@ void NodeListClass::showList()
 	UL lv_now = Time.now();
 	for(int i=0; i < _count; i++) {
 		SERIAL_LN("No.%d - NodeID: %d (%s) actived %ds ago", i,
-		    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identify),
+		    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identity),
 				(_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1));
 	}
 }
 
 // Get a new NodeID
-UC NodeListClass::requestNodeID(char type, uint64_t identify)
+UC NodeListClass::requestNodeID(char type, uint64_t identity)
 {
-	// Must provide identify
-	if( identify == 0 ) return 0;
+	// Must provide identity
+	if( identity == 0 ) return 0;
 
 	UC nodeID = 0;		// error
 	switch( type ) {
 	case NODE_TYP_LAMP:
 		// 1, 8 - 63
 		/// Check Main DeviceID
-		nodeID = getAvailableNodeId(NODEID_MAINDEVICE, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identify);
+		nodeID = getAvailableNodeId(NODEID_MAINDEVICE, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identity);
 		break;
 
 	case NODE_TYP_REMOTE:
 		// 64 - 127
-		nodeID = getAvailableNodeId(NODEID_MIN_REMOTE, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identify);
+		nodeID = getAvailableNodeId(NODEID_MIN_REMOTE, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identity);
 		break;
 
 	case NODE_TYP_THIRDPARTY:
@@ -153,7 +153,7 @@ UC NodeListClass::requestNodeID(char type, uint64_t identify)
 	if( nodeID > 0 ) {
 		NodeIdRow_t lv_Node;
 		lv_Node.nid = nodeID;
-		copyIdentify(lv_Node.identify, &identify);
+		copyIdentity(lv_Node.identity, &identity);
 		lv_Node.recentActive = Time.now();
 		UC oldCnt = count();
 		add(&lv_Node);
@@ -163,11 +163,19 @@ UC NodeListClass::requestNodeID(char type, uint64_t identify)
 		}
 		theConfig.SetNumNodes(count());
 		m_isChanged = true;
+
+		if( type == NODE_TYP_LAMP ) {
+			if( theConfig.InitDevStatus(nodeID) ) {
+				theConfig.SetDSTChanged(true);
+				//ToDo: remove
+				SERIAL_LN("Test DevStatus_table added item: %d, size: %d", nodeID, theSys.DevStatus_table.size());
+			}
+		}
 	}
 	return nodeID;
 }
 
-UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identify)
+UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identity)
 {
 	UC oldestNode;
 	UL oldestTime;
@@ -176,7 +184,7 @@ UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t 
 		lv_Node.nid = defaultID;
 		if( get(&lv_Node) < 0 ) {
 			return 0;
-		} else if( lv_Node.recentActive == 0 || isIdentifyEmpty(lv_Node.identify) || isIdentifyEqual(lv_Node.identify, &identify) ) {
+		} else if( lv_Node.recentActive == 0 || isIdentityEmpty(lv_Node.identity) || isIdentityEqual(lv_Node.identity, &identity) ) {
 			// DefaultID is available
 			return defaultID;
 		} else {
@@ -188,12 +196,12 @@ UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t 
 		oldestTime = Time.now();
 	}
 
-	// Stage 1: Check Identify and reuse if possible
+	// Stage 1: Check Identity and reuse if possible
 	for(int i = 0; i < count(); i++) {
 		if( _pItems[i].nid > maxID ) break;
 		if( _pItems[i].nid < minID ) continue;
 
-		if( isIdentifyEqual(_pItems[i].identify, &identify) ) {
+		if( isIdentityEqual(_pItems[i].identity, &identity) ) {
 			// Return matched item
 			return _pItems[i].nid;
 		} else if( oldestNode == 0 || oldestTime > _pItems[i].recentActive ) {
@@ -222,7 +230,7 @@ BOOL NodeListClass::clearNodeId(UC nodeID)
 	if( nodeID == NODEID_MAINDEVICE || NODEID_MAINDEVICE == NODEID_MIN_REMOTE ) {
 		// Update with black item
 		lv_Node.nid = nodeID;
-		resetIdentify(lv_Node.identify);
+		resetIdentity(lv_Node.identity);
 		lv_Node.recentActive = 0;
 		update(&lv_Node);
 	} else if ( nodeID < NODEID_MIN_DEVCIE ) {
@@ -280,8 +288,10 @@ void ConfigClass::InitConfig()
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
 }
 
-void ConfigClass::InitDevStatus()
+BOOL ConfigClass::InitDevStatus(UC nodeID)
 {
+	if( theSys.SearchDevStatus(nodeID) ) return false;
+
 	Hue_t whiteHue;
 	whiteHue.B = 0;
 	whiteHue.G = 0;
@@ -296,14 +306,16 @@ void ConfigClass::InitDevStatus()
 	first_row.op_flag = (OP_FLAG)1;
 	first_row.flash_flag = (FLASH_FLAG)0;
 	first_row.run_flag = (RUN_FLAG)1;
-	first_row.uid = 0;
-	first_row.node_id = 1; //first light
+	first_row.uid = theSys.DevStatus_table.size();
+	first_row.node_id = nodeID;
+	first_row.present = 0;
+	first_row.token = 0;
 	first_row.type = devtypWRing3;  // White 3 rings
 	first_row.ring1 = whiteHue;
 	first_row.ring2 = whiteHue;
 	first_row.ring3 = whiteHue;
 
-	theSys.DevStatus_table.add(first_row);
+	return theSys.DevStatus_table.add(first_row);
 }
 
 BOOL ConfigClass::MemWriteScenarioRow(ScenarioRow_t row, uint32_t address)
@@ -477,6 +489,7 @@ BOOL ConfigClass::SetVersion(UC ver)
     m_config.version = ver;
     m_isChanged = true;
   }
+	return true;
 }
 
 US ConfigClass::GetTimeZoneID()
@@ -806,14 +819,15 @@ BOOL ConfigClass::LoadDeviceStatus()
 			}
 		}
 
-		//Todo: this code should be where RF pairing happens.
-		//currently initiating with assumption of 1 light w node_id=1, uid=0
+		// This code should also be where device pairing happens.
+		// Currently initiating with assumption of 1 light w node_id=1
 		if (theSys.DevStatus_table.size() == 0)
 		{
-			InitDevStatus();
-			m_isDSTChanged = true;
-			LOGW(LOGTAG_MSG, F("Device status table blank, loaded default status."));
-			SaveConfig();
+			if( InitDevStatus(NODEID_MAINDEVICE) ) {
+				m_isDSTChanged = true;
+				LOGW(LOGTAG_MSG, F("Device status table blank, loaded default status."));
+				SaveConfig();
+			}
 		}
 		else
 		{

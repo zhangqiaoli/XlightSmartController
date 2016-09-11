@@ -275,14 +275,14 @@ public:
 	MyMessage();
 	MyMessage(uint8_t sensor, uint8_t type);
 
-	inline MyMessage& build (uint8_t _sender, uint8_t _destination, uint8_t _sensor, uint8_t _command, uint8_t _type, bool _enableAck) {
+	inline MyMessage& build (uint8_t _sender, uint8_t _destination, uint8_t _sensor, uint8_t _command, uint8_t _type, bool _enableAck, bool _isAck = false) {
 		msg.header.sender = _sender;
 		msg.header.destination = _destination;
 		msg.header.sensor = _sensor;
 		msg.header.type = _type;
 		miSetCommand(_command);
 		miSetRequestAck(_enableAck);
-		miSetAck(false);
+		miSetAck(_isAck);
 		return *this;
 	}
 

@@ -69,12 +69,15 @@ typedef struct
 	__attribute__((packed))
 #endif
 {
-  OP_FLAG op_flag : 2;
-  FLASH_FLAG flash_flag : 1;
-  RUN_FLAG run_flag : 1;
+  OP_FLAG op_flag         : 2;
+  FLASH_FLAG flash_flag   : 1;
+  RUN_FLAG run_flag       : 1;
   UC uid;						   // required
-  UC node_id;                      // Node ID (for RF communication), 1 based
+  UC node_id;          // RF nodeID
+  UC present              :1;  // 0 - not present; 1 - present
+  UC reserved             :7;
   UC type;                         // Type of lamp
+  US token;
   Hue_t ring1;
   Hue_t ring2;
   Hue_t ring3;
@@ -90,15 +93,15 @@ typedef struct
 	__attribute__((packed))
 #endif
 {
-  OP_FLAG op_flag			: 2;
+  OP_FLAG op_flag			    : 2;
   FLASH_FLAG flash_flag		: 1;
-  RUN_FLAG run_flag			: 1;
-	UC uid			        : 8;
-	UC weekdays			    : 7;	  //values: 0-7
-	BOOL isRepeat		    : 1;	  //values: 0-1
-	UC hour				    : 5;    //values: 0-23
-	UC minute				: 6;    //values: 0-59
-	AlarmId alarm_id	    : 8;
+  RUN_FLAG run_flag			  : 1;
+	UC uid			            : 8;
+	UC weekdays			        : 7;	  //values: 0-7
+	BOOL isRepeat		        : 1;	  //values: 0-1
+	UC hour				          : 5;    //values: 0-23
+	UC minute				        : 6;    //values: 0-59
+	AlarmId alarm_id	      : 8;
 } ScheduleRow_t;
 
 #define SCT_ROW_SIZE	sizeof(ScheduleRow_t)
@@ -107,35 +110,35 @@ typedef struct
 //------------------------------------------------------------------
 // Xlight NodeID List
 //------------------------------------------------------------------
-#define LEN_NODE_IDENTIFY     6
+#define LEN_NODE_IDENTITY     6
 typedef struct    // Exact 12 bytes
 	__attribute__((packed))
 {
 	UC nid;
 	UC reserved;
-  UC identify[LEN_NODE_IDENTIFY];
+  UC identity[LEN_NODE_IDENTITY];
   UL recentActive;
 } NodeIdRow_t;
 
-inline BOOL isIdentifyEmpty(UC *pId)
+inline BOOL isIdentityEmpty(UC *pId)
 { return(pId[0] || pId[1] || pId[2] || pId[3] || pId[4] || pId[5]); };
 
-inline void copyIdentify(UC *pId, uint64_t *pData)
-{ memcpy(pId, pData, LEN_NODE_IDENTIFY); };
+inline void copyIdentity(UC *pId, uint64_t *pData)
+{ memcpy(pId, pData, LEN_NODE_IDENTITY); };
 
-inline void resetIdentify(UC *pId)
-{ memset(pId, 0x00, LEN_NODE_IDENTIFY); };
+inline void resetIdentity(UC *pId)
+{ memset(pId, 0x00, LEN_NODE_IDENTITY); };
 
-inline BOOL isIdentifyEqual(UC *pId1, UC *pId2)
+inline BOOL isIdentityEqual(UC *pId1, UC *pId2)
 {
   for( int i = 0; i < 6; i++ ) { if(pId1[i] != pId2[i]) return false; }
   return true;
 };
 
-inline BOOL isIdentifyEqual(UC *pId1, uint64_t *pData)
+inline BOOL isIdentityEqual(UC *pId1, uint64_t *pData)
 {
-  UC pId2[6]; copyIdentify(pId2, pData);
-  return isIdentifyEqual(pId1, pId2);
+  UC pId2[6]; copyIdentity(pId2, pData);
+  return isIdentityEqual(pId1, pId2);
 };
 
 //------------------------------------------------------------------
@@ -147,11 +150,11 @@ typedef struct
 	__attribute__((packed))
 #endif
 {
-	OP_FLAG op_flag			 : 2;
-	FLASH_FLAG flash_flag	 : 1;
-	RUN_FLAG run_flag		 : 1;
+	OP_FLAG op_flag			     : 2;
+	FLASH_FLAG flash_flag	   : 1;
+	RUN_FLAG run_flag		     : 1;
 	UC uid                   : 8;
-	UC node_id				 : 8;
+	UC node_id				       : 8;
 	UC SCT_uid               : 8;
 	UC SNT_uid               : 8;
 	UC notif_uid             : 8;
@@ -170,9 +173,9 @@ typedef struct
 	__attribute__((packed))
 #endif
 {
-	OP_FLAG op_flag				: 2;
+	OP_FLAG op_flag				  : 2;
 	FLASH_FLAG flash_flag		: 1;
-	RUN_FLAG run_flag			: 1;
+	RUN_FLAG run_flag			  : 1;
 	UC uid			            : 8;
 	Hue_t ring1;
 	Hue_t ring2;
@@ -205,11 +208,11 @@ public:
   bool loadList();
   bool saveList();
   void showList();
-  UC requestNodeID(char type, uint64_t identify);
+  UC requestNodeID(char type, uint64_t identity);
   BOOL clearNodeId(UC nodeID);
 
 protected:
-  UC getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identify);
+  UC getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identity);
 };
 
 //------------------------------------------------------------------
@@ -235,7 +238,7 @@ private:
 public:
   ConfigClass();
   void InitConfig();
-  void InitDevStatus();
+  BOOL InitDevStatus(UC nodeID);
 
   // write to P1 using spark-flashee-eeprom
   BOOL MemWriteScenarioRow(ScenarioRow_t row, uint32_t address);

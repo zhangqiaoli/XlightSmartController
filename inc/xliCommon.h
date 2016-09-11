@@ -108,7 +108,9 @@ typedef enum
 } devicetype_t;
 
 // Specify system serial port, could be Serial, Serial1 or Seria2
+#ifndef TheSerial
 #define TheSerial       Serial
+#endif
 
 #ifndef SERIAL
 #define SERIAL          TheSerial.printf

@@ -51,7 +51,8 @@
 #define RF24_CE_PIN		   		A0
 #define RF24_CS_PIN		   	 	A2
 #define RF24_PA_LEVEL 	   	RF24_PA_MAX
-#define RF24_PA_LEVEL_GW   	RF24_PA_LOW
+#define RF24_PA_LEVEL_NODE 	RF24_PA_LOW
+#define RF24_PA_LEVEL_GW   	RF24_PA_MAX
 // RF channel for the sensor net, 0-127
 #define RF24_CHANNEL	   		71
 // RF24_250KBPS for 250kbs, RF24_1MBPS for 1Mbps, or RF24_2MBPS for 2Mbps

@@ -151,17 +151,20 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 			UC deviceType = (getAddress() == 3 ? NODE_TYP_REMOTE : NODE_TYP_LAMP);
 			ChangeNodeID(AUTO);
 			msg.build(AUTO, BASESERVICE_ADDRESS, deviceType, C_INTERNAL, I_ID_REQUEST, false);
-			msg.set(GetNetworkID(true));		// identify: could be MAC, serial id, etc
+			msg.set(GetNetworkID(true));		// identity: could be MAC, serial id, etc
 			bMsgReady = true;
 			SERIAL("Now sending request node id message...");
 		}
 		break;
 
 	case 2:   // Lamp present, req ack
-		msg.build(getAddress(), lv_nNodeID, NODE_SENSOR_ID, C_PRESENTATION, S_LIGHT, true);
-		msg.set("Found Sunny");
-		bMsgReady = true;
-		SERIAL("Now sending lamp present message...");
+		{
+			UC lampType = (UC)devtypWRing3;
+			msg.build(getAddress(), lv_nNodeID, lampType, C_PRESENTATION, S_LIGHT, true);
+			msg.set(GetNetworkID(true));
+			bMsgReady = true;
+			SERIAL("Now sending lamp present message...");
+		}
 		break;
 
 	case 3:   // Temperature sensor present with sensor id 1, req no ack
@@ -224,9 +227,11 @@ bool RF24ServerClass::ProcessReceive()
 {
 	if( !isValid() ) return false;
 
+	bool msgReady = false;
   bool sentOK = false;
   uint8_t to = 0;
   uint8_t pipe;
+	UC replyTo;
   if (!available(&to, &pipe))
     return false;
 
@@ -261,26 +266,20 @@ bool RF24ServerClass::ProcessReceive()
         // On ID Request message:
         /// Get new ID
 				char cNodeType = (char)msg.getSensor();
-				uint64_t nIdentify = msg.getUInt64();
-        UC newID = theConfig.lstNodes.requestNodeID(cNodeType, nIdentify);
-        UC replyTo = msg.getSender();
+				uint64_t nIdentity = msg.getUInt64();
+        UC newID = theConfig.lstNodes.requestNodeID(cNodeType, nIdentity);
+        replyTo = msg.getSender();
         /// Send response message
-        msg.build(getAddress(), replyTo, newID, C_INTERNAL, I_ID_RESPONSE, false);
+        msg.build(getAddress(), replyTo, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
 				if( newID > 0 ) {
 	        msg.set(getMyNetworkID());
-	        LOGN(LOGTAG_EVENT, "Allocated NodeID:%d type:%c to %s", newID, cNodeType, PrintUint64(strDisplay, nIdentify));
+	        LOGN(LOGTAG_EVENT, "Allocated NodeID:%d type:%c to %s", newID, cNodeType, PrintUint64(strDisplay, nIdentity));
 				} else {
-					LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentify));
+					LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentity));
 				}
-        _times++;
-        sentOK = send(replyTo, msg, pipe);
-        if( sentOK ) {
-          _succ++;
-          SERIAL_LN("OK");
-        } else {
-          SERIAL_LN("failed");
-        }
+				msgReady = true;
       } else if( msg.getType() == I_ID_RESPONSE && getAddress() == AUTO ) {
+				// Device/client got nodeID from Controller
 				uint8_t lv_nodeID = msg.getSensor();
         if( lv_nodeID == NODEID_GATEWAY || lv_nodeID == NODEID_DUMMY ) {
           LOGE(LOGTAG_MSG, F("Failed to get NodeID"));
@@ -292,9 +291,43 @@ bool RF24ServerClass::ProcessReceive()
       }
       break;
 
+		case C_PRESENTATION:
+			if( msg.getType() == S_LIGHT ) {
+				US token;
+				if( !msg.isAck() ) {
+					// Presentation message: appear of Smart Lamp
+					// Verify credential, return token if true, and change device status
+					UC lv_nNodeID = msg.getSender();
+					UC lampType = msg.getSensor();
+					uint64_t nIdentity = msg.getUInt64();
+					token = theSys.VerifyDevicePresence(lv_nNodeID, lampType, nIdentity);
+					if( token ) {
+						// return token
+						// Notes: lampType & S_LIGHT are not necessary
+						replyTo = msg.getSender();
+		        msg.build(getAddress(), replyTo, lampType, C_PRESENTATION, S_LIGHT, false, true);
+						msg.set(token);
+					} else {
+						LOGW(LOGTAG_MSG, "Unqualitied device connect attemp received");
+					}
+				} else {
+					// Device/client got Response to Presentation message, ready to work
+					token = msg.getUInt();
+					LOGN(LOGTAG_MSG, "Got Presentation Response with token:%d", getAddress(), token);
+				}
+			}
+			break;
+
     default:
       break;
   }
+
+	// Send reply message
+	if( msgReady ) {
+		_times++;
+		sentOK = send(replyTo, msg, pipe);
+		if( sentOK ) _succ++;
+	}
 
   return true;
 }

@@ -1729,6 +1729,51 @@ ListNode<DevStatusRow_t>* SmartControllerClass::SearchDevStatus(UC dest_id)
 }
 
 //------------------------------------------------------------------
+// Device Operations
+//------------------------------------------------------------------
+US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t _identity)
+{
+	NodeIdRow_t lv_Node;
+	// Veirfy identity
+	lv_Node.nid = _nodeID;
+	if( theConfig.lstNodes.get(&lv_Node) < 0 ) return 0;
+	if( isIdentityEmpty(lv_Node.identity) || !isIdentityEqual(lv_Node.identity, &_identity) ) {
+		LOGN(LOGTAG_MSG, F("Failed to verify identity for device:%d"), _nodeID);
+		return 0;
+	}
+	// Update timestamp
+	lv_Node.recentActive = Time.now();
+	theConfig.lstNodes.update(&lv_Node);
+	theConfig.lstNodes.m_isChanged = true;
+
+	// Search device in Device Status Table, add new item if not exists,
+	// since the node has passed verification
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if (!DevStatusRowPtr) {
+		if( theConfig.InitDevStatus(_nodeID) ) {
+			theConfig.SetDSTChanged(true);
+			DevStatusRowPtr = SearchDevStatus(_nodeID);
+			//ToDo: remove
+			SERIAL_LN("Test DevStatus_table2 added item: %d, size: %d", _nodeID, theSys.DevStatus_table.size());
+		}
+	}
+	if(!DevStatusRowPtr) {
+		LOGW(LOGTAG_MSG, F("Failed to get item form DST for device:%d"), _nodeID);
+		return 0;
+	}
+
+	// Update DST item
+	DevStatusRowPtr->data.present = 1;
+	DevStatusRowPtr->data.type = _devType;
+	DevStatusRowPtr->data.token = random(65535);		// Random number
+	DevStatusRowPtr->data.flash_flag = UNSAVED; //required
+	DevStatusRowPtr->data.run_flag == EXECUTED; //redundant, already should be EXECUTED
+	theConfig.SetDSTChanged(true);
+
+	return DevStatusRowPtr->data.token;
+}
+
+//------------------------------------------------------------------
 // Printing tables/working memory chains
 //------------------------------------------------------------------
 void SmartControllerClass::print_devStatus_table(int row)
