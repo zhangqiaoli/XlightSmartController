@@ -120,10 +120,19 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 	int nPos = strMsg.indexOf(':');
 	uint8_t lv_nNodeID;
 	uint8_t lv_nMsgID;
+	String lv_sPayload;
 	if (nPos > 0) {
 		// Extract NodeID & MessageID
 		lv_nNodeID = (uint8_t)(strMsg.substring(0, nPos).toInt());
 		lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1).toInt());
+		int nPos2 = strMsg.indexOf(nPos + 1, ':');
+		if (nPos2 > 0) {
+			lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1, nPos2).toInt());
+			lv_sPayload = strMsg.substring(nPos2 + 1);
+		} else {
+			lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1).toInt());
+			lv_sPayload = "";
+		}
 	}
 	else {
 		// Parse serial message
@@ -233,6 +242,7 @@ bool RF24ServerClass::ProcessReceive()
   uint8_t pipe;
 	UC replyTo;
 	UC msgType;
+	UC transTo;
   if (!available(&to, &pipe))
     return false;
 
@@ -317,6 +327,50 @@ bool RF24ServerClass::ProcessReceive()
 					// Device/client got Response to Presentation message, ready to work
 					token = msg.getUInt();
 					LOGN(LOGTAG_MSG, "Node:%d got Presentation Response with token:%d", getAddress(), token);
+				}
+			}
+			break;
+
+		case C_REQ:
+			// ToDo: verify token
+			if( msgType == V_PERCENTAGE ) {
+				// Lamp on/of
+				replyTo = msg.getSender();
+				transTo = msg.getSensor();
+				if( transTo > 0 ) {
+					bool bIsAck = msg.isAck();
+
+					// Transfer message
+					msg.build(getAddress(), transTo, replyTo, C_REQ, V_PERCENTAGE, !bIsAck, bIsAck);
+					msgReady = true;
+				}
+			}
+			break;
+
+		case C_SET:
+			// ToDo: verify token
+			if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
+				// Lamp on/of
+				replyTo = msg.getSender();
+				transTo = msg.getSensor();
+				if( transTo > 0 ) {
+					UC bOnOff;
+					String sPayload;
+					if( msgType == V_STATUS ) {
+						bOnOff = msg.getByte();
+					} else if( msgType == V_PERCENTAGE ) {
+						sPayload = msg.getString();
+					}
+					bool bIsAck = msg.isAck();
+
+					// Transfer message
+					msg.build(getAddress(), transTo, replyTo, C_SET, msgType, !bIsAck, bIsAck);
+					if( msgType == V_STATUS ) {
+						msg.set(bOnOff);
+					} else if( msgType == V_PERCENTAGE ) {
+						msg.set(sPayload.c_str());
+					}
+					msgReady = true;
 				}
 			}
 			break;
