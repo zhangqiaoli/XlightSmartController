@@ -31,7 +31,6 @@
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
-#include "LedLevelBar.h"
 #include "LightSensor.h"
 #include "MotionSensor.h"
 #include "TimeAlarms.h"
@@ -44,9 +43,6 @@ SmartControllerClass theSys;
 
 DHT senDHT(PIN_SEN_DHT, SEN_TYPE_DHT);
 LightSensor senLight(PIN_SEN_LIGHT);
-
-LedLevelBar indicatorBrightness(ledLBarProgress, 3);
-
 MotionSensor senMotion(PIN_SEN_PIR);
 
 //------------------------------------------------------------------
@@ -246,10 +242,6 @@ void SmartControllerClass::InitSensors()
 	}
 
 	// Brightness indicator
-	//indicatorBrightness.configPin(0, PIN_LED_LEVEL_B0);
-	//indicatorBrightness.configPin(1, PIN_LED_LEVEL_B1);
-	//indicatorBrightness.configPin(2, PIN_LED_LEVEL_B2);
-	//indicatorBrightness.setLevel(theConfig.GetBrightIndicator());
 
 	// PIR
 	if (theConfig.IsSensorEnabled(sensorPIR)) {
@@ -576,7 +568,6 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 void SmartControllerClass::FastProcess()
 {
 	// Refresh LED brightness indicator
-	indicatorBrightness.refreshLevelBar();
 
 	// ToDo:
 }

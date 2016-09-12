@@ -21,17 +21,18 @@
     #define PIN_LED_RED           29          // RGBR, Status RGB LED
     #define PIN_LED_GREEN         32          // RGBG, Status RGB LED
     #define PIN_LED_BLUE          31          // RGBB, Status RGB LED
+
+    // P1 specific GPIO pins, can also be used as digital GPIOs
+    #define PIN_MOSI_LED          P1S0        // 12b GPIO, may also be PWM
+    #define PIN_LATCH_LED         P1S1        // 12b GPIO, may also be PWM
+    #define PIN_SCK_LED           P1S2        // 12b GPIO
 #endif
 
 // Digital only GPIO pins (D0 - D7, D0-D4 may also be PWM)
 #define PIN_SEN_DHT               D0          // Sensor: temperature and humidity
-//#define PIN_LED_LEVEL_B0          D0          // Brightness indicator bit0, may also be PWM
-//#define PIN_LED_LEVEL_B1          D1          // Brightness indicator bit1, may also be PWM
-//#define PIN_LED_LEVEL_B2          D2          // Brightness indicator bit2, may also be PWM
-
-#define PIN_BTN_DOWN              D3          // Panel button - down
-#define PIN_BTN_OK                D4          // Panel button - OK
-#define PIN_BTN_UP                D5          // Panel button - up
+#define PIN_KNOB_A_PHASE          D2          // Knob: A_PHASE
+#define PIN_KNOB_B_PHASE          D3          // Knob: B_PHASE
+#define PIN_KNOB_BUTTON           D4          // Knob: button
 #define PIN_SEN_PIR               D7          // Sensor: infra red motion, may also be PWM
 
 // Analog GPIO pins (12-bit A0 - A7), can also be used as digital GPIOs
@@ -55,16 +56,6 @@
   NOTE: Also place a 10-100uF cap across the power inputs of
         the NRF24L01+.  I/O o fthe NRF24 is 5V tolerant, but
         do NOT connect more than 3.3V to pin 2(3V3)!!!
-*/
-
-// P1 specific GPIO pins, can also be used as digital GPIOs
-/*
-#define PIN_ANA_SETUP             P1S0        // 12b GPIO, may also be PWM
-#define PIN_ANA_SETUP             P1S1        // 12b GPIO, may also be PWM
-#define PIN_ANA_SETUP             P1S2        // 12b GPIO
-#define PIN_ANA_SETUP             P1S3        // 12b GPIO
-#define PIN_BTN_SETUP             P1S4        // Setup button
-#define PIN_BTN_RESET             P1S5        // 12b GPIO, Reset button
 */
 
 // On-board Special pins
