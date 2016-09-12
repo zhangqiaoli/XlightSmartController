@@ -24,9 +24,10 @@
 #endif
 
 // Digital only GPIO pins (D0 - D7, D0-D4 may also be PWM)
-#define PIN_LED_LEVEL_B0          D0          // Brightness indicator bit0, may also be PWM
-#define PIN_LED_LEVEL_B1          D1          // Brightness indicator bit1, may also be PWM
-#define PIN_LED_LEVEL_B2          D2          // Brightness indicator bit2, may also be PWM
+#define PIN_SEN_DHT               D0          // Sensor: temperature and humidity
+//#define PIN_LED_LEVEL_B0          D0          // Brightness indicator bit0, may also be PWM
+//#define PIN_LED_LEVEL_B1          D1          // Brightness indicator bit1, may also be PWM
+//#define PIN_LED_LEVEL_B2          D2          // Brightness indicator bit2, may also be PWM
 
 #define PIN_BTN_DOWN              D3          // Panel button - down
 #define PIN_BTN_OK                D4          // Panel button - OK
@@ -36,7 +37,6 @@
 // Analog GPIO pins (12-bit A0 - A7), can also be used as digital GPIOs
 #define PIN_RF24_CE		   		      A0
 #define PIN_RF24_CS		   	 	      A2
-#define PIN_SEN_DHT               A1          // Sensor: temperature and humidity
 #define PIN_SEN_MIC               A6          // Sensor: ECT MIC, DAC
 #define PIN_SEN_LIGHT             A7          // Sensor: ALS, may also be PWM
 

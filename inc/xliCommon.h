@@ -107,6 +107,16 @@ typedef enum
   devtypDummy
 } devicetype_t;
 
+// Remote type
+typedef enum
+{
+  remotetypUnknown = 0,
+  remotetypRFSimply,
+  remotetypRFStandard,
+  remotetypRFEnhanced,
+  remotetypDummy
+} remotetype_t;
+
 // Specify system serial port, could be Serial, Serial1 or Seria2
 #ifndef TheSerial
 #define TheSerial       Serial

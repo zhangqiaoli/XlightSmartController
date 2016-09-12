@@ -232,6 +232,7 @@ bool RF24ServerClass::ProcessReceive()
   uint8_t to = 0;
   uint8_t pipe;
 	UC replyTo;
+	UC msgType;
   if (!available(&to, &pipe))
     return false;
 
@@ -248,9 +249,10 @@ bool RF24ServerClass::ProcessReceive()
 
   char strDisplay[SENSORDATA_JSON_SIZE];
   _received++;
+	msgType = msg.getType();
   LOGD(LOGTAG_MSG, "Received from pipe %d msg-len=%d, from:%d to:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
         pipe, len, msg.getSender(), to, msg.getDestination(), msg.getCommand(),
-        msg.getType(), msg.getSensor(), msg.getLength());
+        msgType, msg.getSensor(), msg.getLength());
 	/*
   memset(strDisplay, 0x00, sizeof(strDisplay));
   msg.getJsonString(strDisplay);
@@ -262,7 +264,7 @@ bool RF24ServerClass::ProcessReceive()
   switch( msg.getCommand() )
   {
     case C_INTERNAL:
-      if( msg.getType() == I_ID_REQUEST && msg.getSender() == AUTO ) {
+      if( msgType == I_ID_REQUEST && msg.getSender() == AUTO ) {
         // On ID Request message:
         /// Get new ID
 				char cNodeType = (char)msg.getSensor();
@@ -278,7 +280,7 @@ bool RF24ServerClass::ProcessReceive()
 					LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentity));
 				}
 				msgReady = true;
-      } else if( msg.getType() == I_ID_RESPONSE && getAddress() == AUTO ) {
+      } else if( msgType == I_ID_RESPONSE && getAddress() == AUTO ) {
 				// Device/client got nodeID from Controller
 				uint8_t lv_nodeID = msg.getSensor();
         if( lv_nodeID == NODEID_GATEWAY || lv_nodeID == NODEID_DUMMY ) {
@@ -292,7 +294,7 @@ bool RF24ServerClass::ProcessReceive()
       break;
 
 		case C_PRESENTATION:
-			if( msg.getType() == S_LIGHT ) {
+			if( msgType == S_LIGHT || msgType == S_DIMMER ) {
 				US token;
 				if( !msg.isAck() ) {
 					// Presentation message: appear of Smart Lamp
@@ -305,15 +307,16 @@ bool RF24ServerClass::ProcessReceive()
 						// return token
 						// Notes: lampType & S_LIGHT are not necessary
 						replyTo = msg.getSender();
-		        msg.build(getAddress(), replyTo, lampType, C_PRESENTATION, S_LIGHT, false, true);
-						msg.set(token);
+		        msg.build(getAddress(), replyTo, lampType, C_PRESENTATION, msgType, false, true);
+						msg.set((unsigned int)token);
+						msgReady = true;
 					} else {
 						LOGW(LOGTAG_MSG, "Unqualitied device connect attemp received");
 					}
 				} else {
 					// Device/client got Response to Presentation message, ready to work
 					token = msg.getUInt();
-					LOGN(LOGTAG_MSG, "Got Presentation Response with token:%d", getAddress(), token);
+					LOGN(LOGTAG_MSG, "Node:%d got Presentation Response with token:%d", getAddress(), token);
 				}
 			}
 			break;

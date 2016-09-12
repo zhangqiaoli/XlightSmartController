@@ -85,6 +85,18 @@ typedef struct
 
 #define DST_ROW_SIZE sizeof(DevStatusRow_t)
 
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
+{
+  UC node_id;                       // RF nodeID
+  UC present              :1;       // 0 - not present; 1 - present
+  UC reserved             :7;
+  UC type;                         // Type of remote
+  US token;
+} RemoteStatus_t;
+
 //------------------------------------------------------------------
 // Xlight Schedule Table Structures
 //------------------------------------------------------------------
@@ -121,7 +133,7 @@ typedef struct    // Exact 12 bytes
 } NodeIdRow_t;
 
 inline BOOL isIdentityEmpty(UC *pId)
-{ return(pId[0] || pId[1] || pId[2] || pId[3] || pId[4] || pId[5]); };
+{ return(!(pId[0] | pId[1] | pId[2] | pId[3] | pId[4] | pId[5])); };
 
 inline void copyIdentity(UC *pId, uint64_t *pData)
 { memcpy(pId, pData, LEN_NODE_IDENTITY); };
@@ -332,6 +344,7 @@ public:
   BOOL SetRFPowerLevel(UC level);
 
   NodeListClass lstNodes;
+  RemoteStatus_t m_stMainRemote;
 };
 
 //------------------------------------------------------------------

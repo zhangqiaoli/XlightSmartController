@@ -216,6 +216,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   time:    show current time and time zone"));
     SERIAL_LN(F("   var:     show system variables"));
     SERIAL_LN(F("   table:   show working memory tables"));
+    SERIAL_LN(F("   device:  show functional devices"));
+    SERIAL_LN(F("   remote:  show remotes"));
     SERIAL_LN(F("   version: show firmware version"));
     SERIAL_LN(F("e.g. show rf\n\r"));
     CloudOutput(F("show ble|debug|dev|flag|net|node|rf|time|var|table|version"));
@@ -494,8 +496,17 @@ bool SerialConsoleClass::doShow(const char *cmd)
 			for (int i = 0; i < theSys.Scenario_table.size(); i++)
 				theSys.print_scenario_table(i);
 		SERIAL_LN("");
-
-	} else if (strnicmp(sTopic, "version", 7) == 0) {
+  } else if (strnicmp(sTopic, "device", 6) == 0) {
+    SERIAL_LN("DST_ROW_SIZE: \t\t\t\t%u, items: %d", DST_ROW_SIZE, theSys.DevStatus_table.size());
+    SERIAL_LN("DevStatus_table: ");
+		for (int i = 0; i < theSys.DevStatus_table.size(); i++)
+			theSys.print_devStatus_table(i);
+    SERIAL_LN("");
+  } else if (strnicmp(sTopic, "remote", 6) == 0) {
+    SERIAL("Main remote: %d type: %d", theConfig.m_stMainRemote.node_id, theConfig.m_stMainRemote.type);
+    SERIAL_LN(" %s token: %d", (theConfig.m_stMainRemote.present ? "present" : "not present"), theConfig.m_stMainRemote.token);
+    SERIAL_LN("");
+  } else if (strnicmp(sTopic, "version", 7) == 0) {
       SERIAL_LN("System version: %s\n\r", System.version().c_str());
       CloudOutput("System version: %s", System.version().c_str());
 	} else if (strnicmp(sTopic, "debug", 5) == 0) {

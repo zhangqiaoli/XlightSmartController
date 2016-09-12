@@ -221,9 +221,9 @@ void SmartControllerClass::InitPins()
 #endif
 
 	// Brightness level indicator to LS138
-	pinMode(PIN_LED_LEVEL_B0, OUTPUT);
-	pinMode(PIN_LED_LEVEL_B1, OUTPUT);
-	pinMode(PIN_LED_LEVEL_B2, OUTPUT);
+	//pinMode(PIN_LED_LEVEL_B0, OUTPUT);
+	//pinMode(PIN_LED_LEVEL_B1, OUTPUT);
+	//pinMode(PIN_LED_LEVEL_B2, OUTPUT);
 
 	// Set communication pin mode
 	pinMode(PIN_BLE_RX, INPUT);
@@ -246,10 +246,10 @@ void SmartControllerClass::InitSensors()
 	}
 
 	// Brightness indicator
-	indicatorBrightness.configPin(0, PIN_LED_LEVEL_B0);
-	indicatorBrightness.configPin(1, PIN_LED_LEVEL_B1);
-	indicatorBrightness.configPin(2, PIN_LED_LEVEL_B2);
-	indicatorBrightness.setLevel(theConfig.GetBrightIndicator());
+	//indicatorBrightness.configPin(0, PIN_LED_LEVEL_B0);
+	//indicatorBrightness.configPin(1, PIN_LED_LEVEL_B1);
+	//indicatorBrightness.configPin(2, PIN_LED_LEVEL_B2);
+	//indicatorBrightness.setLevel(theConfig.GetBrightIndicator());
 
 	// PIR
 	if (theConfig.IsSensorEnabled(sensorPIR)) {
@@ -1744,33 +1744,43 @@ US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t 
 	// Update timestamp
 	lv_Node.recentActive = Time.now();
 	theConfig.lstNodes.update(&lv_Node);
-	theConfig.lstNodes.m_isChanged = true;
+	theConfig.SetNIDChanged(true);
 
-	// Search device in Device Status Table, add new item if not exists,
-	// since the node has passed verification
-	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
-	if (!DevStatusRowPtr) {
-		if( theConfig.InitDevStatus(_nodeID) ) {
-			theConfig.SetDSTChanged(true);
-			DevStatusRowPtr = SearchDevStatus(_nodeID);
-			//ToDo: remove
-			SERIAL_LN("Test DevStatus_table2 added item: %d, size: %d", _nodeID, theSys.DevStatus_table.size());
+	US token = random(65535); // Random number
+	if( _nodeID < NODEID_MIN_REMOTE ) {
+		// Lamp
+		// Search device in Device Status Table, add new item if not exists,
+		// since the node has passed verification
+		ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+		if (!DevStatusRowPtr) {
+			if( theConfig.InitDevStatus(_nodeID) ) {
+				theConfig.SetDSTChanged(true);
+				DevStatusRowPtr = SearchDevStatus(_nodeID);
+				//ToDo: remove
+				SERIAL_LN("Test DevStatus_table2 added item: %d, size: %d", _nodeID, theSys.DevStatus_table.size());
+			}
 		}
-	}
-	if(!DevStatusRowPtr) {
-		LOGW(LOGTAG_MSG, F("Failed to get item form DST for device:%d"), _nodeID);
-		return 0;
+		if(!DevStatusRowPtr) {
+			LOGW(LOGTAG_MSG, F("Failed to get item form DST for device:%d"), _nodeID);
+			return 0;
+		}
+
+		// Update DST item
+		DevStatusRowPtr->data.present = 1;
+		DevStatusRowPtr->data.type = _devType;
+		DevStatusRowPtr->data.token = token;
+		DevStatusRowPtr->data.flash_flag = UNSAVED; //required
+		DevStatusRowPtr->data.run_flag == EXECUTED; //redundant, already should be EXECUTED
+		theConfig.SetDSTChanged(true);
+	} else {
+		// Remote
+		theConfig.m_stMainRemote.node_id = _nodeID;
+		theConfig.m_stMainRemote.present = 1;
+		theConfig.m_stMainRemote.type = 1;
+		theConfig.m_stMainRemote.token = token;
 	}
 
-	// Update DST item
-	DevStatusRowPtr->data.present = 1;
-	DevStatusRowPtr->data.type = _devType;
-	DevStatusRowPtr->data.token = random(65535);		// Random number
-	DevStatusRowPtr->data.flash_flag = UNSAVED; //required
-	DevStatusRowPtr->data.run_flag == EXECUTED; //redundant, already should be EXECUTED
-	theConfig.SetDSTChanged(true);
-
-	return DevStatusRowPtr->data.token;
+	return token;
 }
 
 //------------------------------------------------------------------
@@ -1798,9 +1808,8 @@ void SmartControllerClass::print_devStatus_table(int row)
 	case 0: SERIAL_LN("run_flag = UNEXECUTED"); break;
 	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
 	}
-	SERIAL_LN("uid = %d", DevStatus_table.get(row).uid);
-	SERIAL_LN("node_id = %d", DevStatus_table.get(row).node_id);
-	SERIAL_LN("type = %d", DevStatus_table.get(row).type);
+	SERIAL_LN("uid = %d, type = %d", DevStatus_table.get(row).uid, DevStatus_table.get(row).type);
+	SERIAL_LN("node_id = %d, present = %s", DevStatus_table.get(row).node_id, (DevStatus_table.get(row).present ? "true" : "false"));
 	SERIAL_LN("ring1 = %s", hue_to_string(DevStatus_table.get(row).ring1).c_str());
 	SERIAL_LN("ring2 = %s", hue_to_string(DevStatus_table.get(row).ring2).c_str());
 	SERIAL_LN("ring3 = %s", hue_to_string(DevStatus_table.get(row).ring3).c_str());
