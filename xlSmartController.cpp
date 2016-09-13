@@ -31,6 +31,7 @@
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
+#include "ClickEncoder.h"
 #include "LightSensor.h"
 #include "MotionSensor.h"
 #include "TimeAlarms.h"
@@ -44,6 +45,7 @@ SmartControllerClass theSys;
 DHT senDHT(PIN_SEN_DHT, SEN_TYPE_DHT);
 LightSensor senLight(PIN_SEN_LIGHT);
 MotionSensor senMotion(PIN_SEN_PIR);
+ClickEncoder theEncoder(PIN_KNOB_A_PHASE, PIN_KNOB_B_PHASE, PIN_KNOB_BUTTON);
 
 //------------------------------------------------------------------
 // Alarm Triggered Actions
@@ -105,6 +107,7 @@ SmartControllerClass::SmartControllerClass()
 	m_isBLE = false;
 	m_isLAN = false;
 	m_isWAN = false;
+	m_nDimmerValue = 0;
 }
 
 // Primitive initialization before loading configuration
@@ -545,6 +548,47 @@ void SmartControllerClass::CollectData(UC tick)
 	// from all channels including Wi-Fi, BLE, etc. for MAC addresses and distance to device
 }
 
+// Process panel operations, such as key press, knob rotation, etc.
+bool SmartControllerClass::ProcessKeyPress()
+{
+	bool rc = false;
+	static int16_t nLastRead = -1;
+	m_nDimmerValue += theEncoder.getValue();
+	// Restrict range
+	if( m_nDimmerValue <= 0 ) {
+		m_nDimmerValue = 0;
+	} else if( m_nDimmerValue > 100 ) {
+		m_nDimmerValue = 100;
+	}
+
+	// Get dimmer value
+  if( m_nDimmerValue != nLastRead ) {
+    nLastRead = m_nDimmerValue;
+		SERIAL_LN("Test dimmer value: %d", m_nDimmerValue);
+		rc = true;
+	}
+
+	// Get button input
+	ButtonType b = theEncoder.getButton();
+  if (b != BUTTON_OPEN) {
+    SERIAL("Button: ");
+    #define VERBOSECASE(label) case label: SERIAL_LN(#label); break;
+    switch (b) {
+      VERBOSECASE(BUTTON_PRESSED);
+      VERBOSECASE(BUTTON_HELD)
+      VERBOSECASE(BUTTON_RELEASED)
+      VERBOSECASE(BUTTON_CLICKED)
+      case BUTTON_DOUBLE_CLICKED:
+          SERIAL_LN("ClickEncoder::DoubleClicked");
+          theEncoder.setAccelerationEnabled(!theEncoder.getAccelerationEnabled());
+          SERIAL_LN("  Acceleration is %s", theEncoder.getAccelerationEnabled() ? "enabled" : "disabled");
+        break;
+    }
+  }
+
+	return rc;
+}
+
 //------------------------------------------------------------------
 // Device Control Functions
 //------------------------------------------------------------------
@@ -568,6 +612,7 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 void SmartControllerClass::FastProcess()
 {
 	// Refresh LED brightness indicator
+	theEncoder.service();
 
 	// ToDo:
 }
