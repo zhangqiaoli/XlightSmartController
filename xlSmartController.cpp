@@ -551,24 +551,12 @@ void SmartControllerClass::CollectData(UC tick)
 // Process panel operations, such as key press, knob rotation, etc.
 bool SmartControllerClass::ProcessKeyPress()
 {
-	bool rc = false;
-	static int16_t nLastRead = -1;
-	m_nDimmerValue += theEncoder.getValue();
-	// Restrict range
-	if( m_nDimmerValue <= 0 ) {
-		m_nDimmerValue = 0;
-	} else if( m_nDimmerValue > 100 ) {
-		m_nDimmerValue = 100;
-	}
+	// Read dimmer value
+	int16_t _dimValue = GetDimmerValue();
+	_dimValue += theEncoder.getValue();
+	SetDimmerValue(_dimValue);
 
-	// Get dimmer value
-  if( m_nDimmerValue != nLastRead ) {
-    nLastRead = m_nDimmerValue;
-		SERIAL_LN("Test dimmer value: %d", m_nDimmerValue);
-		rc = true;
-	}
-
-	// Get button input
+	// Read button input
 	ButtonType b = theEncoder.getButton();
   if (b != BUTTON_OPEN) {
     SERIAL("Button: ");
@@ -586,7 +574,32 @@ bool SmartControllerClass::ProcessKeyPress()
     }
   }
 
-	return rc;
+	return true;
+}
+
+int16_t SmartControllerClass::GetDimmerValue()
+{
+	return m_nDimmerValue;
+}
+
+void SmartControllerClass::SetDimmerValue(int16_t _value)
+{
+	// Restrict range
+	if( _value <= 0 ) {
+		_value = 0;
+	} else if( _value > 100 ) {
+		_value = 100;
+	}
+
+	if( m_nDimmerValue != _value ) {
+		m_nDimmerValue = _value;
+		LOGD(LOGTAG_EVENT, "Dimmer changed to %d", _value);
+	}
+}
+
+UC SmartControllerClass::GetButtonStatus()
+{
+	return (UC)theEncoder.getButton();
 }
 
 //------------------------------------------------------------------

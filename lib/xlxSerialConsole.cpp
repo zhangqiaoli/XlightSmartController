@@ -211,6 +211,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   flag:    show system flags"));
     SERIAL_LN(F("   net:     show network summary"));
     SERIAL_LN(F("   node:    show node summary"));
+    SERIAL_LN(F("   button:  show button (knob) status"));
     SERIAL_LN(F("   nlist:   show NodeID list"));
     SERIAL_LN(F("   rf:      print RF details"));
     SERIAL_LN(F("   time:    show current time and time zone"));
@@ -419,6 +420,9 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("  Product Info: %s-%s-%d", theConfig.GetOrganization().c_str(), theConfig.GetProductName().c_str(), theConfig.GetVersion());
       SERIAL_LN("  System Info: %s-%s\n\r", theSys.GetSysID().c_str(), theSys.GetSysVersion().c_str());
       CloudOutput("NodeID: %d (%s), Status: %d", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")), theSys.GetStatus());
+  } else if (strnicmp(sTopic, "button", 6) == 0) {
+      SERIAL_LN("Knob status - Dimmer:%d, Button:%d\n\r",  theSys.GetDimmerValue(), theSys.GetButtonStatus());
+      CloudOutput("Dimmer:%d, Button:%d", theSys.GetDimmerValue(), theSys.GetButtonStatus());
   } else if (strnicmp(sTopic, "nlist", 5) == 0) {
       SERIAL_LN("**Node List count:%d, size:%d", theConfig.lstNodes.count(), theConfig.lstNodes.size());
       theConfig.lstNodes.showList();

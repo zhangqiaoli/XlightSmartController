@@ -116,6 +116,10 @@ public:
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure
+
+  int16_t GetDimmerValue();
+  void SetDimmerValue(int16_t _value);
+  UC GetButtonStatus();
 };
 
 //------------------------------------------------------------------
