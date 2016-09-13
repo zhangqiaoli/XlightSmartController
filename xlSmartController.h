@@ -27,7 +27,6 @@ private:
   BOOL m_isLAN;
   BOOL m_isWAN;
 
-  int16_t m_nDimmerValue;
   String hue_to_string(Hue_t hue);
   bool updateDevStatusRow(MyMessage msg);
 
@@ -61,7 +60,7 @@ public:
   void ProcessCommands();
   void CollectData(UC tick);
   bool ExecuteLightCommand(String mySerialStr);
-  bool ProcessKeyPress();
+  bool ProcessPanel();
 
   // Device Control Functions
   int DevSoftSwitch(BOOL sw, UC dev = 0);
@@ -116,10 +115,6 @@ public:
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure
-
-  int16_t GetDimmerValue();
-  void SetDimmerValue(int16_t _value);
-  UC GetButtonStatus();
 };
 
 //------------------------------------------------------------------

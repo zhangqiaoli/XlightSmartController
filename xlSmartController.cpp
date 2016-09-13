@@ -26,12 +26,12 @@
 #include "xliPinMap.h"
 #include "xlxConfig.h"
 #include "xlxLogger.h"
+#include "xlxPanel.h"
 #include "xlxRF24Server.h"
 #include "xlxSerialConsole.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
-#include "ClickEncoder.h"
 #include "LightSensor.h"
 #include "MotionSensor.h"
 #include "TimeAlarms.h"
@@ -45,7 +45,6 @@ SmartControllerClass theSys;
 DHT senDHT(PIN_SEN_DHT, SEN_TYPE_DHT);
 LightSensor senLight(PIN_SEN_LIGHT);
 MotionSensor senMotion(PIN_SEN_PIR);
-ClickEncoder theEncoder(PIN_KNOB_A_PHASE, PIN_KNOB_B_PHASE, PIN_KNOB_BUTTON);
 
 //------------------------------------------------------------------
 // Alarm Triggered Actions
@@ -107,7 +106,6 @@ SmartControllerClass::SmartControllerClass()
 	m_isBLE = false;
 	m_isLAN = false;
 	m_isWAN = false;
-	m_nDimmerValue = 0;
 }
 
 // Primitive initialization before loading configuration
@@ -227,6 +225,11 @@ void SmartControllerClass::InitPins()
 	// Set communication pin mode
 	pinMode(PIN_BLE_RX, INPUT);
 	pinMode(PIN_BLE_TX, OUTPUT);
+
+	// Init Panel components
+	thePanel.InitPanel();
+	// Change Panel LED ring to indicate panel is working
+	thePanel.CheckLEDRing();
 }
 
 // Initialize Sensors
@@ -280,6 +283,9 @@ BOOL SmartControllerClass::Start()
 #ifndef SYS_SERIAL_DEBUG
 	ResetSerialPort();
 #endif
+
+	// Change Panel LED ring to the recent level
+	thePanel.SetDimmerValue(theConfig.GetBrightIndicator());
 
 	return true;
 }
@@ -549,57 +555,12 @@ void SmartControllerClass::CollectData(UC tick)
 }
 
 // Process panel operations, such as key press, knob rotation, etc.
-bool SmartControllerClass::ProcessKeyPress()
+bool SmartControllerClass::ProcessPanel()
 {
-	// Read dimmer value
-	int16_t _dimValue = GetDimmerValue();
-	_dimValue += theEncoder.getValue();
-	SetDimmerValue(_dimValue);
-
-	// Read button input
-	ButtonType b = theEncoder.getButton();
-  if (b != BUTTON_OPEN) {
-    SERIAL("Button: ");
-    #define VERBOSECASE(label) case label: SERIAL_LN(#label); break;
-    switch (b) {
-      VERBOSECASE(BUTTON_PRESSED);
-      VERBOSECASE(BUTTON_HELD)
-      VERBOSECASE(BUTTON_RELEASED)
-      VERBOSECASE(BUTTON_CLICKED)
-      case BUTTON_DOUBLE_CLICKED:
-          SERIAL_LN("ClickEncoder::DoubleClicked");
-          theEncoder.setAccelerationEnabled(!theEncoder.getAccelerationEnabled());
-          SERIAL_LN("  Acceleration is %s", theEncoder.getAccelerationEnabled() ? "enabled" : "disabled");
-        break;
-    }
-  }
+	// Process Panel Encoder
+	thePanel.ProcessEncoder();
 
 	return true;
-}
-
-int16_t SmartControllerClass::GetDimmerValue()
-{
-	return m_nDimmerValue;
-}
-
-void SmartControllerClass::SetDimmerValue(int16_t _value)
-{
-	// Restrict range
-	if( _value <= 0 ) {
-		_value = 0;
-	} else if( _value > 100 ) {
-		_value = 100;
-	}
-
-	if( m_nDimmerValue != _value ) {
-		m_nDimmerValue = _value;
-		LOGD(LOGTAG_EVENT, "Dimmer changed to %d", _value);
-	}
-}
-
-UC SmartControllerClass::GetButtonStatus()
-{
-	return (UC)theEncoder.getButton();
 }
 
 //------------------------------------------------------------------
@@ -624,8 +585,8 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 // High speed system timer process
 void SmartControllerClass::FastProcess()
 {
-	// Refresh LED brightness indicator
-	theEncoder.service();
+	// Refresh Encoder
+	thePanel.EncoderAvailable();
 
 	// ToDo:
 }

@@ -37,6 +37,7 @@
 #include "xliPinMap.h"
 #include "xlxLogger.h"
 #include "xliMemoryMap.h"
+#include "xlxPanel.h"
 #include "xlxRF24Server.h"
 #include "xlSmartController.h"
 
@@ -387,6 +388,9 @@ BOOL ConfigClass::LoadConfig()
 
 BOOL ConfigClass::SaveConfig()
 {
+	// Check changes on Panel
+	SetBrightIndicator(thePanel.GetDimmerValue());
+
   if( m_isChanged )
   {
     EEPROM.put(MEM_CONFIG_OFFSET, m_config);

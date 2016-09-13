@@ -45,7 +45,7 @@ typedef struct
 {
   UC version                  :8;           // Data version, other than 0xFF
   US sensorBitmap             :16;          // Sensor enable bitmap
-  UC indBrightness            :4;           // Indicator of brightness
+  UC indBrightness            :8;           // Indicator of brightness
   UC typeMainDevice           :8;           // Type of the main lamp
   UC numDevices               :8;           // Number of devices
   Timezone_t timeZone;                      // Time zone
