@@ -10,6 +10,7 @@
 // ----------------------------------------------------------------------------
 
 #include "ClickEncoder.h"
+#include "xliCommon.h"
 
 // ----------------------------------------------------------------------------
 // _button configuration (values for 1ms timer service calls)
@@ -30,12 +31,12 @@
 #if ENC_DECODER != ENC_NORMAL
 #  ifdef ENC_HALFSTEP
      // decoding _table for hardware with flaky notch (half resolution)
-     const int8_t ClickEncoder::_table[16] _attribute_((_progmem_)) = {
+     const int8_t ClickEncoder::_table[16] = {
        0, 0, -1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, -1, 0, 0
      };
 #  else
      // decoding _table for normal hardware
-     const int8_t ClickEncoder::_table[16] _attribute_((_progmem_)) = {
+     const int8_t ClickEncoder::_table[16] = {
        0, 1, -1, 0, -1, 0, 0, 1, 1, 0, 0, -1, 0, -1, 1, 0
      };
 #  endif
@@ -61,6 +62,7 @@ ClickEncoder::ClickEncoder(uint8_t A, uint8_t B, uint8_t _buttonPin, uint8_t _st
   if (digitalRead(_pinB) == _pinsActive) {
     _last ^=1;
   }
+  _direction = (_last & 2) - 1;
 }
 
 // ----------------------------------------------------------------------------
@@ -68,6 +70,7 @@ ClickEncoder::ClickEncoder(uint8_t A, uint8_t B, uint8_t _buttonPin, uint8_t _st
 //
 void ClickEncoder::service(void)
 {
+  static bool prestep = false;
   bool moved = false;
   unsigned long now = millis();
 
@@ -89,7 +92,7 @@ void ClickEncoder::service(void)
     _last |= 1;
   }
 
-  uint8_t tbl = pgm_read_byte(&_table[_last]);
+  int8_t tbl = pgm_read_byte(&_table[_last]);
   if (tbl) {
     _delta += tbl;
     moved = true;
@@ -106,12 +109,34 @@ void ClickEncoder::service(void)
   }
 
   int8_t diff = _last - curr;
-
-  if (diff & 1) {            // bit 0 = step
+  if( diff ) {
+    //SERIAL_LN("last: 0x%x curr:0x%x dif:%d", _last, curr, diff);
+    if (diff & 1 || prestep ) {            // bit 0 = step
+      if( !_last ) {
+        prestep = false;
+        _delta = 0;
+        _direction = (curr & 2) - 1;
+      } else if( !curr ) {
+        prestep = false;
+        _delta += _direction;
+        moved = true;
+      } else {
+        prestep = true;
+      }
+    }
     _last = curr;
-    _delta += (diff & 2) - 1; // bit 1 = direction (+/-)
-    moved = true;
   }
+
+  /*
+  if (diff & 1) {            // bit 0 = step
+    //_last = curr;
+    if( diff > 0 ) {
+      _delta += (diff & 2) - 1; // bit 1 = direction (+/-)
+      moved = true;
+    }
+    SERIAL_LN("delta:%d, dif:%d, acc:%d\n\r", _delta, diff, _acceleration);
+  }*/
+
 #else
 # error "Error: define ENC_DECODER to ENC_NORMAL or ENC_FLAKY"
 #endif
@@ -147,8 +172,7 @@ void ClickEncoder::service(void)
         if (_button == BUTTON_HELD) {
           _button = BUTTON_RELEASED;
           doubleClickTicks = 0;
-        }
-        else {
+        } else {
           #define ENC_SINGLECLICKONLY 1
           if (doubleClickTicks > ENC_SINGLECLICKONLY) {   // prevent trigger in single click mode
             if (doubleClickTicks < (ENC_DOUBLECLICKTIME / ENC_buttonINTERVAL)) {
@@ -168,7 +192,7 @@ void ClickEncoder::service(void)
     if (doubleClickTicks > 0) {
       doubleClickTicks--;
       if (--doubleClickTicks == 0) {
-        _button = BUTTON_OPEN;
+        _button = BUTTON_CLICKED;;
       }
     }
   }
@@ -182,23 +206,27 @@ int16_t ClickEncoder::getValue(void)
 {
   int16_t val;
 
-  val = _delta;
-
+  val = _delta * _steps;
+  _delta = 0;
+/*
   if (_steps == 2) _delta = val & 1;
   else if (_steps == 4) _delta = val & 3;
   else _delta = 0; // default to 1 step per notch
 
   if (_steps == 4) val >>= 2;
   if (_steps == 2) val >>= 1;
+*/
 
   int16_t r = 0;
-  int16_t accel = ((_accelerationEnabled) ? (_acceleration >> 8) : 0);
+  int16_t accel = ((_accelerationEnabled) ? (_acceleration >> 3) : 0);
 
   if (val < 0) {
-    r -= 1 + accel;
+    r = val - accel;
+    SERIAL_LN("val:%d acc: %d - %d", val, _acceleration, accel);
   }
   else if (val > 0) {
-    r += 1 + accel;
+    r = val + accel;
+    SERIAL_LN("val:%d acc: %d - %d", val, _acceleration, accel);
   }
 
   return r;

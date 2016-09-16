@@ -32,8 +32,10 @@
 // the one and only instance of Panel class
 xlPanelClass thePanel;
 
-uint16_t CCWTipLight595 [] = {0x0000,0x0001,0x0003,0x0007,0x000f,0x001f,0x003f,0x007f,0x00ff,0x01ff,0x03ff,0x07ff,0x0fff};
-uint16_t CWTipLight595 [] = {0x0000,0x0800,0x0c00,0x0e00,0x0f00,0x0f80,0x0fc0,0x0fe0,0x0ff0,0x0ff8,0x0ffc,0x0ffe,0x0fff};
+//uint16_t CCWTipLight595 [] = {0x0000,0x0001,0x0003,0x0007,0x000f,0x001f,0x003f,0x007f,0x00ff,0x01ff,0x03ff,0x07ff,0x0fff};
+//uint16_t CWTipLight595 [] = {0x0000,0x0800,0x0c00,0x0e00,0x0f00,0x0f80,0x0fc0,0x0fe0,0x0ff0,0x0ff8,0x0ffc,0x0ffe,0x0fff};
+uint8_t CCWTipLight595 [] = {0x00,0x00,0x01,0x00,0x03,0x00,0x07,0x00,0x0f,0x00,0x1f,0x00,0x3f,0x00,0x7f,0x00,0xff,0x00,0xff,0x01,0xff,0x03,0xff,0x07,0xff,0x0f};
+uint8_t CWTipLight595 [] = {0x00,0x00,0x00,0x08,0x00,0x0c,0x00,0x0e,0x00,0x0f,0x80,0x0f,0xc0,0x0f,0xe0,0x0f,0xf0,0x0f,0xf8,0x0f,0xfc,0x0f,0xfe,0x0f,0xff,0x0f};
 
 xlPanelClass::xlPanelClass()
 {
@@ -64,11 +66,11 @@ void xlPanelClass::InitPanel()
 void xlPanelClass::InitEncoder(uint8_t A, uint8_t B, uint8_t buttonPin)
 {
   if( !m_pEncoder ) {
-    m_pEncoder = new ClickEncoder(A, B, buttonPin);
+    m_pEncoder = new ClickEncoder(A, B, buttonPin, 6);
   }
 }
 
-void xlPanelClass::InitHC595(int numberOfShiftRegisters, int serialDataPin, int clockPin, int latchPin)
+void xlPanelClass::InitHC595(uint8_t numberOfShiftRegisters, uint8_t serialDataPin, uint8_t clockPin, uint8_t latchPin)
 {
   if( !m_pHC595 ) {
     // create shift register object (number of shift registers, data pin, clock pin, latch pin)
@@ -94,23 +96,31 @@ bool xlPanelClass::ProcessEncoder()
 
 	// Read dimmer value
 	int16_t _dimValue = GetDimmerValue();
-	_dimValue += m_pEncoder->getValue();
+	int16_t _delta = m_pEncoder->getValue();
+  _dimValue += _delta;
 	SetDimmerValue(_dimValue);
 
 	// Read button input
 	ButtonType b = m_pEncoder->getButton();
   if (b != BUTTON_OPEN) {
     SERIAL("Button: ");
-    #define VERBOSECASE(label) case label: SERIAL_LN(#label); break;
     switch (b) {
-      VERBOSECASE(BUTTON_PRESSED);
-      VERBOSECASE(BUTTON_HELD)
-      VERBOSECASE(BUTTON_RELEASED)
-      VERBOSECASE(BUTTON_CLICKED)
+      case BUTTON_PRESSED:
+        SERIAL_LN("Pressed");
+        break;
+      case BUTTON_HELD:
+        SERIAL_LN("Held");
+        break;
+      case BUTTON_RELEASED:
+        SERIAL_LN("Released");
+        break;
+      case BUTTON_CLICKED:
+        SERIAL_LN("Clicked");
+        break;
       case BUTTON_DOUBLE_CLICKED:
-          SERIAL_LN("ClickEncoder::DoubleClicked");
-          m_pEncoder->setAccelerationEnabled(!m_pEncoder->getAccelerationEnabled());
-          SERIAL_LN("  Acceleration is %s", m_pEncoder->getAccelerationEnabled() ? "enabled" : "disabled");
+        SERIAL_LN("DoubleClicked");
+        m_pEncoder->setAccelerationEnabled(!m_pEncoder->getAccelerationEnabled());
+        SERIAL_LN("  Acceleration is %s", m_pEncoder->getAccelerationEnabled() ? "enabled" : "disabled");
         break;
     }
   }
@@ -149,23 +159,75 @@ bool xlPanelClass::SetHC595()
   uint8_t pos = map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING);
   //uint8_t stateOfPin5 = m_pHC595->get(5);
   //if( stateOfPin5 ) { m_pHC595->setAll((uint8_t *)(CWTipLight595 + pos));} else
-  m_pHC595->setAll((uint8_t *)(CCWTipLight595 + pos));
+  //m_pHC595->setAll((uint8_t *)(CCWTipLight595 + pos));
+  SetRingPos(pos);
   return true;
 }
 
-bool xlPanelClass::CheckLEDRing()
+void xlPanelClass::SetRingPos(uint8_t _pos)
+{
+  if( !m_pHC595 ) return;
+  SERIAL_LN("pos:%d, b0:0x%x, b1:0x%x", _pos, CCWTipLight595[_pos * 2], CCWTipLight595[_pos * 2+1]);
+  m_pHC595->setAll(CCWTipLight595 + _pos * 2);
+
+/*
+  bool bDir = true;
+  if( m_pEncoder ) {
+    bDir = m_pEncoder->getDirection();
+  }
+  if( bDir )
+    m_pHC595->setAll((uint8_t *)(CCWTipLight595 + _pos));
+  else
+    m_pHC595->setAll((uint8_t *)(CWTipLight595 + _pos));
+*/
+
+/*uint8_t i;
+  for (i = 0; i <= _pos; i++) {
+    if( !m_pHC595->get(i) ) {
+      m_pHC595->set(i, HIGH);
+    }
+  }*/
+}
+
+bool xlPanelClass::CheckLEDRing(uint8_t _testno)
 {
   if( !m_pHC595 ) return false;
 
-  m_pHC595->setAllHigh(); // set all pins HIGH
-  delay(500);
-
-  m_pHC595->setAllLow();  // set all pins LOW
-  delay(500);
-
-  for (int i = 0; i < 8; i++) {
-    m_pHC595->set(i, HIGH); // set single pin HIGH
-    delay(250);
+  uint8_t i;
+  //uint8_t length = m_pHC595->getNumberOfShiftRegisters() * 8;
+  switch(_testno) {
+  case 0:
+    SERIAL("all low...");
+    m_pHC595->setAllLow();  // set all pins LOW
+    break;
+  case 1:
+    SERIAL("all high...");
+    m_pHC595->setAllHigh();  // set all pins HIGH
+    break;
+  case 2:
+    for (i = 0; i <= PANEL_NUM_LEDS_RING; i++) {
+      m_pHC595->set(i, HIGH); // set single pin HIGH
+      delay(200);
+    }
+    break;
+  case 3:
+    for (i = 0; i <= PANEL_NUM_LEDS_RING; i++) {
+      m_pHC595->set(i, LOW); // set single pin LOW
+      delay(200);
+    }
+    break;
+  case 4:
+    for (i = 0; i <= PANEL_NUM_LEDS_RING; i++) {
+      m_pHC595->setAll(CWTipLight595 + i*2);
+      delay(200);
+    }
+    break;
+  case 5:
+    for (i = 0; i <= PANEL_NUM_LEDS_RING; i++) {
+      m_pHC595->setAll(CCWTipLight595 + i*2);
+      delay(200);
+    }
+    break;
   }
 
   return true;

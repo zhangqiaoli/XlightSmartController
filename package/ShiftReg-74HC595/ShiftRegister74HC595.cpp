@@ -1,7 +1,7 @@
 #include "ShiftRegister74HC595.h"
 
 // constructor
-ShiftRegister74HC595::ShiftRegister74HC595(int numberOfShiftRegisters, int serialDataPin, int clockPin, int latchPin)
+ShiftRegister74HC595::ShiftRegister74HC595(uint8_t numberOfShiftRegisters, uint8_t serialDataPin, uint8_t clockPin, uint8_t latchPin)
 {
     // set attributes
     _numberOfShiftRegisters = numberOfShiftRegisters;
@@ -27,6 +27,18 @@ ShiftRegister74HC595::ShiftRegister74HC595(int numberOfShiftRegisters, int seria
     setAll(_digitalValues); // reset shift register
 }
 
+ShiftRegister74HC595::~ShiftRegister74HC595()
+{
+  if( _digitalValues ) {
+    delete _digitalValues;
+  }
+}
+
+uint8_t ShiftRegister74HC595::getNumberOfShiftRegisters()
+{
+  return _numberOfShiftRegisters;
+}
+
 void ShiftRegister74HC595::setAll(uint8_t * digitalValues) {
     int byte;
 
@@ -45,7 +57,7 @@ uint8_t * ShiftRegister74HC595::getAll() {
     return _digitalValues;
 }
 
-void ShiftRegister74HC595::set(int pin, uint8_t value) {
+void ShiftRegister74HC595::set(uint8_t pin, uint8_t value) {
     if (value == 1)
         _digitalValues[pin / 8] |= 1 << (pin % 8);
     else
@@ -55,7 +67,7 @@ void ShiftRegister74HC595::set(int pin, uint8_t value) {
 }
 
 
-uint8_t ShiftRegister74HC595::get(int pin) {
+uint8_t ShiftRegister74HC595::get(uint8_t pin) {
     return (_digitalValues[pin / 8] >> (pin % 8)) & 1;
 }
 

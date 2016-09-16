@@ -23,9 +23,9 @@
     #define PIN_LED_BLUE          31          // RGBB, Status RGB LED
 
     // P1 specific GPIO pins, can also be used as digital GPIOs
-    #define PIN_MOSI_LED          P1S0        // 12b GPIO, may also be PWM
-    #define PIN_LATCH_LED         P1S1        // 12b GPIO, may also be PWM
-    #define PIN_SCK_LED           P1S2        // 12b GPIO
+    #define PIN_MOSI_LED          A3 //40          // P1S0, 12b GPIO, may also be PWM
+    #define PIN_LATCH_LED         A4 //41          // P1S1, 12b GPIO, may also be PWM
+    #define PIN_SCK_LED           A5 //42          // P1S2, 12b GPIO
 #endif
 
 // Digital only GPIO pins (D0 - D7, D0-D4 may also be PWM)

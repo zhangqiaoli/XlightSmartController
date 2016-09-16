@@ -229,7 +229,8 @@ void SmartControllerClass::InitPins()
 	// Init Panel components
 	thePanel.InitPanel();
 	// Change Panel LED ring to indicate panel is working
-	thePanel.CheckLEDRing();
+	thePanel.CheckLEDRing(2);
+	thePanel.CheckLEDRing(3);
 }
 
 // Initialize Sensors
@@ -321,8 +322,9 @@ void SmartControllerClass::ResetSerialPort()
 
 BOOL SmartControllerClass::CheckRF()
 {
+	return true;
 	// RF Server begins
-	m_isRF = theRadio.ServerBegin();
+	//m_isRF = theRadio.ServerBegin();
 	if( m_isRF ) {
 		// Change it if setting is not default value
 		theRadio.setPALevel(theConfig.GetRFPowerLevel());
@@ -393,13 +395,13 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 	Alarm.delay(ms);
 
 	// Save config if it was changed
-	if (++tickSaveConfig > 5000 / ms) {	// once per 5 seconds
+	if (++tickSaveConfig > 30000 / ms) {	// once per 30 seconds
 		tickSaveConfig = 0;
 		theConfig.SaveConfig();
 	}
 
-  // Slow Checking: once per 30 seconds
-  if (++tickCheckRadio > 30000 / ms) {
+  // Slow Checking: once per 60 seconds
+  if (++tickCheckRadio > 60000 / ms) {
 		// Check RF module
 		++tickAcitveCheck;
 		tickCheckRadio = 0;

@@ -22,10 +22,12 @@
 #include "ArduinoJson.h"
 
 MyMessage::MyMessage() {
+	msg.header.version_length = PROTOCOL_VERSION;
 	msg.header.destination = 0; // Gateway is default destination
 }
 
 MyMessage::MyMessage(uint8_t _sensor, uint8_t _type) {
+	msg.header.version_length = PROTOCOL_VERSION;
 	msg.header.destination = 0; // Gateway is default destination
 	msg.header.sensor = _sensor;
 	msg.header.type = _type;

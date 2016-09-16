@@ -239,6 +239,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
   } else if(strTopic.equals("test")) {
     SERIAL_LN(F("--- Command: test <action parameters> ---"));
     SERIAL_LN(F("To perform testing, where <action> could be:"));
+    SERIAL_LN(F("   ledring: check brightness LED indicator"));
+    SERIAL_LN(F("   ledrgb: check status RGB LED"));
     SERIAL_LN(F("   ping <ip address>: ping ip address"));
     SERIAL_LN(F("   send <NodeId:MessageId>: send test message to node"));
     SERIAL_LN(F("   send <message>: send MySensors format message\n\r"));
@@ -570,13 +572,23 @@ bool SerialConsoleClass::doTest(const char *cmd)
   bool retVal = false;
 
   char *sTopic = next();
+  char *sParam;
   if( sTopic ) {
     if (strnicmp(sTopic, "ping", 4) == 0) {
       char *sIPaddress = next();
       PingAddress(sIPaddress);
       retVal = true;
+    } else if (strnicmp(sTopic, "ledring", 7) == 0) {
+      UC testNo = 0;
+      sParam = next();
+      if( sParam) { testNo = (UC)atoi(sParam); }
+      SERIAL(F("Checking brightness indicator LEDs..."));
+      SERIAL_LN("%s\n\r", thePanel.CheckLEDRing(testNo) ? "done" : "error");
+      retVal = true;
+    } else if (strnicmp(sTopic, "ledrgb", 6) == 0) {
+      // ToDo:
     } else if (strnicmp(sTopic, "send", 4) == 0) {
-      char *sParam = next();
+      sParam = next();
       if( strlen(sParam) >= 3 ) {
         String strMsg = sParam;
         theRadio.ProcessSend(strMsg);

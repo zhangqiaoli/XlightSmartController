@@ -20,12 +20,13 @@ public:
   virtual ~xlPanelClass();
   void InitPanel();
   void InitEncoder(uint8_t A, uint8_t B, uint8_t buttonPin);
-  void InitHC595(int numberOfShiftRegisters, int serialDataPin, int clockPin, int latchPin);
+  void InitHC595(uint8_t numberOfShiftRegisters, uint8_t serialDataPin, uint8_t clockPin, uint8_t latchPin);
 
   bool EncoderAvailable();
   bool HC595Available();
   bool ProcessEncoder();
-  bool CheckLEDRing();
+  bool CheckLEDRing(uint8_t _testno = 0);
+  void SetRingPos(uint8_t _pos);
 
   int16_t GetDimmerValue();
   void SetDimmerValue(int16_t _value);
