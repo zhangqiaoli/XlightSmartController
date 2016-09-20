@@ -342,6 +342,7 @@ void RF24::printDetails(void)
   print_byte_register("RX_PW_P0-6",RX_PW_P0,6);
   print_byte_register("EN_AA\t",EN_AA);
   print_byte_register("EN_RXADDR",EN_RXADDR);
+  print_byte_register("SETUP_RETR",SETUP_RETR);
   print_byte_register("RF_CH\t",RF_CH);
   print_byte_register("RF_SETUP",RF_SETUP);
   print_byte_register("CONFIG\t",CONFIG);

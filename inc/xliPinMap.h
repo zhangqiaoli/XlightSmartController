@@ -16,6 +16,13 @@
 //------------------------------------------------------------------
 // System Control
 #ifdef MCU_TYPE_P1
+    #define P1S0                  40          // P1S0, 12b GPIO, may also be PWM
+    #define P1S1                  41          // P1S1, 12b GPIO, may also be PWM
+    #define P1S2                  42          // P1S2, 12b GPIO, may also be PWM
+    #define P1S3                  44          // P1S3, 12b GPIO, may also be PWM
+    #define P1S4                  47          // P1S4, 12b GPIO, may also be PWM
+    #define P1S5                  48          // P1S5, 12b GPIO, may also be PWM
+
     #define PIN_BTN_SETUP         46          // Setup button
     #define PIN_BTN_RESET         34          // Reset button
     #define PIN_LED_RED           29          // RGBR, Status RGB LED
@@ -23,9 +30,9 @@
     #define PIN_LED_BLUE          31          // RGBB, Status RGB LED
 
     // P1 specific GPIO pins, can also be used as digital GPIOs
-    #define PIN_MOSI_LED          A3 //40          // P1S0, 12b GPIO, may also be PWM
-    #define PIN_LATCH_LED         A4 //41          // P1S1, 12b GPIO, may also be PWM
-    #define PIN_SCK_LED           A5 //42          // P1S2, 12b GPIO
+    #define PIN_MOSI_LED          P1S0        // Panel HC595 data line
+    #define PIN_LATCH_LED         P1S1        // Panel HC595 chip enable
+    #define PIN_SCK_LED           P1S2        // Panel HC595 clock
 #endif
 
 // Digital only GPIO pins (D0 - D7, D0-D4 may also be PWM)

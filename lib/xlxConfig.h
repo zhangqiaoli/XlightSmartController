@@ -33,9 +33,9 @@ typedef struct
 	__attribute__((packed))
 #endif
 {
-  UC State                    :4;           // Component state
-  UC CW                       :8;           // Brightness of cold white
-  UC WW                       :8;           // Brightness of warm white
+  UC State                    :1;           // Component state
+  UC BR                       :7;           // Brightness of white [0..100]
+  US CCT                      :16;          // CCT (warm or cold) [2700..6500]
   UC R                        :8;           // Brightness of red
   UC G                        :8;           // Brightness of green
   UC B                        :8;           // Brightness of blue

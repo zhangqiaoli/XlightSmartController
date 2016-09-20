@@ -21,11 +21,21 @@
  * 1. Click-rotation knob
  * 2. LED brightness indicator
  * 3. RGB status LED
+ * 4. Click-knob actions:
+ * 4.1 BUTTON_CLICKED: switch the lights on/off
+ * 4.2 BUTTON_DOUBLE_CLICKED: switch between BCM (Brightness Control Mode) and CCT control mode temporarily,
+ *      if there is no knob spin operation in CCT mode for a few seconds, it will resume to BCM automatically
+ * 4.3 BUTTON_HELD / BUTTON_RELEASED, system operations
+ *      if >= 30 seconds, then enter DFU mode
+ *      if >= 15 seconds, the enter Wi-Fi setup mode
+ *      if >= 10 seconds, then reset the controller
+ *      if >= 5 seconds, enable base network
  *
 **/
 #include "xliPinMap.h"
 #include "xlxPanel.h"
 #include "xlxLogger.h"
+#include "xlSmartController.h"
 
 #define PANEL_NUM_LEDS_RING   12
 
@@ -103,24 +113,25 @@ bool xlPanelClass::ProcessEncoder()
 	// Read button input
 	ButtonType b = m_pEncoder->getButton();
   if (b != BUTTON_OPEN) {
-    SERIAL("Button: ");
+    IF_SERIAL_DEBUG(SERIAL("Button: "));
     switch (b) {
       case BUTTON_PRESSED:
-        SERIAL_LN("Pressed");
+        IF_SERIAL_DEBUG(SERIAL_LN("Pressed"));
         break;
       case BUTTON_HELD:
-        SERIAL_LN("Held");
+        IF_SERIAL_DEBUG(SERIAL_LN("Held"));
         break;
       case BUTTON_RELEASED:
-        SERIAL_LN("Released");
+        IF_SERIAL_DEBUG(SERIAL_LN("Released"));
         break;
       case BUTTON_CLICKED:
-        SERIAL_LN("Clicked");
+        IF_SERIAL_DEBUG(SERIAL_LN("Clicked"));
+        theSys.ToggleLampOnOff(NODEID_MAINDEVICE);
         break;
       case BUTTON_DOUBLE_CLICKED:
-        SERIAL_LN("DoubleClicked");
-        m_pEncoder->setAccelerationEnabled(!m_pEncoder->getAccelerationEnabled());
-        SERIAL_LN("  Acceleration is %s", m_pEncoder->getAccelerationEnabled() ? "enabled" : "disabled");
+        IF_SERIAL_DEBUG(SERIAL_LN("DoubleClicked"));
+        //m_pEncoder->setAccelerationEnabled(!m_pEncoder->getAccelerationEnabled());
+        //SERIAL_LN("  Acceleration is %s", m_pEncoder->getAccelerationEnabled() ? "enabled" : "disabled");
         break;
     }
   }
@@ -167,7 +178,7 @@ bool xlPanelClass::SetHC595()
 void xlPanelClass::SetRingPos(uint8_t _pos)
 {
   if( !m_pHC595 ) return;
-  SERIAL_LN("pos:%d, b0:0x%x, b1:0x%x", _pos, CCWTipLight595[_pos * 2], CCWTipLight595[_pos * 2+1]);
+  //SERIAL_LN("pos:%d, b0:0x%x, b1:0x%x", _pos, CCWTipLight595[_pos * 2], CCWTipLight595[_pos * 2+1]);
   m_pHC595->setAll(CCWTipLight595 + _pos * 2);
 
 /*

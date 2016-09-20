@@ -222,11 +222,11 @@ int16_t ClickEncoder::getValue(void)
 
   if (val < 0) {
     r = val - accel;
-    SERIAL_LN("val:%d acc: %d - %d", val, _acceleration, accel);
+    //SERIAL_LN("val:%d acc: %d - %d", val, _acceleration, accel);
   }
   else if (val > 0) {
     r = val + accel;
-    SERIAL_LN("val:%d acc: %d - %d", val, _acceleration, accel);
+    //SERIAL_LN("val:%d acc: %d - %d", val, _acceleration, accel);
   }
 
   return r;

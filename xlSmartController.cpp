@@ -72,9 +72,9 @@ void AlarmTimerTriggered(uint32_t tag)
 
 	if (rowptr)
 	{
-		String ring1_payload = theSys.CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
-		String ring2_payload = theSys.CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.CW, rowptr->data.ring2.WW, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
-		String ring3_payload = theSys.CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.CW, rowptr->data.ring3.WW, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
+		String ring1_payload = theSys.CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.BR, rowptr->data.ring1.CCT, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
+		String ring2_payload = theSys.CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.BR, rowptr->data.ring2.CCT, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
+		String ring3_payload = theSys.CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.BR, rowptr->data.ring3.CCT, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
 
 		char buf[64];
 
@@ -322,9 +322,8 @@ void SmartControllerClass::ResetSerialPort()
 
 BOOL SmartControllerClass::CheckRF()
 {
-	return true;
 	// RF Server begins
-	//m_isRF = theRadio.ServerBegin();
+	m_isRF = theRadio.ServerBegin();
 	if( m_isRF ) {
 		// Change it if setting is not default value
 		theRadio.setPALevel(theConfig.GetRFPowerLevel());
@@ -815,9 +814,9 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		ListNode<ScenarioRow_t> *rowptr = SearchScenario(SNT_uid);
 		if (rowptr)
 		{
-			String ring1_payload = CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.CW, rowptr->data.ring1.WW, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
-			String ring2_payload = CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.CW, rowptr->data.ring2.WW, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
-			String ring3_payload = CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.CW, rowptr->data.ring3.WW, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
+			String ring1_payload = CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.BR, rowptr->data.ring1.CCT, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
+			String ring2_payload = CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.BR, rowptr->data.ring2.CCT, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
+			String ring3_payload = CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.BR, rowptr->data.ring3.CCT, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
 
 			char buf[64];
 
@@ -1339,17 +1338,22 @@ bool SmartControllerClass::updateDevStatusRow(MyMessage msg)
 	case S_CUSTOM:
 		if (msg.getType() == V_VAR1)
 		{
+			/*
 			uint64_t payload = msg.getUInt64();
 
 			uint8_t ring_num = (payload >> (8 * 6)) & 0xff;
 			Hue_t ring_col;
 
 			ring_col.State = (payload >> (8 * 5)) & 0xff;
-			ring_col.CW = (payload >> (8 * 4)) & 0xff;
+			ring_col.CW= (payload >> (8 * 4)) & 0xff;
 			ring_col.WW = (payload >> (8 * 3)) & 0xff;
 			ring_col.R = (payload >> (8 * 2)) & 0xff;
 			ring_col.G = (payload >> (8 * 1)) & 0xff;
-			ring_col.B = (payload >> (8 * 0)) & 0xff;
+			ring_col.B = (payload >> (8 * 0)) & 0xff;*/
+			uint8_t *payload = (uint8_t *)msg.getCustom();
+			uint8_t ring_num = payload[0];
+			Hue_t ring_col;
+			memcpy(&ring_col, payload+1, sizeof(Hue_t));
 
 			switch (ring_num)
 			{
@@ -1795,6 +1799,16 @@ US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t 
 	return token;
 }
 
+BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
+{
+	BOOL rc = false;
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if (!DevStatusRowPtr) {
+		DevSoftSwitch(DevStatusRowPtr->data.ring1.State, _nodeID);
+	}
+	return rc;
+}
+
 //------------------------------------------------------------------
 // Printing tables/working memory chains
 //------------------------------------------------------------------
@@ -1922,8 +1936,8 @@ void SmartControllerClass::print_rule_table(int row)
 void SmartControllerClass::Array2Hue(JsonArray& data, Hue_t& hue)
 {
 	hue.State = data[0];
-	hue.CW = data[1];
-	hue.WW = data[2];
+	hue.BR = data[1];
+	hue.CCT = data[2];
 	hue.R = data[3];
 	hue.G = data[4];
 	hue.B = data[5];
@@ -1935,11 +1949,11 @@ String SmartControllerClass::hue_to_string(Hue_t hue)
 	out.concat("State:");
 	out.concat(hue.State);
 	out.concat("|");
-	out.concat("CW:");
-	out.concat(hue.CW);
+	out.concat("BR:");
+	out.concat(hue.BR);
 	out.concat("|");
-	out.concat("WW:");
-	out.concat(hue.WW);
+	out.concat("CCT:");
+	out.concat(hue.CCT);
 	out.concat("|");
 	out.concat("R:");
 	out.concat(hue.R);

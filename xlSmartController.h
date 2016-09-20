@@ -112,6 +112,7 @@ public:
 
   // Device Operations, will be moved to dedicate class later
   US VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t _identity);
+  BOOL ToggleLampOnOff(UC _nodeID = NODEID_MAINDEVICE);
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure

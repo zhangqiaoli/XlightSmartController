@@ -297,8 +297,8 @@ BOOL ConfigClass::InitDevStatus(UC nodeID)
 	whiteHue.B = 0;
 	whiteHue.G = 0;
 	whiteHue.R = 0;
-	whiteHue.CW = 0xFF;
-	whiteHue.WW = 0xFF;
+	whiteHue.BR = 50;
+	whiteHue.CCT = 2700;
 	whiteHue.State = 1; // 1 for on, 0 for off
 
 	//ToDo: ensure radio pairing has occured before doing this step in the future

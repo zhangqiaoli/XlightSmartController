@@ -42,6 +42,13 @@
 // Number of ticks on System Timer
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
 
+// Panel Operarion Timers
+#define RTE_TM_MAX_CCT_IDLE       10          // Maximum idle time (seconds) in CCT control mode
+#define RTE_TM_HELD_TO_DFU        30          // Held duration threshold for DFU
+#define RTE_TM_HELD_TO_WIFI       15          // Held duration threshold to enter Wi-Fi setup
+#define RTE_TM_HELD_TO_RESET      10          // Held duration threshold to reset
+#define RTE_TM_HELD_TO_BASENW     5           // Held duration threshold to enable Base Network
+
 // Maximum number of rows for any working memory table implimented using ChainClass
 #define MAX_TABLE_SIZE    8
 
@@ -69,5 +76,10 @@
 #define NODEID_MIN_REMOTE       64
 #define NODEID_MAX_REMOTE       127
 #define NODEID_DUMMY            255
+
+#define CT_MIN_VALUE            2700
+#define CT_MAX_VALUE            6500
+#define CT_SCOPE                38
+#define CT_STEP                 ((CT_MAX_VALUE-CT_MIN_VALUE)/10)
 
 #endif /* xliConfig_h */

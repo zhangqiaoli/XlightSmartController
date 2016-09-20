@@ -113,6 +113,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 {
 	bool sentOK = false;
 	bool bMsgReady = false;
+	uint8_t bytValue;
 	int iValue;
 	float fValue;
 	char strBuffer[64];
@@ -125,7 +126,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		// Extract NodeID & MessageID
 		lv_nNodeID = (uint8_t)(strMsg.substring(0, nPos).toInt());
 		lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1).toInt());
-		int nPos2 = strMsg.indexOf(nPos + 1, ':');
+		int nPos2 = strMsg.indexOf(':', nPos + 1);
 		if (nPos2 > 0) {
 			lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1, nPos2).toInt());
 			lv_sPayload = strMsg.substring(nPos2 + 1);
@@ -197,6 +198,48 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		msg.set(iValue);
 		bMsgReady = true;
 		SERIAL("Now sending set humidity message...");
+		break;
+
+	case 6:   // Get main lamp(ID:1) power(V_STATUS:2) on/off, ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_REQ, V_STATUS, true);
+		bMsgReady = true;
+		SERIAL("Now sending get V_STATUS message...");
+		break;
+
+	case 7:   // Set main lamp(ID:1) power(V_STATUS:2) on/off, ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_STATUS, true);
+		bytValue = (lv_sPayload == "1" ? 1 : 0);
+		msg.set(bytValue);
+		bMsgReady = true;
+		SERIAL("Now sending set V_STATUS %s message...", (bytValue ? "on" : "off"));
+		break;
+
+	case 8:   // Get main lamp(ID:1) dimmer (V_PERCENTAGE:3), ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_REQ, V_PERCENTAGE, true);
+		bMsgReady = true;
+		SERIAL("Now sending get V_PERCENTAGE message...");
+		break;
+
+	case 9:   // Set main lamp(ID:1) dimmer (V_PERCENTAGE:3), ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_PERCENTAGE, true);
+		bytValue = constrain(atoi(lv_sPayload), 0, 100);
+		msg.set(bytValue);
+		bMsgReady = true;
+		SERIAL("Now sending set V_PERCENTAGE:%d message...", bytValue);
+		break;
+
+	case 10:  // Get main lamp(ID:1) color temperature (V_LEVEL), ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_REQ, V_LEVEL, true);
+		bMsgReady = true;
+		SERIAL("Now sending get CCT V_LEVEL message...");
+		break;
+
+	case 11:  // Set main lamp(ID:1) color temperature (V_LEVEL), ack
+		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_LEVEL, true);
+		iValue = constrain(atoi(lv_sPayload), CT_MIN_VALUE, CT_MAX_VALUE);
+		msg.set((unsigned int)iValue);
+		bMsgReady = true;
+		SERIAL("Now sending set CCT V_LEVEL %d message...", iValue);
 		break;
 	}
 
@@ -336,7 +379,7 @@ bool RF24ServerClass::ProcessReceive()
 			if( msgType == V_PERCENTAGE ) {
 				// Lamp on/of
 				replyTo = msg.getSender();
-				transTo = msg.getSensor();
+				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				if( transTo > 0 ) {
 					bool bIsAck = msg.isAck();
 
@@ -352,7 +395,7 @@ bool RF24ServerClass::ProcessReceive()
 			if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
 				// Lamp on/of
 				replyTo = msg.getSender();
-				transTo = msg.getSensor();
+				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				if( transTo > 0 ) {
 					UC bOnOff;
 					String sPayload;
@@ -362,15 +405,19 @@ bool RF24ServerClass::ProcessReceive()
 						sPayload = msg.getString();
 					}
 					bool bIsAck = msg.isAck();
-
-					// Transfer message
-					msg.build(getAddress(), transTo, replyTo, C_SET, msgType, !bIsAck, bIsAck);
-					if( msgType == V_STATUS ) {
-						msg.set(bOnOff);
-					} else if( msgType == V_PERCENTAGE ) {
-						msg.set(sPayload.c_str());
+					if( bIsAck ) {
+						// ToDo: change Dev_Status
 					}
-					msgReady = true;
+					if( !bIsAck || (transTo >= NODEID_MIN_REMOTE && transTo >= NODEID_MAX_REMOTE) ) {
+						// Transfer message
+						msg.build(getAddress(), transTo, replyTo, C_SET, msgType, !bIsAck, bIsAck);
+						if( msgType == V_STATUS ) {
+							msg.set(bOnOff);
+						} else if( msgType == V_PERCENTAGE ) {
+							msg.set(sPayload.c_str());
+						}
+						msgReady = true;
+					}
 				}
 			}
 			break;
@@ -382,7 +429,7 @@ bool RF24ServerClass::ProcessReceive()
 	// Send reply message
 	if( msgReady ) {
 		_times++;
-		sentOK = send(replyTo, msg, pipe);
+		sentOK = send(msg.getDestination(), msg, pipe);
 		if( sentOK ) _succ++;
 	}
 
