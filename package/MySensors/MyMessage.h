@@ -275,7 +275,12 @@ public:
 	MyMessage();
 	MyMessage(uint8_t sensor, uint8_t type);
 
-	inline MyMessage& build (uint8_t _sender, uint8_t _destination, uint8_t _sensor, uint8_t _command, uint8_t _type, bool _enableAck, bool _isAck = false) {
+	inline MyMessage& build (uint8_t _sender, uint8_t _destination, uint8_t _sensor, uint8_t _command, uint8_t _type, bool _enableAck, bool _isAck = false, bool _keepPayload = false) {
+		uint8_t pl_len, pl_typ;
+		if( _keepPayload ) {
+			pl_len = miGetLength();
+			pl_typ = miGetPayloadType();
+		}
 		msg.header.version_length = PROTOCOL_VERSION;
 		msg.header.sender = _sender;
 		msg.header.destination = _destination;
@@ -284,6 +289,10 @@ public:
 		miSetCommand(_command);
 		miSetRequestAck(_enableAck);
 		miSetAck(_isAck);
+		if( _keepPayload ) {
+			miSetLength(pl_len);
+			miSetPayloadType(pl_typ);
+		}
 		return *this;
 	}
 

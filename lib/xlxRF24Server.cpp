@@ -241,6 +241,12 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		bMsgReady = true;
 		SERIAL("Now sending set CCT V_LEVEL %d message...", iValue);
 		break;
+
+	case 12:  // Request lamp status in one
+		msg.build(getAddress(), lv_nNodeID, 1, C_REQ, V_RGBW, true);
+		bMsgReady = true;
+		SERIAL("Now sending get dev-status (V_RGBW) message...");
+		break;
 	}
 
 	if (bMsgReady) {
@@ -303,8 +309,9 @@ bool RF24ServerClass::ProcessReceive()
   char strDisplay[SENSORDATA_JSON_SIZE];
   _received++;
 	msgType = msg.getType();
+	replyTo = msg.getSender();
   LOGD(LOGTAG_MSG, "Received from pipe %d msg-len=%d, from:%d to:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
-        pipe, len, msg.getSender(), to, msg.getDestination(), msg.getCommand(),
+        pipe, len, replyTo, to, msg.getDestination(), msg.getCommand(),
         msgType, msg.getSensor(), msg.getLength());
 	/*
   memset(strDisplay, 0x00, sizeof(strDisplay));
@@ -313,6 +320,11 @@ bool RF24ServerClass::ProcessReceive()
   memset(strDisplay, 0x00, sizeof(strDisplay));
   SERIAL_LN("  Serial: %s, len: %d", msg.getSerialString(strDisplay), strlen(strDisplay));
 	*/
+
+	bool _bIsAck = msg.isAck();
+	bool _needAck = msg.isReqAck();
+	UC _bValue;
+	US _iValue;
 
   switch( msg.getCommand() )
   {
@@ -323,7 +335,7 @@ bool RF24ServerClass::ProcessReceive()
 				char cNodeType = (char)msg.getSensor();
 				uint64_t nIdentity = msg.getUInt64();
         UC newID = theConfig.lstNodes.requestNodeID(cNodeType, nIdentity);
-        replyTo = msg.getSender();
+
         /// Send response message
         msg.build(getAddress(), replyTo, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
 				if( newID > 0 ) {
@@ -349,7 +361,7 @@ bool RF24ServerClass::ProcessReceive()
 		case C_PRESENTATION:
 			if( msgType == S_LIGHT || msgType == S_DIMMER ) {
 				US token;
-				if( !msg.isAck() ) {
+				if( _needAck ) {
 					// Presentation message: appear of Smart Lamp
 					// Verify credential, return token if true, and change device status
 					UC lv_nNodeID = msg.getSender();
@@ -359,10 +371,10 @@ bool RF24ServerClass::ProcessReceive()
 					if( token ) {
 						// return token
 						// Notes: lampType & S_LIGHT are not necessary
-						replyTo = msg.getSender();
 		        msg.build(getAddress(), replyTo, lampType, C_PRESENTATION, msgType, false, true);
 						msg.set((unsigned int)token);
 						msgReady = true;
+						// ToDo: send status req to this lamp
 					} else {
 						LOGW(LOGTAG_MSG, "Unqualitied device connect attemp received");
 					}
@@ -376,15 +388,16 @@ bool RF24ServerClass::ProcessReceive()
 
 		case C_REQ:
 			// ToDo: verify token
-			if( msgType == V_PERCENTAGE ) {
-				// Lamp on/of
-				replyTo = msg.getSender();
+			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL || msgType == V_RGBW ) {
+				if( _bIsAck ) {
+					// ToDo: change Dev_Status
+				}
+				// ToDo: if lamp is not present, reture error
 				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				if( transTo > 0 ) {
-					bool bIsAck = msg.isAck();
-
 					// Transfer message
-					msg.build(getAddress(), transTo, replyTo, C_REQ, V_PERCENTAGE, !bIsAck, bIsAck);
+					msg.build(getAddress(), transTo, replyTo, C_REQ, msgType, _needAck, _bIsAck, true);
+					// Keep payload unchanged
 					msgReady = true;
 				}
 			}
@@ -392,32 +405,27 @@ bool RF24ServerClass::ProcessReceive()
 
 		case C_SET:
 			// ToDo: verify token
-			if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
-				// Lamp on/of
-				replyTo = msg.getSender();
+			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL ) {
+				// Lamp on/off, Dimmer or CCT
+				// ToDo: if lamp is not present, reture error
 				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				if( transTo > 0 ) {
-					UC bOnOff;
-					String sPayload;
-					if( msgType == V_STATUS ) {
-						bOnOff = msg.getByte();
-					} else if( msgType == V_PERCENTAGE ) {
-						sPayload = msg.getString();
+					if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
+						_bValue = msg.getByte();
+					} else if( msgType == V_LEVEL ) {
+						_iValue = (US)msg.getUInt();
 					}
-					bool bIsAck = msg.isAck();
-					if( bIsAck ) {
+					if( _bIsAck ) {
 						// ToDo: change Dev_Status
 					}
-					if( !bIsAck || (transTo >= NODEID_MIN_REMOTE && transTo >= NODEID_MAX_REMOTE) ) {
-						// Transfer message
-						msg.build(getAddress(), transTo, replyTo, C_SET, msgType, !bIsAck, bIsAck);
-						if( msgType == V_STATUS ) {
-							msg.set(bOnOff);
-						} else if( msgType == V_PERCENTAGE ) {
-							msg.set(sPayload.c_str());
-						}
-						msgReady = true;
+					// Transfer message
+					msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck);
+					if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
+						msg.set(_bValue);
+					} else if( msgType == V_LEVEL ) {
+						msg.set((unsigned int)_iValue);
 					}
+					msgReady = true;
 				}
 			}
 			break;

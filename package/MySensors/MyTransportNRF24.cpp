@@ -127,6 +127,14 @@ bool MyTransportNRF24::isValid() {
 	return(_bValid & rf24.isValid());
 }
 
+bool MyTransportNRF24::CheckConfig()
+{
+	if( rf24.getChannel() != RF24_CHANNEL ) return false;
+	if( rf24.getDataRate() != RF24_DATARATE ) return false;
+	if( rf24.getCRCLength() != RF24_CRC_16 ) return false;
+	return true;
+}
+
 // SBS added 2016-07-04
 void MyTransportNRF24::PrintRFDetails() {
 	rf24.printDetails();

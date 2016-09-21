@@ -57,6 +57,7 @@ public:
 	bool switch2BaseNetwork();
 	bool switch2MyNetwork();
 	bool isValid();
+	bool CheckConfig();
 	void PrintRFDetails();
 
 	// SBS added 2016-07-22

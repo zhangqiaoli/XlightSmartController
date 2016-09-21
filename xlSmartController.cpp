@@ -327,6 +327,7 @@ BOOL SmartControllerClass::CheckRF()
 	if( m_isRF ) {
 		// Change it if setting is not default value
 		theRadio.setPALevel(theConfig.GetRFPowerLevel());
+		m_isRF = theRadio.CheckConfig();
 	}
 	return m_isRF;
 }
@@ -404,9 +405,12 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 		// Check RF module
 		++tickAcitveCheck;
 		tickCheckRadio = 0;
-    if( !IsRFGood() ) {
+    if( !IsRFGood() || !theRadio.CheckConfig() ) {
       if( CheckRF() ) {
-        LOGN(LOGTAG_MSG, F("RF24 module recovered."));
+				theRadio.switch2BaseNetwork();
+				delay(10);
+				theRadio.switch2MyNetwork();
+        LOGN(LOGTAG_MSG, F("RF24 moudle recovered."));
       }
     }
 
@@ -573,14 +577,14 @@ bool SmartControllerClass::ProcessPanel()
 ///   dev: device id or 0 (all devices under this controller)
 int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 {
-	String strCmd = String::format("%d;%d;%d;%d;%d;%d", dev, S_DIMMER, C_SET, 1, V_STATUS, (sw ? 1:0));
-	ExecuteLightCommand(strCmd);
+	//String strCmd = String::format("%d;%d;%d;%d;%d;%d", dev, S_DIMMER, C_SET, 1, V_STATUS, (sw ? 1:0));
+	//ExecuteLightCommand(strCmd);
 
 	//ToDo: if dev = 0, go through list of devices
 	// ToDo:
 	//SetStatus();
-
-	return 0;
+	String strCmd = String::format("%d:7:%d", dev, sw ? 1 : 0);
+	return theRadio.ProcessSend(strCmd);
 }
 
 // High speed system timer process
@@ -1773,7 +1777,7 @@ US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t 
 				theConfig.SetDSTChanged(true);
 				DevStatusRowPtr = SearchDevStatus(_nodeID);
 				//ToDo: remove
-				SERIAL_LN("Test DevStatus_table2 added item: %d, size: %d", _nodeID, theSys.DevStatus_table.size());
+				//SERIAL_LN("Test DevStatus_table2 added item: %d, size: %d", _nodeID, theSys.DevStatus_table.size());
 			}
 		}
 		if(!DevStatusRowPtr) {
@@ -1804,8 +1808,19 @@ BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 	BOOL rc = false;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (!DevStatusRowPtr) {
-		DevSoftSwitch(DevStatusRowPtr->data.ring1.State, _nodeID);
+		rc = DevSoftSwitch(DevStatusRowPtr->data.ring1.State, _nodeID);
 	}
+	return rc;
+}
+
+BOOL SmartControllerClass::ChangeLampBrightness(UC _nodeID, UC _percentage)
+{
+	BOOL rc = false;
+	//ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	//if (!DevStatusRowPtr) {
+		String strCmd = String::format("%d:9:%d", _nodeID, _percentage);
+		rc = theRadio.ProcessSend(strCmd);
+	//}
 	return rc;
 }
 
@@ -1814,6 +1829,13 @@ BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 //------------------------------------------------------------------
 void SmartControllerClass::print_devStatus_table(int row)
 {
+	SERIAL_LN("==== DevStatus Row %d ====", row);
+	SERIAL_LN("uid = %d, type = %d", DevStatus_table.get(row).uid, DevStatus_table.get(row).type);
+	SERIAL_LN("node_id = %d, present = %s", DevStatus_table.get(row).node_id, (DevStatus_table.get(row).present ? "true" : "false"));
+  SERIAL_LN("Status: %s, BR: %d, CCT: %d\n\r", DevStatus_table.get(row).ring1.State ? "On" : "Off",
+				DevStatus_table.get(row).ring1.BR, DevStatus_table.get(row).ring1.CCT);
+
+/*
 	SERIAL_LN("==========================");
 	SERIAL_LN("==== DevStatus Row %d ====", row);
 
@@ -1839,6 +1861,7 @@ void SmartControllerClass::print_devStatus_table(int row)
 	SERIAL_LN("ring1 = %s", hue_to_string(DevStatus_table.get(row).ring1).c_str());
 	SERIAL_LN("ring2 = %s", hue_to_string(DevStatus_table.get(row).ring2).c_str());
 	SERIAL_LN("ring3 = %s", hue_to_string(DevStatus_table.get(row).ring3).c_str());
+	*/
 }
 
 void SmartControllerClass::print_schedule_table(int row)

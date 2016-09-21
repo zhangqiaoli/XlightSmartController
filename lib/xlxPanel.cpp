@@ -151,6 +151,8 @@ void xlPanelClass::SetDimmerValue(int16_t _value)
 	if( m_nDimmerValue != _value ) {
 		m_nDimmerValue = _value;
     SetHC595();
+    // Send Light Percentage message
+    theSys.ChangeLampBrightness(NODEID_MAINDEVICE, _value);
 		LOGD(LOGTAG_EVENT, "Dimmer changed to %d", _value);
 	}
 }
