@@ -52,6 +52,8 @@ xlPanelClass::xlPanelClass()
   m_pEncoder = NULL;
   m_pHC595 = NULL;
   m_nDimmerValue = 0;
+  m_nCCTValue = 0;
+  m_bCCTFlag = false;
 }
 
 xlPanelClass::~xlPanelClass()
@@ -105,10 +107,17 @@ bool xlPanelClass::ProcessEncoder()
   if( !m_pEncoder ) return false;
 
 	// Read dimmer value
-	int16_t _dimValue = GetDimmerValue();
-	int16_t _delta = m_pEncoder->getValue();
-  _dimValue += _delta;
-	SetDimmerValue(_dimValue);
+  int16_t _dimValue;
+  int16_t _delta = m_pEncoder->getValue();
+  if( GetCCTFlag() ) {
+    _dimValue = GetCCTValue();
+    _dimValue += _delta;
+  	SetCCTValue(_dimValue);
+  } else {
+  	_dimValue = GetDimmerValue();
+    _dimValue += _delta;
+  	SetDimmerValue(_dimValue);
+  }
 
 	// Read button input
 	ButtonType b = m_pEncoder->getButton();
@@ -130,6 +139,7 @@ bool xlPanelClass::ProcessEncoder()
         break;
       case BUTTON_DOUBLE_CLICKED:
         IF_SERIAL_DEBUG(SERIAL_LN("DoubleClicked"));
+        ReverseCCTFlag();
         //m_pEncoder->setAccelerationEnabled(!m_pEncoder->getAccelerationEnabled());
         //SERIAL_LN("  Acceleration is %s", m_pEncoder->getAccelerationEnabled() ? "enabled" : "disabled");
         break;
@@ -153,8 +163,34 @@ void xlPanelClass::SetDimmerValue(int16_t _value)
     SetHC595();
     // Send Light Percentage message
     theSys.ChangeLampBrightness(NODEID_MAINDEVICE, _value);
-		LOGD(LOGTAG_EVENT, "Dimmer changed to %d", _value);
+		LOGD(LOGTAG_EVENT, "Dimmer-BR changed to %d", _value);
 	}
+}
+
+int16_t xlPanelClass::GetCCTValue()
+{
+	return m_nCCTValue;
+}
+
+void xlPanelClass::SetCCTValue(int16_t _value)
+{
+	// Restrict range
+  _value = constrain(_value, 0, 100);
+
+	if( m_nCCTValue != _value ) {
+		m_nCCTValue = _value;
+    //SetHC595();
+    // Send CCT message
+    US cctValue = map(_value, 0, 100, CT_MIN_VALUE, CT_MAX_VALUE);
+    theSys.ChangeLampCCT(NODEID_MAINDEVICE, cctValue);
+		LOGD(LOGTAG_EVENT, "Dimmer-CCT changed to %d", cctValue);
+	}
+}
+
+void xlPanelClass::UpdateCCTValue(US _value)
+{
+  UC cct_dimmer = map(_value, CT_MIN_VALUE, CT_MAX_VALUE, 0, 100);
+  m_nCCTValue = cct_dimmer;
 }
 
 uint8_t xlPanelClass::GetButtonStatus()
@@ -244,4 +280,21 @@ bool xlPanelClass::CheckLEDRing(uint8_t _testno)
   }
 
   return true;
+}
+
+bool xlPanelClass::GetCCTFlag()
+{
+  return m_bCCTFlag;
+}
+
+void xlPanelClass::SetCCTFlag(bool _flag)
+{
+  if( m_bCCTFlag != _flag ) {
+    m_bCCTFlag = _flag;
+  }
+}
+
+void xlPanelClass::ReverseCCTFlag()
+{
+  SetCCTFlag(!m_bCCTFlag);
 }

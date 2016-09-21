@@ -40,6 +40,7 @@
 #include "xliPinMap.h"
 #include "xlSmartController.h"
 #include "xlxLogger.h"
+#include "xlxPanel.h"
 
 #include "MyParserSerial.h"
 
@@ -391,6 +392,34 @@ bool RF24ServerClass::ProcessReceive()
 			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL || msgType == V_RGBW ) {
 				if( _bIsAck ) {
 					// ToDo: change Dev_Status
+					if( theSys.m_pMainDev ) {
+						if( msgType == V_STATUS ) {
+							theSys.m_pMainDev->data.ring1.State = msg.getByte();	// ToDo: set panel ring on or off
+						} else if( msgType == V_PERCENTAGE ) {
+							theSys.m_pMainDev->data.ring1.BR = msg.getByte();
+							thePanel.SetDimmerValue(theSys.m_pMainDev->data.ring1.BR);
+						} else if( msgType == V_LEVEL ) {
+							theSys.m_pMainDev->data.ring1.CCT = (US)msg.getUInt();
+							thePanel.UpdateCCTValue(theSys.m_pMainDev->data.ring1.CCT);
+						} else if( msgType == V_RGBW ) {
+							uint8_t *payload = (uint8_t *)msg.getCustom();
+							if( payload[0] ) {	// Succeed or not
+								UC _devType = payload[1];
+								theSys.m_pMainDev->data.type = _devType;
+								theSys.m_pMainDev->data.present = payload[2];
+								theSys.m_pMainDev->data.ring1.State = payload[3];
+								theSys.m_pMainDev->data.ring1.BR = payload[4];
+								if( _devType >= devtypWRing3 && _devType <= devtypWRing1 ) {
+									// Sunny
+									US _CCTValue = payload[5] * 256 + payload[6];
+									theSys.m_pMainDev->data.ring1.CCT = _CCTValue;
+								} else if( _devType >= devtypCRing3 && _devType <= devtypCRing1 ) {
+									// Rainbow or Mirage
+									// ToDo: set RWB
+								}
+							}
+						}
+					}
 				}
 				// ToDo: if lamp is not present, reture error
 				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
@@ -417,6 +446,17 @@ bool RF24ServerClass::ProcessReceive()
 					}
 					if( _bIsAck ) {
 						// ToDo: change Dev_Status
+						if( theSys.m_pMainDev ) {
+							if( msgType == V_STATUS ) {
+								theSys.m_pMainDev->data.ring1.State = _bValue;	// ToDo: set panel ring on or off
+							} else if( msgType == V_PERCENTAGE ) {
+								theSys.m_pMainDev->data.ring1.BR = _bValue;
+								thePanel.SetDimmerValue(_bValue);
+							} else if( msgType == V_LEVEL ) {
+								theSys.m_pMainDev->data.ring1.CCT = _iValue;
+								thePanel.UpdateCCTValue(_iValue);
+							}
+						}
 					}
 					// Transfer message
 					msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck);

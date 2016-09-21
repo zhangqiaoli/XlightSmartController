@@ -109,11 +109,13 @@ public:
   ListNode<ScheduleRow_t> *SearchSchedule(UC uid);
   ListNode<ScenarioRow_t> *SearchScenario(UC uid);
   ListNode<DevStatusRow_t> *SearchDevStatus(UC dest_id); //destination node
+  ListNode<DevStatusRow_t> *m_pMainDev;
 
   // Device Operations, will be moved to dedicate class later
   US VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t _identity);
   BOOL ToggleLampOnOff(UC _nodeID = NODEID_MAINDEVICE);
   BOOL ChangeLampBrightness(UC _nodeID = NODEID_MAINDEVICE, UC _percentage = 50);
+  BOOL ChangeLampCCT(UC _nodeID = NODEID_MAINDEVICE, US _cct = 3000);
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure

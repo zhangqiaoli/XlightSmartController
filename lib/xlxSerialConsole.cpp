@@ -424,8 +424,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("  System Info: %s-%s\n\r", theSys.GetSysID().c_str(), theSys.GetSysVersion().c_str());
       CloudOutput("NodeID: %d (%s), Status: %d", lv_NodeID, (lv_NodeID==GATEWAY_ADDRESS ? "Gateway" : (lv_NodeID==AUTO ? "AUTO" : "Node")), theSys.GetStatus());
   } else if (strnicmp(sTopic, "button", 6) == 0) {
-      SERIAL_LN("Knob status - Dimmer:%d, Button:%d\n\r",  thePanel.GetDimmerValue(), thePanel.GetButtonStatus());
-      CloudOutput("Dimmer:%d, Button:%d", thePanel.GetDimmerValue(), thePanel.GetButtonStatus());
+      SERIAL_LN("Knob status - Dimmer:%d, Button:%d, CCT Flag:%d\n\r",  thePanel.GetDimmerValue(), thePanel.GetButtonStatus(), thePanel.GetCCTFlag());
+      CloudOutput("Dimmer:%d, Button:%d, CCT Flag:%d", thePanel.GetDimmerValue(), thePanel.GetButtonStatus(), thePanel.GetCCTFlag());
   } else if (strnicmp(sTopic, "nlist", 5) == 0) {
       SERIAL_LN("**Node List count:%d, size:%d", theConfig.lstNodes.count(), theConfig.lstNodes.size());
       theConfig.lstNodes.showList();

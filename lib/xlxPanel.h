@@ -11,6 +11,8 @@ private:
   ClickEncoder *m_pEncoder;
   ShiftRegister74HC595 *m_pHC595;
   int16_t m_nDimmerValue;
+  int16_t m_nCCTValue;
+  bool m_bCCTFlag;
 
 protected:
   bool SetHC595();
@@ -30,7 +32,14 @@ public:
 
   int16_t GetDimmerValue();
   void SetDimmerValue(int16_t _value);
+  int16_t GetCCTValue();
+  void SetCCTValue(int16_t _value);
+  void UpdateCCTValue(US _value);
   uint8_t GetButtonStatus();
+
+  bool GetCCTFlag();
+  void SetCCTFlag(bool _flag);
+  void ReverseCCTFlag();
 };
 
 //------------------------------------------------------------------

@@ -274,6 +274,7 @@ void SmartControllerClass::InitCloudObj()
 BOOL SmartControllerClass::Start()
 {
 	// ToDo:bring controller up along with all modules (RF, wifi, BLE)
+	m_pMainDev = SearchDevStatus(NODEID_MAINDEVICE);
 
 	LOGI(LOGTAG_MSG, F("SmartController started."));
 	LOGI(LOGTAG_MSG, "Product Info: %s-%s-%d",
@@ -287,6 +288,11 @@ BOOL SmartControllerClass::Start()
 
 	// Change Panel LED ring to the recent level
 	thePanel.SetDimmerValue(theConfig.GetBrightIndicator());
+	// ToDo: sync panel with dev-st
+	if( m_pMainDev ) {
+		thePanel.UpdateCCTValue(m_pMainDev->data.ring1.CCT);
+		ChangeLampCCT(NODEID_MAINDEVICE, m_pMainDev->data.ring1.CCT);
+	}
 
 	return true;
 }
@@ -1807,8 +1813,9 @@ BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 {
 	BOOL rc = false;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
-	if (!DevStatusRowPtr) {
-		rc = DevSoftSwitch(DevStatusRowPtr->data.ring1.State, _nodeID);
+	if (DevStatusRowPtr) {
+		rc = DevSoftSwitch(!DevStatusRowPtr->data.ring1.State, _nodeID);
+		if( rc ) DevStatusRowPtr->data.ring1.State = !DevStatusRowPtr->data.ring1.State;
 	}
 	return rc;
 }
@@ -1821,6 +1828,14 @@ BOOL SmartControllerClass::ChangeLampBrightness(UC _nodeID, UC _percentage)
 		String strCmd = String::format("%d:9:%d", _nodeID, _percentage);
 		rc = theRadio.ProcessSend(strCmd);
 	//}
+	return rc;
+}
+
+BOOL SmartControllerClass::ChangeLampCCT(UC _nodeID, US _cct)
+{
+	BOOL rc = false;
+	String strCmd = String::format("%d:11:%d", _nodeID, _cct);
+	rc = theRadio.ProcessSend(strCmd);
 	return rc;
 }
 
