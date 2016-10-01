@@ -34,7 +34,7 @@ public:
   void SetDimmerValue(int16_t _value);
   int16_t GetCCTValue();
   void SetCCTValue(int16_t _value);
-  void UpdateCCTValue(US _value);
+  void UpdateCCTValue(uint16_t _value);
   uint8_t GetButtonStatus();
 
   bool GetCCTFlag();

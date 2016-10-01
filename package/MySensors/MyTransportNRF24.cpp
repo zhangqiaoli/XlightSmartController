@@ -50,7 +50,7 @@ bool MyTransportNRF24::init() {
 	rf24.setDataRate(RF24_DATARATE);
 	rf24.setRetries(5,15);
 	rf24.setCRCLength(RF24_CRC_16);
-	rf24.enableDynamicPayloads();
+	rf24.enableDynamicPayloads(false);
 
 	// All nodes listen to broadcast pipe (for FIND_PARENT_RESPONSE messages)
 	for( uint8_t i=0; i<6; i++) {

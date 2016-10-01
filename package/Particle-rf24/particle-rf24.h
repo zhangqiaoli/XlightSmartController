@@ -749,7 +749,7 @@ s   *
    * once in a while.  This enables dynamic payloads on ALL pipes.
    *
    */
-  void enableDynamicPayloads(void);
+  void enableDynamicPayloads(bool _enable = true);
 
   /**
    * Enable dynamic ACKs (single write multicast or unicast) for chosen messages

@@ -143,13 +143,13 @@ inline void resetIdentity(UC *pId)
 
 inline BOOL isIdentityEqual(UC *pId1, UC *pId2)
 {
-  for( int i = 0; i < 6; i++ ) { if(pId1[i] != pId2[i]) return false; }
+  for( int i = 0; i < LEN_NODE_IDENTITY; i++ ) { if(pId1[i] != pId2[i]) return false; }
   return true;
 };
 
 inline BOOL isIdentityEqual(UC *pId1, uint64_t *pData)
 {
-  UC pId2[6]; copyIdentity(pId2, pData);
+  UC pId2[LEN_NODE_IDENTITY]; copyIdentity(pId2, pData);
   return isIdentityEqual(pId1, pId2);
 };
 

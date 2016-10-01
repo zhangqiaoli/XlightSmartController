@@ -42,8 +42,6 @@
 // the one and only instance of Panel class
 xlPanelClass thePanel;
 
-//uint16_t CCWTipLight595 [] = {0x0000,0x0001,0x0003,0x0007,0x000f,0x001f,0x003f,0x007f,0x00ff,0x01ff,0x03ff,0x07ff,0x0fff};
-//uint16_t CWTipLight595 [] = {0x0000,0x0800,0x0c00,0x0e00,0x0f00,0x0f80,0x0fc0,0x0fe0,0x0ff0,0x0ff8,0x0ffc,0x0ffe,0x0fff};
 uint8_t CCWTipLight595 [] = {0x00,0x00,0x01,0x00,0x03,0x00,0x07,0x00,0x0f,0x00,0x1f,0x00,0x3f,0x00,0x7f,0x00,0xff,0x00,0xff,0x01,0xff,0x03,0xff,0x07,0xff,0x0f};
 uint8_t CWTipLight595 [] = {0x00,0x00,0x00,0x08,0x00,0x0c,0x00,0x0e,0x00,0x0f,0x80,0x0f,0xc0,0x0f,0xe0,0x0f,0xf0,0x0f,0xf8,0x0f,0xfc,0x0f,0xfe,0x0f,0xff,0x0f};
 
@@ -187,7 +185,7 @@ void xlPanelClass::SetCCTValue(int16_t _value)
 	}
 }
 
-void xlPanelClass::UpdateCCTValue(US _value)
+void xlPanelClass::UpdateCCTValue(uint16_t _value)
 {
   UC cct_dimmer = map(_value, CT_MIN_VALUE, CT_MAX_VALUE, 0, 100);
   m_nCCTValue = cct_dimmer;
@@ -217,25 +215,7 @@ void xlPanelClass::SetRingPos(uint8_t _pos)
 {
   if( !m_pHC595 ) return;
   //SERIAL_LN("pos:%d, b0:0x%x, b1:0x%x", _pos, CCWTipLight595[_pos * 2], CCWTipLight595[_pos * 2+1]);
-  m_pHC595->setAll(CCWTipLight595 + _pos * 2);
-
-/*
-  bool bDir = true;
-  if( m_pEncoder ) {
-    bDir = m_pEncoder->getDirection();
-  }
-  if( bDir )
-    m_pHC595->setAll((uint8_t *)(CCWTipLight595 + _pos));
-  else
-    m_pHC595->setAll((uint8_t *)(CWTipLight595 + _pos));
-*/
-
-/*uint8_t i;
-  for (i = 0; i <= _pos; i++) {
-    if( !m_pHC595->get(i) ) {
-      m_pHC595->set(i, HIGH);
-    }
-  }*/
+  m_pHC595->setAll(CWTipLight595 + _pos * 2);
 }
 
 bool xlPanelClass::CheckLEDRing(uint8_t _testno)

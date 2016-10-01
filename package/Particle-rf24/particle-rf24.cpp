@@ -1021,8 +1021,15 @@ void RF24::toggle_features(void)
 
 /****************************************************************************/
 
-void RF24::enableDynamicPayloads(void)
+void RF24::enableDynamicPayloads(bool _enable)
 {
+  if( !_enable ) {
+    write_register(FEATURE, 0x00);
+    write_register(DYNPD, 0x00);
+    dynamic_payloads_enabled = false;
+    return;
+  }
+  
   // Enable dynamic payload throughout the system
   write_register(FEATURE,read_register(FEATURE) | _BV(EN_DPL) );
 
