@@ -330,7 +330,7 @@ bool RF24ServerClass::ProcessReceive()
   switch( msg.getCommand() )
   {
     case C_INTERNAL:
-      if( msgType == I_ID_REQUEST && msg.getSender() == AUTO ) {
+      if( msgType == I_ID_REQUEST && (replyTo == AUTO || replyTo == BASESERVICE_ADDRESS) ) {
         // On ID Request message:
         /// Get new ID
 				char cNodeType = (char)msg.getSensor();
@@ -346,16 +346,6 @@ bool RF24ServerClass::ProcessReceive()
 					LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentity));
 				}
 				msgReady = true;
-      } else if( msgType == I_ID_RESPONSE && getAddress() == AUTO ) {
-				// Device/client got nodeID from Controller
-				uint8_t lv_nodeID = msg.getSensor();
-        if( lv_nodeID == NODEID_GATEWAY || lv_nodeID == NODEID_DUMMY ) {
-          LOGE(LOGTAG_MSG, F("Failed to get NodeID"));
-        } else {
-					uint64_t lv_networkID = msg.getUInt64();
-          LOGI(LOGTAG_DATA, "Get NodeId: %d, networkId: %s", lv_nodeID, PrintUint64(strDisplay, lv_networkID));
-          setAddress(lv_nodeID, lv_networkID);
-        }
       }
       break;
 
@@ -379,10 +369,6 @@ bool RF24ServerClass::ProcessReceive()
 					} else {
 						LOGW(LOGTAG_MSG, "Unqualitied device connect attemp received");
 					}
-				} else {
-					// Device/client got Response to Presentation message, ready to work
-					token = msg.getUInt();
-					LOGN(LOGTAG_MSG, "Node:%d got Presentation Response with token:%d", getAddress(), token);
 				}
 			}
 			break;
@@ -394,10 +380,11 @@ bool RF24ServerClass::ProcessReceive()
 					// ToDo: change Dev_Status
 					if( theSys.m_pMainDev ) {
 						if( msgType == V_STATUS ) {
-							theSys.m_pMainDev->data.ring1.State = msg.getByte();	// ToDo: set panel ring on or off
+							theSys.ConfirmLampOnOff(replyTo, msg.getByte());
 						} else if( msgType == V_PERCENTAGE ) {
 							theSys.m_pMainDev->data.ring1.BR = msg.getByte();
 							thePanel.SetDimmerValue(theSys.m_pMainDev->data.ring1.BR);
+							//theSys.ConfirmLampOnOff(replyTo, msg.getByte() > 0);
 						} else if( msgType == V_LEVEL ) {
 							theSys.m_pMainDev->data.ring1.CCT = (US)msg.getUInt();
 							thePanel.UpdateCCTValue(theSys.m_pMainDev->data.ring1.CCT);
@@ -448,7 +435,7 @@ bool RF24ServerClass::ProcessReceive()
 						// ToDo: change Dev_Status
 						if( theSys.m_pMainDev ) {
 							if( msgType == V_STATUS ) {
-								theSys.m_pMainDev->data.ring1.State = _bValue;	// ToDo: set panel ring on or off
+								theSys.ConfirmLampOnOff(replyTo, _bValue);
 							} else if( msgType == V_PERCENTAGE ) {
 								theSys.m_pMainDev->data.ring1.BR = _bValue;
 								thePanel.SetDimmerValue(_bValue);

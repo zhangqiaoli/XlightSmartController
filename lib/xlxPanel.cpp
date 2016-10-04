@@ -215,7 +215,14 @@ void xlPanelClass::SetRingPos(uint8_t _pos)
 {
   if( !m_pHC595 ) return;
   //SERIAL_LN("pos:%d, b0:0x%x, b1:0x%x", _pos, CCWTipLight595[_pos * 2], CCWTipLight595[_pos * 2+1]);
-  m_pHC595->setAll(CWTipLight595 + _pos * 2);
+  m_pHC595->setAll(CCWTipLight595 + _pos * 2);
+}
+
+void xlPanelClass::SetRingOnOff(bool _switch)
+{
+  if( !m_pHC595 ) return;
+  uint8_t pos = (_switch ? map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING) : 0);
+  SetRingPos(pos);
 }
 
 bool xlPanelClass::CheckLEDRing(uint8_t _testno)

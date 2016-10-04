@@ -116,6 +116,7 @@ public:
   BOOL ToggleLampOnOff(UC _nodeID = NODEID_MAINDEVICE);
   BOOL ChangeLampBrightness(UC _nodeID = NODEID_MAINDEVICE, UC _percentage = 50);
   BOOL ChangeLampCCT(UC _nodeID = NODEID_MAINDEVICE, US _cct = 3000);
+  BOOL ConfirmLampOnOff(UC _nodeID, UC _st);
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure

@@ -37,8 +37,8 @@
 
 // Digital only GPIO pins (D0 - D7, D0-D4 may also be PWM)
 #define PIN_SEN_DHT               D0          // Sensor: temperature and humidity
-#define PIN_KNOB_A_PHASE          D2          // Knob: A_PHASE
-#define PIN_KNOB_B_PHASE          D3          // Knob: B_PHASE
+#define PIN_KNOB_B_PHASE          D2          // Knob: B_PHASE
+#define PIN_KNOB_A_PHASE          D3          // Knob: A_PHASE
 #define PIN_KNOB_BUTTON           D4          // Knob: button
 #define PIN_SEN_PIR               D7          // Sensor: infra red motion, may also be PWM
 

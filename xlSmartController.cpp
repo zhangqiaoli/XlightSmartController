@@ -740,10 +740,10 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		return 0;
   }
 
-	const COMMAND strCmd = (COMMAND)(*m_jpCldCmd)["cmd"].as<int>();
+	const COMMAND _cmd = (COMMAND)(*m_jpCldCmd)["cmd"].as<int>();
 
 	//COMMAND 0: Use Serial Interface
-	if( strCmd == CMD_SERIAL) {
+	if( _cmd == CMD_SERIAL) {
 		// Execute serial port command, and reflect results on cloud variable
 		if (!(*m_jpCldCmd).containsKey("data")) {
 			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
@@ -759,7 +759,7 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 	}
 
 	//COMMAND 1: Toggle light switch
-	if (strCmd == CMD_POWER) {
+	if (_cmd == CMD_POWER) {
 		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("state")) {
 			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
 			return 0;
@@ -774,7 +774,7 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 	}
 
 	//COMMAND 2: Change light color
-	if (strCmd == CMD_COLOR) {
+	if (_cmd == CMD_COLOR) {
 		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("ring") || !(*m_jpCldCmd).containsKey("color")) {
 			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
 			return 0;
@@ -797,7 +797,8 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 	}
 
 	//COMMAND 3: Change brightness
-	if (strCmd == CMD_BRIGHTNESS) {
+	//COMMAND 5: Change CCT
+	if (_cmd == CMD_BRIGHTNESS || _cmd == CMD_CCT) {
 		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("value")) {
 			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
 			return 0;
@@ -805,14 +806,17 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
 		const int value = (*m_jpCldCmd)["value"].as<int>();
 
-		char buf[64];
-		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_DIMMER, C_SET, 1, V_DIMMER, value);
-		String strCmd(buf);
-		ExecuteLightCommand(strCmd);
+		//char buf[64];
+		//sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_DIMMER, C_SET, 1, V_DIMMER, value);
+		//String strCmd(buf);
+		//ExecuteLightCommand(strCmd);
+		// Use shortcut instead
+		String strCmd = String::format("%d:%d:%d", node_id, (_cmd == CMD_BRIGHTNESS ? 9 : 11), value);
+		theRadio.ProcessSend(strCmd);
 	}
 
 	//COMMAND 4: Change color with scenerio input
-	if (strCmd == CMD_SCENARIO) {
+	if (_cmd == CMD_SCENARIO) {
 		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("SNT_id")) {
 			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
 			return 0;
@@ -1827,6 +1831,7 @@ BOOL SmartControllerClass::ChangeLampBrightness(UC _nodeID, UC _percentage)
 	//if (!DevStatusRowPtr) {
 		String strCmd = String::format("%d:9:%d", _nodeID, _percentage);
 		rc = theRadio.ProcessSend(strCmd);
+    m_pMainDev->data.ring1.State = (_percentage > 0);
 	//}
 	return rc;
 }
@@ -1836,6 +1841,22 @@ BOOL SmartControllerClass::ChangeLampCCT(UC _nodeID, US _cct)
 	BOOL rc = false;
 	String strCmd = String::format("%d:11:%d", _nodeID, _cct);
 	rc = theRadio.ProcessSend(strCmd);
+	return rc;
+}
+
+BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
+{
+	BOOL rc = false;
+	//m_pMainDev->data.ring1.State = _st;
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if (DevStatusRowPtr) {
+		DevStatusRowPtr->data.ring1.State = _st;
+		// Set panel ring on or off
+		thePanel.SetRingOnOff(_st);
+		// Clear CCT flag
+		thePanel.SetCCTFlag(false);
+		rc = true;
+	}
 	return rc;
 }
 

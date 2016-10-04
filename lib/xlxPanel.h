@@ -29,6 +29,7 @@ public:
   bool ProcessEncoder();
   bool CheckLEDRing(uint8_t _testno = 0);
   void SetRingPos(uint8_t _pos);
+  void SetRingOnOff(bool _switch);
 
   int16_t GetDimmerValue();
   void SetDimmerValue(int16_t _value);
