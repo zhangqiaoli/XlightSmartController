@@ -60,6 +60,8 @@ private:
   volatile int8_t _direction;
   uint8_t _steps;
   volatile uint16_t _acceleration;
+  uint32_t _heldStartTick;
+  volatile uint8_t _heldDuration;
 
 #if ENC_DECODER != ENC_NORMAL
   static const int8_t _table[16];
@@ -92,6 +94,12 @@ public:
   {
     return _doubleClickEnabled;
   }
+
+  const uint8_t getHeldDuration()
+  {
+    return _heldDuration;
+  }
+
 #endif
 
   void setAccelerationEnabled(const bool &a)

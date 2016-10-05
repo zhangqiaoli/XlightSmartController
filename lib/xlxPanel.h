@@ -13,9 +13,11 @@ private:
   int16_t m_nDimmerValue;
   int16_t m_nCCTValue;
   bool m_bCCTFlag;
+  uint32_t m_nCCTick;
 
 protected:
   bool SetHC595();
+  void CheckHeldTimeout(const uint8_t nHeldDur);
 
 public:
   xlPanelClass();

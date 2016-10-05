@@ -1853,8 +1853,6 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 		DevStatusRowPtr->data.ring1.State = _st;
 		// Set panel ring on or off
 		thePanel.SetRingOnOff(_st);
-		// Clear CCT flag
-		thePanel.SetCCTFlag(false);
 		rc = true;
 	}
 	return rc;

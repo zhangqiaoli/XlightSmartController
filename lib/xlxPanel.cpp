@@ -36,6 +36,7 @@
 #include "xlxPanel.h"
 #include "xlxLogger.h"
 #include "xlSmartController.h"
+#include "xlxRF24Server.h"
 
 #define PANEL_NUM_LEDS_RING   12
 
@@ -111,6 +112,14 @@ bool xlPanelClass::ProcessEncoder()
     _dimValue = GetCCTValue();
     _dimValue += _delta;
   	SetCCTValue(_dimValue);
+
+    // CCT idle timeout: automatically clear CCT flag
+    if( _delta > 0 ) {
+      m_nCCTick = millis();
+    } else if( (millis() - m_nCCTick) / 1000 > RTE_TM_MAX_CCT_IDLE ) {
+      // Clear CCT flag
+      SetCCTFlag(false);
+    }
   } else {
   	_dimValue = GetDimmerValue();
     _dimValue += _delta;
@@ -130,10 +139,16 @@ bool xlPanelClass::ProcessEncoder()
         break;
       case BUTTON_RELEASED:
         IF_SERIAL_DEBUG(SERIAL_LN("Released"));
+        // Clear CCT flag
+        SetCCTFlag(false);
+        // Check held duration
+        CheckHeldTimeout(m_pEncoder->getHeldDuration());
         break;
       case BUTTON_CLICKED:
         IF_SERIAL_DEBUG(SERIAL_LN("Clicked"));
         theSys.ToggleLampOnOff(NODEID_MAINDEVICE);
+        // Clear CCT flag
+        SetCCTFlag(false);
         break;
       case BUTTON_DOUBLE_CLICKED:
         IF_SERIAL_DEBUG(SERIAL_LN("DoubleClicked"));
@@ -277,6 +292,7 @@ bool xlPanelClass::GetCCTFlag()
 void xlPanelClass::SetCCTFlag(bool _flag)
 {
   if( m_bCCTFlag != _flag ) {
+    if( _flag ) m_nCCTick = millis();
     m_bCCTFlag = _flag;
   }
 }
@@ -284,4 +300,17 @@ void xlPanelClass::SetCCTFlag(bool _flag)
 void xlPanelClass::ReverseCCTFlag()
 {
   SetCCTFlag(!m_bCCTFlag);
+}
+
+void xlPanelClass::CheckHeldTimeout(const uint8_t nHeldDur)
+{
+  if( nHeldDur >= RTE_TM_HELD_TO_DFU ) {
+    System.dfu();
+  } else if( nHeldDur >= RTE_TM_HELD_TO_WIFI ) {
+    System.enterSafeMode();
+  } else if( nHeldDur >= RTE_TM_HELD_TO_RESET ) {
+    theSys.Restart();
+  } else if( nHeldDur >= RTE_TM_HELD_TO_BASENW ) {
+    theRadio.enableBaseNetwork(true);
+  }
 }
