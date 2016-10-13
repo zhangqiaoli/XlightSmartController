@@ -119,6 +119,7 @@ public:
   BOOL ConfirmLampOnOff(UC _nodeID, UC _st);
   BOOL ConfirmLampBrightness(UC _nodeID, UC _percentage);
   BOOL ConfirmLampCCT(UC _nodeID, US _cct);
+  BOOL QueryDeviceStatus(UC _nodeID);
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure

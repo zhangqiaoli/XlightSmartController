@@ -853,6 +853,16 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		}
 	}
 
+	//COMMAND 6: Query Device Status
+	if (_cmd == CMD_QUERY) {
+		if (!(*m_jpCldCmd).containsKey("node_id")) {
+			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
+			return 0;
+		}
+		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+		QueryDeviceStatus((UC)node_id);
+	}
+
 	return 1;
 }
 
@@ -1064,27 +1074,7 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			// Query Device Status and feedback through event
 			if( op_flag == GET ) {
 				// Note: here we use uid as node_id
-				ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(uidNum);
-				if (DevStatusRowPtr) {
-					StaticJsonBuffer<256> jBuf;
-					JsonObject *jroot;
-					jroot = &(jBuf.createObject());
-					if( jroot->success() ) {
-						(*jroot)["nd"] = DevStatusRowPtr->data.node_id;
-						(*jroot)["State"] = DevStatusRowPtr->data.ring1.State;
-						(*jroot)["BR"] = DevStatusRowPtr->data.ring1.BR;
-						if( DevStatusRowPtr->data.type >= devtypWRing3 ) {
-							(*jroot)["CCT"] = DevStatusRowPtr->data.ring1.CCT;
-						} else {
-							(*jroot)["R"] = DevStatusRowPtr->data.ring1.R;
-							(*jroot)["G"] = DevStatusRowPtr->data.ring1.G;
-							(*jroot)["B"] = DevStatusRowPtr->data.ring1.B;
-						}
-						char buffer[256];
-						jroot->printTo(buffer, 256);
-						PublishDeviceStatus(buffer);
-					}
-				}
+				QueryDeviceStatus(uidNum);
 			}
 			break;
 		}
@@ -1952,6 +1942,32 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct)
 		rc = true;
 	}
 	return rc;
+}
+
+BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID)
+{
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if (DevStatusRowPtr) {
+		StaticJsonBuffer<256> jBuf;
+		JsonObject *jroot;
+		jroot = &(jBuf.createObject());
+		if( jroot->success() ) {
+			(*jroot)["nd"] = DevStatusRowPtr->data.node_id;
+			(*jroot)["State"] = DevStatusRowPtr->data.ring1.State;
+			(*jroot)["BR"] = DevStatusRowPtr->data.ring1.BR;
+			if( DevStatusRowPtr->data.type >= devtypWRing3 ) {
+				(*jroot)["CCT"] = DevStatusRowPtr->data.ring1.CCT;
+			} else {
+				(*jroot)["R"] = DevStatusRowPtr->data.ring1.R;
+				(*jroot)["G"] = DevStatusRowPtr->data.ring1.G;
+				(*jroot)["B"] = DevStatusRowPtr->data.ring1.B;
+			}
+			char buffer[256];
+			jroot->printTo(buffer, 256);
+			return PublishDeviceStatus(buffer);
+		}
+	}
+	return false;
 }
 
 //------------------------------------------------------------------
