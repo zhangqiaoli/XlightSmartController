@@ -444,7 +444,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
 	} else if (strnicmp(sTopic, "var", 3) == 0) {
 		SERIAL_LN("theSys.mSysID = \t\t\t%s", theSys.m_SysID.c_str());
 		SERIAL_LN("theSys.m_SysVersion = \t\t\t%s", theSys.m_SysVersion.c_str());
-		SERIAL_LN("theSys.m_devStatus = \t\t\t%d", theSys.m_devStatus);
+		SERIAL_LN("theSys.m_SysStatus = \t\t\t%d", theSys.m_SysStatus);
 		SERIAL_LN("theSys.m_tzString = \t\t\t%s", theSys.m_tzString.c_str());
 		SERIAL_LN("theSys.m_jsonData = \t\t\t%s", theSys.m_jsonData.c_str());
     SERIAL_LN("theSys.m_strCldCmd = \t\t%s\n\r", theSys.m_strCldCmd.c_str());

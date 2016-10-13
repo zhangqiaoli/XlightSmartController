@@ -32,7 +32,7 @@ CloudObjClass::CloudObjClass()
 {
   m_SysID = "";
   m_SysVersion = "";
-  m_devStatus = STATUS_OFF;
+  m_SysStatus = STATUS_OFF;
   m_temperature = 0.0;
   m_humidity = 0.0;
   m_brightness = 0;
@@ -54,7 +54,7 @@ void CloudObjClass::InitCloudObj()
 #ifdef USE_PARTICLE_CLOUD
   Particle.variable(CLV_SysID, &m_SysID, STRING);
   Particle.variable(CLV_TimeZone, &m_tzString, STRING);
-  Particle.variable(CLV_DevStatus, &m_devStatus, INT);
+  Particle.variable(CLV_SysStatus, &m_SysStatus, INT);
   Particle.variable(CLV_JSONData, &m_jsonData, STRING);
   Particle.variable(CLV_LastMessage, &m_lastMsg, STRING);
 
@@ -150,13 +150,23 @@ void CloudObjClass::UpdateJSONData()
   }
 }
 
-// Publish LOG message and update cloud veriable
+// Publish LOG message and update cloud variable
 BOOL CloudObjClass::PublishLog(const char *msg)
 {
   BOOL rc = true;
   m_lastMsg = msg;
 #ifdef USE_PARTICLE_CLOUD
   rc = Particle.publish(CLT_NAME_LOGMSG, msg, CLT_TTL_LOGMSG, PRIVATE);
+#endif
+  return rc;
+}
+
+// Publish Device status
+BOOL CloudObjClass::PublishDeviceStatus(const char *msg)
+{
+  BOOL rc = true;
+#ifdef USE_PARTICLE_CLOUD
+  rc = Particle.publish(CLT_NAME_DeviceStatus, msg, CLT_TTL_DeviceStatus, PRIVATE);
 #endif
   return rc;
 }

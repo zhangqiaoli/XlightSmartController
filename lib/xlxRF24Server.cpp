@@ -377,17 +377,13 @@ bool RF24ServerClass::ProcessReceive()
 			// ToDo: verify token
 			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL || msgType == V_RGBW ) {
 				if( _bIsAck ) {
-					// ToDo: change Dev_Status
 					if( theSys.m_pMainDev ) {
 						if( msgType == V_STATUS ) {
 							theSys.ConfirmLampOnOff(replyTo, msg.getByte());
 						} else if( msgType == V_PERCENTAGE ) {
-							theSys.m_pMainDev->data.ring1.BR = msg.getByte();
-							thePanel.SetDimmerValue(theSys.m_pMainDev->data.ring1.BR);
-							//theSys.ConfirmLampOnOff(replyTo, msg.getByte() > 0);
+							theSys.ConfirmLampBrightness(replyTo, msg.getByte());
 						} else if( msgType == V_LEVEL ) {
-							theSys.m_pMainDev->data.ring1.CCT = (US)msg.getUInt();
-							thePanel.UpdateCCTValue(theSys.m_pMainDev->data.ring1.CCT);
+							theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
 						} else if( msgType == V_RGBW ) {
 							uint8_t *payload = (uint8_t *)msg.getCustom();
 							if( payload[0] ) {	// Succeed or not
@@ -432,16 +428,13 @@ bool RF24ServerClass::ProcessReceive()
 						_iValue = (US)msg.getUInt();
 					}
 					if( _bIsAck ) {
-						// ToDo: change Dev_Status
 						if( theSys.m_pMainDev ) {
 							if( msgType == V_STATUS ) {
 								theSys.ConfirmLampOnOff(replyTo, _bValue);
 							} else if( msgType == V_PERCENTAGE ) {
-								theSys.m_pMainDev->data.ring1.BR = _bValue;
-								thePanel.SetDimmerValue(_bValue);
+								theSys.ConfirmLampBrightness(replyTo, _bValue);
 							} else if( msgType == V_LEVEL ) {
-								theSys.m_pMainDev->data.ring1.CCT = _iValue;
-								thePanel.UpdateCCTValue(_iValue);
+								theSys.ConfirmLampCCT(replyTo, _iValue);
 							}
 						}
 					}

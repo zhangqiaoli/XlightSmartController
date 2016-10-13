@@ -16,7 +16,7 @@
 // Cloud variables
 #define CLV_SysID               "sysID"           // Can also be a Particle Object
 #define CLV_TimeZone            "timeZone"        // Can also be a Particle Object
-#define CLV_DevStatus           "devStatus"       // Can also be a Particle Object
+#define CLV_SysStatus           "sysStatus"       // Can also be a Particle Object
 #define CLV_JSONData            "jsonData"        // Can also be a Particle Object
 #define CLV_LastMessage         "lastMsg"         // Can also be a Particle Object
 #define CLV_SenTemperatur       "senTemp"
@@ -44,6 +44,9 @@
 /// LOG Message
 #define CLT_NAME_LOGMSG          "xlc-event-log"
 #define CLT_TTL_LOGMSG           3600              // 1 hour
+/// Device status event
+#define CLT_NAME_DeviceStatus    "xlc-status-device"
+#define CLT_TTL_DeviceStatus     10
 
 //------------------------------------------------------------------
 // Xlight CloudObj Class
@@ -54,7 +57,7 @@ public:
   // Variables should be defined as public
   String m_SysID;
   String m_SysVersion;    // firmware version
-  int m_devStatus;
+  int m_SysStatus;
   String m_tzString;
   String m_jsonData;
   String m_lastMsg;
@@ -84,6 +87,7 @@ public:
   BOOL UpdateMotion(bool value);
   void UpdateJSONData();
   BOOL PublishLog(const char *msg);
+  BOOL PublishDeviceStatus(const char *msg);
 
 protected:
   void InitCloudObj();

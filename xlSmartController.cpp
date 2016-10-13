@@ -123,7 +123,7 @@ void SmartControllerClass::Init()
 	// Get System ID
 	m_SysID = System.deviceID();
 	m_SysVersion = System.version();
-	m_devStatus = STATUS_INIT;
+	m_SysStatus = STATUS_INIT;
 
 	// Initialize Logger
 	theLog.Init(m_SysID);
@@ -306,15 +306,15 @@ void SmartControllerClass::Restart()
 
 UC SmartControllerClass::GetStatus()
 {
-	return (UC)m_devStatus;
+	return (UC)m_SysStatus;
 }
 
 BOOL SmartControllerClass::SetStatus(UC st)
 {
 	if( st > STATUS_ERR ) return false;
-	LOGN(LOGTAG_STATUS, F("System status changed from %d to %d"), m_devStatus, st);
-	if ((UC)m_devStatus != st) {
-		m_devStatus = st;
+	LOGN(LOGTAG_STATUS, F("System status changed from %d to %d"), m_SysStatus, st);
+	if ((UC)m_SysStatus != st) {
+		m_SysStatus = st;
 	}
 	return true;
 }
@@ -1056,6 +1056,35 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			{
 				LOGI(LOGTAG_MSG, "UID:%s write row to Scenario_t OK", uidWhole);
 				return 1;
+			}
+			break;
+		}
+		case CLS_LIGHT_STATUS:		// Device or Lamp Status
+		{
+			// Query Device Status and feedback through event
+			if( op_flag == GET ) {
+				// Note: here we use uid as node_id
+				ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(uidNum);
+				if (DevStatusRowPtr) {
+					StaticJsonBuffer<256> jBuf;
+					JsonObject *jroot;
+					jroot = &(jBuf.createObject());
+					if( jroot->success() ) {
+						(*jroot)["nd"] = DevStatusRowPtr->data.node_id;
+						(*jroot)["State"] = DevStatusRowPtr->data.ring1.State;
+						(*jroot)["BR"] = DevStatusRowPtr->data.ring1.BR;
+						if( DevStatusRowPtr->data.type >= devtypWRing3 ) {
+							(*jroot)["CCT"] = DevStatusRowPtr->data.ring1.CCT;
+						} else {
+							(*jroot)["R"] = DevStatusRowPtr->data.ring1.R;
+							(*jroot)["G"] = DevStatusRowPtr->data.ring1.G;
+							(*jroot)["B"] = DevStatusRowPtr->data.ring1.B;
+						}
+						char buffer[256];
+						jroot->printTo(buffer, 256);
+						PublishDeviceStatus(buffer);
+					}
+				}
 			}
 			break;
 		}
@@ -1853,6 +1882,73 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 		DevStatusRowPtr->data.ring1.State = _st;
 		// Set panel ring on or off
 		thePanel.SetRingOnOff(_st);
+
+		// Publish device status event
+		StaticJsonBuffer<256> jBuf;
+		JsonObject *jroot;
+		jroot = &(jBuf.createObject());
+		if( jroot->success() ) {
+			(*jroot)["nd"] = _nodeID;
+			(*jroot)["State"] = _st;
+			char buffer[256];
+			jroot->printTo(buffer, 256);
+			PublishDeviceStatus(buffer);
+		}
+
+		rc = true;
+	}
+	return rc;
+}
+
+BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _percentage)
+{
+	BOOL rc = false;
+	//m_pMainDev->data.ring1.BR = _percentage;
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if (DevStatusRowPtr) {
+		DevStatusRowPtr->data.ring1.BR = _percentage;
+		// Set panel ring to new position
+		thePanel.SetDimmerValue(_percentage);
+
+		// Publish device status event
+		StaticJsonBuffer<256> jBuf;
+		JsonObject *jroot;
+		jroot = &(jBuf.createObject());
+		if( jroot->success() ) {
+			(*jroot)["nd"] = _nodeID;
+			(*jroot)["BR"] = _percentage;
+			char buffer[256];
+			jroot->printTo(buffer, 256);
+			PublishDeviceStatus(buffer);
+		}
+
+		rc = true;
+	}
+	return rc;
+}
+
+BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct)
+{
+	BOOL rc = false;
+	//m_pMainDev->data.ring1.CCT = _cct;
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if (DevStatusRowPtr) {
+		DevStatusRowPtr->data.ring1.CCT = _cct;
+		// Update cooresponding panel CCT value
+		thePanel.UpdateCCTValue(_cct);
+
+		// Publish device status event
+		StaticJsonBuffer<256> jBuf;
+		JsonObject *jroot;
+		jroot = &(jBuf.createObject());
+		if( jroot->success() ) {
+			(*jroot)["nd"] = _nodeID;
+			(*jroot)["CCT"] = _cct;
+			char buffer[256];
+			jroot->printTo(buffer, 256);
+			PublishDeviceStatus(buffer);
+		}
+
 		rc = true;
 	}
 	return rc;
