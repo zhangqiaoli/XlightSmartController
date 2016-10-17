@@ -39,6 +39,9 @@ typedef struct
   UC R                        :8;           // Brightness of red
   UC G                        :8;           // Brightness of green
   UC B                        :8;           // Brightness of blue
+  UC L1                       :8;           // Length of thread 1
+  UC L2                       :8;           // Length of thread 2
+  UC L3                       :8;           // Length of thread 3
 } Hue_t;
 
 typedef struct

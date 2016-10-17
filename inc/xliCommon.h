@@ -98,14 +98,21 @@ typedef enum
 typedef enum
 {
   devtypUnknown = 0,
-  devtypCRing3,     // Color ring
+  devtypCRing3,     // Color ring - Rainbow
   devtypCRing2,
   devtypCRing1,
-  devtypWRing3,     // White ring
+  devtypWRing3,     // White ring - Sunny
   devtypWRing2,
   devtypWRing1,
-  devtypDummy
+  devtypMRing3 = 8, // Color & Motion ring - Mirage
+  devtypMRing2,
+  devtypMRing1,
+  devtypDummy = 255
 } devicetype_t;
+
+#define IS_SUNNY(DevType)       ((DevType) >= devtypWRing3 || (DevType) <= devtypWRing1)
+#define IS_RAINBOW(DevType)     ((DevType) >= devtypCRing3 || (DevType) <= devtypCRing1)
+#define IS_MIRAGE(DevType)      ((DevType) >= devtypMRing3 || (DevType) <= devtypMRing1)
 
 // Remote type
 typedef enum

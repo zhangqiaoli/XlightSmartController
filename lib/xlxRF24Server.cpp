@@ -377,29 +377,25 @@ bool RF24ServerClass::ProcessReceive()
 			// ToDo: verify token
 			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL || msgType == V_RGBW ) {
 				if( _bIsAck ) {
-					if( theSys.m_pMainDev ) {
-						if( msgType == V_STATUS ) {
-							theSys.ConfirmLampOnOff(replyTo, msg.getByte());
-						} else if( msgType == V_PERCENTAGE ) {
-							theSys.ConfirmLampBrightness(replyTo, msg.getByte());
-						} else if( msgType == V_LEVEL ) {
-							theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
-						} else if( msgType == V_RGBW ) {
-							uint8_t *payload = (uint8_t *)msg.getCustom();
-							if( payload[0] ) {	// Succeed or not
-								UC _devType = payload[1];
-								theSys.m_pMainDev->data.type = _devType;
-								theSys.m_pMainDev->data.present = payload[2];
-								theSys.m_pMainDev->data.ring1.State = payload[3];
-								theSys.m_pMainDev->data.ring1.BR = payload[4];
-								if( _devType >= devtypWRing3 && _devType <= devtypWRing1 ) {
-									// Sunny
-									US _CCTValue = payload[5] * 256 + payload[6];
-									theSys.m_pMainDev->data.ring1.CCT = _CCTValue;
-								} else if( _devType >= devtypCRing3 && _devType <= devtypCRing1 ) {
-									// Rainbow or Mirage
-									// ToDo: set RWB
-								}
+					if( msgType == V_STATUS ) {
+						theSys.ConfirmLampOnOff(replyTo, msg.getByte());
+					} else if( msgType == V_PERCENTAGE ) {
+						theSys.ConfirmLampBrightness(replyTo, msg.getByte());
+					} else if( msgType == V_LEVEL ) {
+						theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
+					} else if( msgType == V_RGBW ) {
+						uint8_t *payload = (uint8_t *)msg.getCustom();
+						if( payload[0] ) {	// Succeed or not
+							UC _devType = payload[1];
+							if( IS_SUNNY(_devType) ) {
+								// Sunny
+								US _CCTValue = payload[5] * 256 + payload[6];
+								theSys.ConfirmLampCCT(replyTo, _CCTValue);
+								theSys.ConfirmLampBrightness(replyTo, payload[4]);
+								theSys.ConfirmLampOnOff(replyTo, payload[3]);
+							} else if( IS_RAINBOW(_devType) || IS_MIRAGE(_devType) ) {
+								// Rainbow or Mirage
+								// ToDo: set RGBW
 							}
 						}
 					}

@@ -33,6 +33,7 @@ test(serialconsole)
   theSys.CldJSONCommand("{'cmd':0, 'data':'ping'}");
   theSys.CldJSONCommand("{'cmd':0, 'data':'sys reset'}");
   theSys.CldJSONCommand("{'cmd':0, 'data':'show time'}");}
+  theSys.CldJSONCommand("{'cmd':6, 'node_id':1}");}
 
 test(cloudinput)
 {

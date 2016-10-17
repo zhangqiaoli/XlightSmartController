@@ -1955,9 +1955,9 @@ BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID)
 			(*jroot)["nd"] = DevStatusRowPtr->data.node_id;
 			(*jroot)["State"] = DevStatusRowPtr->data.ring1.State;
 			(*jroot)["BR"] = DevStatusRowPtr->data.ring1.BR;
-			if( DevStatusRowPtr->data.type >= devtypWRing3 ) {
+			if( IS_SUNNY(DevStatusRowPtr->data.type) ) {
 				(*jroot)["CCT"] = DevStatusRowPtr->data.ring1.CCT;
-			} else {
+			} else if( IS_RAINBOW(DevStatusRowPtr->data.type) ) {
 				(*jroot)["R"] = DevStatusRowPtr->data.ring1.R;
 				(*jroot)["G"] = DevStatusRowPtr->data.ring1.G;
 				(*jroot)["B"] = DevStatusRowPtr->data.ring1.B;
