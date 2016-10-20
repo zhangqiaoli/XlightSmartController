@@ -1837,6 +1837,9 @@ BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 	BOOL rc = false;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
+		if( DevStatusRowPtr->data.ring1.BR < BR_MIN_VALUE ) {
+			DevStatusRowPtr->data.ring1.State = 0;
+		}
 		rc = DevSoftSwitch(!DevStatusRowPtr->data.ring1.State, _nodeID);
 		if( rc ) DevStatusRowPtr->data.ring1.State = !DevStatusRowPtr->data.ring1.State;
 	}
@@ -1897,6 +1900,7 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _percentage)
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
 		DevStatusRowPtr->data.ring1.BR = _percentage;
+		DevStatusRowPtr->data.ring1.State = (DevStatusRowPtr->data.ring1.BR >= BR_MIN_VALUE);
 		// Set panel ring to new position
 		thePanel.SetDimmerValue(_percentage);
 
