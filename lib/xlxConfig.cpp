@@ -275,7 +275,11 @@ void ConfigClass::InitConfig()
   m_config.timeZone.id = 90;              // Toronto
   m_config.timeZone.offset = -300;        // -5 hours
   m_config.timeZone.dst = 1;              // 1 or 0
-  m_config.sensorBitmap = 0x0017;
+  m_config.sensorBitmap = 0;
+	BITSET(m_config.sensorBitmap, sensorDHT);
+	//BITSET(m_config.sensorBitmap, sensorALS);
+	//BITSET(m_config.sensorBitmap, sensorMIC);
+	//BITSET(m_config.sensorBitmap, sensorPIR);
   strcpy(m_config.Organization, XLA_ORGANIZATION);
   strcpy(m_config.ProductName, XLA_PRODUCT_NAME);
   strcpy(m_config.Token, XLA_TOKEN);

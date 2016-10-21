@@ -1853,7 +1853,6 @@ BOOL SmartControllerClass::ChangeLampBrightness(UC _nodeID, UC _percentage)
 	//if (!DevStatusRowPtr) {
 		String strCmd = String::format("%d:9:%d", _nodeID, _percentage);
 		rc = theRadio.ProcessSend(strCmd);
-    m_pMainDev->data.ring1.State = (_percentage > 0);
 	//}
 	return rc;
 }
@@ -1893,16 +1892,18 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 	return rc;
 }
 
-BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _percentage)
+BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percentage)
 {
 	BOOL rc = false;
 	//m_pMainDev->data.ring1.BR = _percentage;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
+		DevStatusRowPtr->data.ring1.State = _st;
 		DevStatusRowPtr->data.ring1.BR = _percentage;
-		DevStatusRowPtr->data.ring1.State = (DevStatusRowPtr->data.ring1.BR >= BR_MIN_VALUE);
 		// Set panel ring to new position
 		thePanel.SetDimmerValue(_percentage);
+		// Set panel ring off
+		thePanel.SetRingOnOff(_st);
 
 		// Publish device status event
 		StaticJsonBuffer<256> jBuf;
@@ -1910,6 +1911,7 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _percentage)
 		jroot = &(jBuf.createObject());
 		if( jroot->success() ) {
 			(*jroot)["nd"] = _nodeID;
+			(*jroot)["State"] = _st;
 			(*jroot)["BR"] = _percentage;
 			char buffer[256];
 			jroot->printTo(buffer, 256);

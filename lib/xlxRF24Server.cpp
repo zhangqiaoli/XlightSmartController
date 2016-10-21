@@ -324,6 +324,7 @@ bool RF24ServerClass::ProcessReceive()
 
 	bool _bIsAck = msg.isAck();
 	bool _needAck = msg.isReqAck();
+	uint8_t *payload = (uint8_t *)msg.getCustom();
 	UC _bValue;
 	US _iValue;
 
@@ -377,22 +378,18 @@ bool RF24ServerClass::ProcessReceive()
 			// ToDo: verify token
 			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL || msgType == V_RGBW ) {
 				if( _bIsAck ) {
-					if( msgType == V_STATUS ) {
-						theSys.ConfirmLampOnOff(replyTo, msg.getByte());
-					} else if( msgType == V_PERCENTAGE ) {
-						theSys.ConfirmLampBrightness(replyTo, msg.getByte());
+					if( msgType == V_STATUS ||  msgType == V_PERCENTAGE ) {
+						theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
 					} else if( msgType == V_LEVEL ) {
 						theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
 					} else if( msgType == V_RGBW ) {
-						uint8_t *payload = (uint8_t *)msg.getCustom();
 						if( payload[0] ) {	// Succeed or not
 							UC _devType = payload[1];
 							if( IS_SUNNY(_devType) ) {
 								// Sunny
 								US _CCTValue = payload[5] * 256 + payload[6];
 								theSys.ConfirmLampCCT(replyTo, _CCTValue);
-								theSys.ConfirmLampBrightness(replyTo, payload[4]);
-								theSys.ConfirmLampOnOff(replyTo, payload[3]);
+								theSys.ConfirmLampBrightness(replyTo, payload[3], payload[4]);
 							} else if( IS_RAINBOW(_devType) || IS_MIRAGE(_devType) ) {
 								// Rainbow or Mirage
 								// ToDo: set RGBW
@@ -419,28 +416,20 @@ bool RF24ServerClass::ProcessReceive()
 				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				if( transTo > 0 ) {
 					if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
-						_bValue = msg.getByte();
+						_bValue = msg.getByte();	// On or Off
 					} else if( msgType == V_LEVEL ) {
 						_iValue = (US)msg.getUInt();
 					}
 					if( _bIsAck ) {
-						if( theSys.m_pMainDev ) {
-							if( msgType == V_STATUS ) {
-								theSys.ConfirmLampOnOff(replyTo, _bValue);
-							} else if( msgType == V_PERCENTAGE ) {
-								theSys.ConfirmLampBrightness(replyTo, _bValue);
-							} else if( msgType == V_LEVEL ) {
-								theSys.ConfirmLampCCT(replyTo, _iValue);
-							}
+						if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
+							theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
+						} else if( msgType == V_LEVEL ) {
+							theSys.ConfirmLampCCT(replyTo, _iValue);
 						}
 					}
 					// Transfer message
 					msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck);
-					if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
-						msg.set(_bValue);
-					} else if( msgType == V_LEVEL ) {
-						msg.set((unsigned int)_iValue);
-					}
+					// Keep payload unchanged
 					msgReady = true;
 				}
 			}
