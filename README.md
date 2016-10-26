@@ -11,5 +11,8 @@ At present, XlightSmartController has these main features:
 
 This repository contains the software package of XlightSmartController, while the hardware design will be added as its sibling project soon.
 
+See also:
+* [XlightSunny - the smart lighting project](https://github.com/sunbaoshi1975/xlightSunny-stm8s)  
+* [XlightRemote - the remote controller project](https://github.com/sunbaoshi1975/xlightRemote-stm8l)   
 
 More contents are coming...  
