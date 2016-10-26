@@ -77,7 +77,7 @@
 #define NODEID_MAX_REMOTE       127
 #define NODEID_DUMMY            255
 
-#define BR_MIN_VALUE            5
+#define BR_MIN_VALUE            1
 #define CT_MIN_VALUE            2700
 #define CT_MAX_VALUE            6500
 #define CT_SCOPE                38

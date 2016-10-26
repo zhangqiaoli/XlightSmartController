@@ -377,7 +377,9 @@ bool RF24ServerClass::ProcessReceive()
 		case C_REQ:
 			// ToDo: verify token
 			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL || msgType == V_RGBW ) {
+				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				if( _bIsAck ) {
+					SERIAL_LN("REQ ack:%d to: %d 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x", msgType, transTo, payload[0],payload[1], payload[2], payload[3], payload[4],payload[5],payload[6]);
 					if( msgType == V_STATUS ||  msgType == V_PERCENTAGE ) {
 						theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
 					} else if( msgType == V_LEVEL ) {
@@ -387,7 +389,7 @@ bool RF24ServerClass::ProcessReceive()
 							UC _devType = payload[1];
 							if( IS_SUNNY(_devType) ) {
 								// Sunny
-								US _CCTValue = payload[5] * 256 + payload[6];
+								US _CCTValue = payload[6] * 256 + payload[5];
 								theSys.ConfirmLampCCT(replyTo, _CCTValue);
 								theSys.ConfirmLampBrightness(replyTo, payload[3], payload[4]);
 							} else if( IS_RAINBOW(_devType) || IS_MIRAGE(_devType) ) {
@@ -398,7 +400,6 @@ bool RF24ServerClass::ProcessReceive()
 					}
 				}
 				// ToDo: if lamp is not present, reture error
-				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				if( transTo > 0 ) {
 					// Transfer message
 					msg.build(getAddress(), transTo, replyTo, C_REQ, msgType, _needAck, _bIsAck, true);
@@ -410,28 +411,13 @@ bool RF24ServerClass::ProcessReceive()
 
 		case C_SET:
 			// ToDo: verify token
-			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL ) {
-				// Lamp on/off, Dimmer or CCT
-				// ToDo: if lamp is not present, reture error
-				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
-				if( transTo > 0 ) {
-					if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
-						_bValue = msg.getByte();	// On or Off
-					} else if( msgType == V_LEVEL ) {
-						_iValue = (US)msg.getUInt();
-					}
-					if( _bIsAck ) {
-						if( msgType == V_STATUS || msgType == V_PERCENTAGE ) {
-							theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
-						} else if( msgType == V_LEVEL ) {
-							theSys.ConfirmLampCCT(replyTo, _iValue);
-						}
-					}
-					// Transfer message
-					msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck);
-					// Keep payload unchanged
-					msgReady = true;
-				}
+			// ToDo: if lamp is not present, reture error
+			transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
+			if( transTo > 0 ) {
+				// Transfer message
+				msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
+				// Keep payload unchanged
+				msgReady = true;
 			}
 			break;
 

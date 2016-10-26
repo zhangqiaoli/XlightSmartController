@@ -1837,11 +1837,14 @@ BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 	BOOL rc = false;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
-		if( DevStatusRowPtr->data.ring1.BR < BR_MIN_VALUE ) {
-			DevStatusRowPtr->data.ring1.State = 0;
+		BOOL _st = (DevStatusRowPtr->data.ring1.BR < BR_MIN_VALUE ? true : !DevStatusRowPtr->data.ring1.State);
+		rc = DevSoftSwitch(_st, _nodeID);
+		// Wait for confirmation or not
+		if( rc && DevStatusRowPtr->data.present ) {
+			// no need to wait
+			DevStatusRowPtr->data.ring1.State = _st;
+			thePanel.SetRingOnOff(_st);
 		}
-		rc = DevSoftSwitch(!DevStatusRowPtr->data.ring1.State, _nodeID);
-		if( rc ) DevStatusRowPtr->data.ring1.State = !DevStatusRowPtr->data.ring1.State;
 	}
 	return rc;
 }
@@ -1898,24 +1901,26 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 	//m_pMainDev->data.ring1.BR = _percentage;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
-		DevStatusRowPtr->data.ring1.State = _st;
-		DevStatusRowPtr->data.ring1.BR = _percentage;
-		// Set panel ring to new position
-		thePanel.SetDimmerValue(_percentage);
-		// Set panel ring off
-		thePanel.SetRingOnOff(_st);
+		if( DevStatusRowPtr->data.ring1.State != _st || DevStatusRowPtr->data.ring1.BR != _percentage ) {
+			DevStatusRowPtr->data.ring1.State = _st;
+			DevStatusRowPtr->data.ring1.BR = _percentage;
+			// Set panel ring to new position
+			thePanel.UpdateDimmerValue(_percentage);
+			// Set panel ring off
+			thePanel.SetRingOnOff(_st);
 
-		// Publish device status event
-		StaticJsonBuffer<256> jBuf;
-		JsonObject *jroot;
-		jroot = &(jBuf.createObject());
-		if( jroot->success() ) {
-			(*jroot)["nd"] = _nodeID;
-			(*jroot)["State"] = _st;
-			(*jroot)["BR"] = _percentage;
-			char buffer[256];
-			jroot->printTo(buffer, 256);
-			PublishDeviceStatus(buffer);
+			// Publish device status event
+			StaticJsonBuffer<256> jBuf;
+			JsonObject *jroot;
+			jroot = &(jBuf.createObject());
+			if( jroot->success() ) {
+				(*jroot)["nd"] = _nodeID;
+				(*jroot)["State"] = _st;
+				(*jroot)["BR"] = _percentage;
+				char buffer[256];
+				jroot->printTo(buffer, 256);
+				PublishDeviceStatus(buffer);
+			}
 		}
 
 		rc = true;
@@ -1929,20 +1934,22 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct)
 	//m_pMainDev->data.ring1.CCT = _cct;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
-		DevStatusRowPtr->data.ring1.CCT = _cct;
-		// Update cooresponding panel CCT value
-		thePanel.UpdateCCTValue(_cct);
+		if( DevStatusRowPtr->data.ring1.CCT != _cct ) {
+			DevStatusRowPtr->data.ring1.CCT = _cct;
+			// Update cooresponding panel CCT value
+			thePanel.UpdateCCTValue(_cct);
 
-		// Publish device status event
-		StaticJsonBuffer<256> jBuf;
-		JsonObject *jroot;
-		jroot = &(jBuf.createObject());
-		if( jroot->success() ) {
-			(*jroot)["nd"] = _nodeID;
-			(*jroot)["CCT"] = _cct;
-			char buffer[256];
-			jroot->printTo(buffer, 256);
-			PublishDeviceStatus(buffer);
+			// Publish device status event
+			StaticJsonBuffer<256> jBuf;
+			JsonObject *jroot;
+			jroot = &(jBuf.createObject());
+			if( jroot->success() ) {
+				(*jroot)["nd"] = _nodeID;
+				(*jroot)["CCT"] = _cct;
+				char buffer[256];
+				jroot->printTo(buffer, 256);
+				PublishDeviceStatus(buffer);
+			}
 		}
 
 		rc = true;

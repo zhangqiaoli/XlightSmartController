@@ -35,6 +35,7 @@ public:
 
   int16_t GetDimmerValue();
   void SetDimmerValue(int16_t _value);
+  void UpdateDimmerValue(int16_t _value);
   int16_t GetCCTValue();
   void SetCCTValue(int16_t _value);
   void UpdateCCTValue(uint16_t _value);

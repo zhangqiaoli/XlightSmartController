@@ -110,9 +110,13 @@ typedef enum
   devtypDummy = 255
 } devicetype_t;
 
-#define IS_SUNNY(DevType)       ((DevType) >= devtypWRing3 || (DevType) <= devtypWRing1)
-#define IS_RAINBOW(DevType)     ((DevType) >= devtypCRing3 || (DevType) <= devtypCRing1)
-#define IS_MIRAGE(DevType)      ((DevType) >= devtypMRing3 || (DevType) <= devtypMRing1)
+#define IS_SUNNY(DevType)           ((DevType) >= devtypWRing3 && (DevType) <= devtypWRing1)
+#define IS_RAINBOW(DevType)         ((DevType) >= devtypCRing3 && (DevType) <= devtypCRing1)
+#define IS_MIRAGE(DevType)          ((DevType) >= devtypMRing3 && (DevType) <= devtypMRing1)
+#define IS_VALID_REMOTE(DevType)    ((DevType) >= remotetypRFSimply && (DevType) <= remotetypRFEnhanced)
+
+#define IS_NOT_DEVICE_NODEID(nID)   ((nID < NODEID_MIN_DEVCIE || nID > NODEID_MAX_DEVCIE) && nID != NODEID_MAINDEVICE)
+#define IS_NOT_REMOTE_NODEID(nID)   (nID < NODEID_MIN_REMOTE || nID > NODEID_MAX_REMOTE)
 
 // Remote type
 typedef enum
