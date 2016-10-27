@@ -57,6 +57,12 @@
 #define PIN_SEN_LIGHT             A7          // Sensor: ALS, may also be PWM
 
 /*
+  RF24L01 connector pinout:
+  GND    VCC
+  CE     CSN
+  SCK    MOSI
+  MISO   IRQ
+
   RF2.4 Module
   SPARK CORE    SHIELD SHIELD    NRF24L01+
   GND           GND              1 (GND)
