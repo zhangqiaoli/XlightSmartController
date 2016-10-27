@@ -1,6 +1,14 @@
 //  xliPinMap.h - Xlight include file: MCU Pin Map
 /// SBS updated 20150429 in accordance with EF H/W design
-
+/// SBS updated 20161027:
+///  available pins:
+///    D1 (35), D5 (53), D6 (55), D7 (54)
+///    P1S3 (40), P1S4 (47), P1S5 (48)
+///  PIN_SEN_PIR & PIN_SEN_LIGHT moved to the light
+///  no need MIC if use voice recognition module
+///    use serial2 by moving RGB-G (32) & RGB-B (31) pin to A6 (24) & A7 (30),
+///        and leave RGB-R (29) unchanged
+//
 #ifndef xliPinMap_h
 #define xliPinMap_h
 
