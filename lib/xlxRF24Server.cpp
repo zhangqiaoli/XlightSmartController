@@ -378,25 +378,31 @@ bool RF24ServerClass::ProcessReceive()
 			// ToDo: verify token
 			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL || msgType == V_RGBW ) {
 				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
+				BOOL bDataChanged = false;
 				if( _bIsAck ) {
 					SERIAL_LN("REQ ack:%d to: %d 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x", msgType, transTo, payload[0],payload[1], payload[2], payload[3], payload[4],payload[5],payload[6]);
 					if( msgType == V_STATUS ||  msgType == V_PERCENTAGE ) {
-						theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
+						bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
 					} else if( msgType == V_LEVEL ) {
-						theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
+						bDataChanged |= theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
 					} else if( msgType == V_RGBW ) {
 						if( payload[0] ) {	// Succeed or not
 							UC _devType = payload[1];
 							if( IS_SUNNY(_devType) ) {
 								// Sunny
 								US _CCTValue = payload[6] * 256 + payload[5];
-								theSys.ConfirmLampCCT(replyTo, _CCTValue);
-								theSys.ConfirmLampBrightness(replyTo, payload[3], payload[4]);
+								bDataChanged |= theSys.ConfirmLampCCT(replyTo, _CCTValue);
+								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[3], payload[4]);
 							} else if( IS_RAINBOW(_devType) || IS_MIRAGE(_devType) ) {
 								// Rainbow or Mirage
 								// ToDo: set RGBW
 							}
 						}
+					}
+
+					// If data changed, new status must broadcast to all end points
+					if( bDataChanged ) {
+						transTo = BROADCAST_ADDRESS;
 					}
 				}
 				// ToDo: if lamp is not present, reture error

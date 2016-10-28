@@ -1840,10 +1840,9 @@ BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 		BOOL _st = (DevStatusRowPtr->data.ring1.BR < BR_MIN_VALUE ? true : !DevStatusRowPtr->data.ring1.State);
 		rc = DevSoftSwitch(_st, _nodeID);
 		// Wait for confirmation or not
-		if( rc && DevStatusRowPtr->data.present ) {
+		if( !rc ) {
 			// no need to wait
-			DevStatusRowPtr->data.ring1.State = _st;
-			thePanel.SetRingOnOff(_st);
+			ConfirmLampOnOff(_nodeID, _st);
 		}
 	}
 	return rc;
