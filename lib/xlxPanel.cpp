@@ -39,12 +39,15 @@
 #include "xlxRF24Server.h"
 
 #define PANEL_NUM_LEDS_RING   12
+#define PANEL_NUM_LEDS_CCTIDX 8
 
 // the one and only instance of Panel class
 xlPanelClass thePanel;
 
 uint8_t CCWTipLight595 [] = {0x00,0x00,0x01,0x00,0x03,0x00,0x07,0x00,0x0f,0x00,0x1f,0x00,0x3f,0x00,0x7f,0x00,0xff,0x00,0xff,0x01,0xff,0x03,0xff,0x07,0xff,0x0f};
 uint8_t CWTipLight595 [] = {0x00,0x00,0x00,0x08,0x00,0x0c,0x00,0x0e,0x00,0x0f,0x80,0x0f,0xc0,0x0f,0xe0,0x0f,0xf0,0x0f,0xf8,0x0f,0xfc,0x0f,0xfe,0x0f,0xff,0x0f};
+// LED#: 9, 10, 11, 12, 1, 2, 3, 4, 5
+uint8_t CCTIdxLight595 [] = {0x00,0x01, 0x00,0x02, 0x00,0x04, 0x00,0x08, 0x01,0x00, 0x02,0x00, 0x04,0x00, 0x08,0x00, 0x10,0x00};
 
 xlPanelClass::xlPanelClass()
 {
@@ -147,8 +150,9 @@ bool xlPanelClass::ProcessEncoder()
       case BUTTON_CLICKED:
         IF_SERIAL_DEBUG(SERIAL_LN("Clicked"));
         theSys.ToggleLampOnOff(NODEID_MAINDEVICE);
-        // Clear CCT flag
-        SetCCTFlag(false);
+        // Clear CCT flag, but don't need to change HC595, cuz the toggle function will do it
+        //SetCCTFlag(false);
+        m_bCCTFlag = false;
         break;
       case BUTTON_DOUBLE_CLICKED:
         IF_SERIAL_DEBUG(SERIAL_LN("DoubleClicked"));
@@ -199,7 +203,7 @@ void xlPanelClass::SetCCTValue(int16_t _value)
 
 	if( m_nCCTValue != _value ) {
 		m_nCCTValue = _value;
-    //SetHC595();
+    SetHC595();
     // Send CCT message
     US cctValue = map(_value, 0, 100, CT_MIN_VALUE, CT_MAX_VALUE);
     theSys.ChangeLampCCT(NODEID_MAINDEVICE, cctValue);
@@ -224,11 +228,14 @@ bool xlPanelClass::SetHC595()
 {
   if( !m_pHC595 ) return false;
 
-  // Change dimmer value to LED ring position
-  uint8_t pos = map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING);
-  //uint8_t stateOfPin5 = m_pHC595->get(5);
-  //if( stateOfPin5 ) { m_pHC595->setAll((uint8_t *)(CWTipLight595 + pos));} else
-  //m_pHC595->setAll((uint8_t *)(CCWTipLight595 + pos));
+  uint8_t pos;
+  if( GetCCTFlag() ) {
+    // Change dimmer value to LED ring position
+    pos = map(m_nCCTValue, 0, 100, 0, PANEL_NUM_LEDS_CCTIDX);
+  } else {
+    // Change dimmer value to LED ring position
+    pos = map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING);
+  }
   SetRingPos(pos);
   return true;
 }
@@ -237,13 +244,22 @@ void xlPanelClass::SetRingPos(uint8_t _pos)
 {
   if( !m_pHC595 ) return;
   //SERIAL_LN("pos:%d, b0:0x%x, b1:0x%x", _pos, CCWTipLight595[_pos * 2], CCWTipLight595[_pos * 2+1]);
-  m_pHC595->setAll(CCWTipLight595 + _pos * 2);
+  if( GetCCTFlag() ) {
+    m_pHC595->setAll(CCTIdxLight595 + _pos * 2);
+  } else {
+    m_pHC595->setAll(CCWTipLight595 + _pos * 2);
+  }
 }
 
 void xlPanelClass::SetRingOnOff(bool _switch)
 {
   if( !m_pHC595 ) return;
-  uint8_t pos = (_switch ? map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING) : 0);
+  uint8_t pos;
+  if( GetCCTFlag() ) {
+    pos = (_switch ? map(m_nCCTValue, 0, 100, 0, PANEL_NUM_LEDS_CCTIDX) : 0);
+  } else {
+    pos = (_switch ? map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING) : 0);
+  }
   SetRingPos(pos);
 }
 
@@ -301,6 +317,7 @@ void xlPanelClass::SetCCTFlag(bool _flag)
   if( m_bCCTFlag != _flag ) {
     if( _flag ) m_nCCTick = millis();
     m_bCCTFlag = _flag;
+    SetHC595();
   }
 }
 

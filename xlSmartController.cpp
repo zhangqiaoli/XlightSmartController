@@ -1937,6 +1937,7 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct)
 			DevStatusRowPtr->data.ring1.CCT = _cct;
 			// Update cooresponding panel CCT value
 			thePanel.UpdateCCTValue(_cct);
+			thePanel.SetRingOnOff(DevStatusRowPtr->data.ring1.State);
 
 			// Publish device status event
 			StaticJsonBuffer<256> jBuf;

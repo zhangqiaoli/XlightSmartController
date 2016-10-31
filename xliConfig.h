@@ -43,7 +43,7 @@
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
 
 // Panel Operarion Timers
-#define RTE_TM_MAX_CCT_IDLE       10          // Maximum idle time (seconds) in CCT control mode
+#define RTE_TM_MAX_CCT_IDLE       6           // Maximum idle time (seconds) in CCT control mode
 #define RTE_TM_HELD_TO_DFU        30          // Held duration threshold for DFU
 #define RTE_TM_HELD_TO_WIFI       15          // Held duration threshold to enter Wi-Fi setup
 #define RTE_TM_HELD_TO_RESET      10          // Held duration threshold to reset
