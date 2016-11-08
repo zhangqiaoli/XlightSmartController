@@ -293,6 +293,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN(F("     , to enable or disable base network"));
       SERIAL_LN(F("e.g. set maxebn <duration>"));
       SERIAL_LN(F("     , to set maximum base network enable duration"));
+      SERIAL_LN(F("e.g. set spkr [0|1]"));
+      SERIAL_LN(F("     , to enable or disable speaker"));
       SERIAL_LN(F("set flag <flag name> [0|1]"));
       SERIAL_LN(F("     , to set system flag value, use '? set flag' for detail"));
       SERIAL_LN(F("set var <var name> <value>"));
@@ -300,7 +302,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN(F("e.g. set debug [log:level]"));
       SERIAL_LN(F("     , where log is [serial|flash|syslog|cloud|all"));
       SERIAL_LN(F("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r"));
-      CloudOutput(F("set tz|dst|nodeid|base|flag|var|debug"));
+      CloudOutput(F("set tz|dst|nodeid|base|spkr|flag|var|debug"));
     }
   } else if(strTopic.equals("sys")) {
     SERIAL_LN(F("--- Command: sys <mode> ---"));
