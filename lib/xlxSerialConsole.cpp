@@ -273,6 +273,10 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
         SERIAL_LN(F("e.g. set var rfpl [0..3]"));
         SERIAL_LN(F("     , set RF Power Level to min(0), low(1), high(2) or max(3)"));
         CloudOutput(F("set var senmap|devst|rfpl"));
+      } else if (strnicmp(sObj, "spkr", 4) == 0) {
+        SERIAL_LN(F("--- Command: set spkr [0|1] ---"));
+        SERIAL_LN(F("To disable or enable speaker"));
+        CloudOutput(F("set spkr 0|1"));
       }
     } else {
       SERIAL_LN(F("--- Command: set <object value> ---"));
@@ -470,6 +474,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
     SERIAL_LN("");
     SERIAL_LN("mConfig.enableCloudSerialCmd = \t\t%s", (theConfig.IsCloudSerialEnabled() ? "true" : "false"));
     SERIAL_LN("mConfig.enableDailyTimeSync = \t\t%s", (theConfig.IsDailyTimeSyncEnabled() ? "true" : "false"));
+    SERIAL_LN("mConfig.enableSpeaker = \t\t%s", (theConfig.IsSpeakerEnabled() ? "true" : "false"));
     SERIAL_LN("theRadio._bBaseNetworkEnabled = \t%s", (theRadio.isBaseNetworkEnabled() ? "true" : "false"));
     SERIAL_LN("");
 		SERIAL_LN("theConfig.m_isLoaded = \t\t\t%s", (theConfig.IsConfigLoaded() ? "true" : "false"));
@@ -738,6 +743,18 @@ bool SerialConsoleClass::doSet(const char *cmd)
         }
       } else {
         SERIAL_LN("Require var name and value, use '? set var' for detail\n\r");
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "spkr", 4) == 0) {
+      // Enable or disable speaker
+      sParam1 = next();   // Get speaker flag
+      if( sParam1) {
+        theConfig.SetSpeakerEnabled(atoi(sParam1) > 0);
+        SERIAL_LN("Speaker is %s\n\r", (theConfig.IsSpeakerEnabled() ? "enabled" : "disabled"));
+        CloudOutput("Speaker is %s", (theConfig.IsSpeakerEnabled() ? "enabled" : "disabled"));
+        retVal = true;
+      } else {
+        SERIAL_LN("Require spkr flag value [0|1], use '? set spkr' for detail\n\r");
         retVal = true;
       }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {

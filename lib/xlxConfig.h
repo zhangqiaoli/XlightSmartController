@@ -57,7 +57,8 @@ typedef struct
   char Token[64];                           // Token
   BOOL enableCloudSerialCmd   :1;           // Whether enable cloud serial command
   BOOL enableDailyTimeSync    :1;           // Whether enable daily time synchronization
-  BOOL Reserved_bool          :6;           // Reserved for boolean flags
+  BOOL enableSpeaker          :1;           // Whether enable speaker
+  BOOL Reserved_bool          :5;           // Reserved for boolean flags
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
   UC rfPowerLevel             :2;           // RF Power Level 0..3
   UC Reserved1                :6;           // Reserved bits
@@ -318,6 +319,9 @@ public:
 
   BOOL IsCloudSerialEnabled();
   void SetCloudSerialEnabled(BOOL sw = true);
+
+  BOOL IsSpeakerEnabled();
+  void SetSpeakerEnabled(BOOL sw = true);
 
   BOOL IsDailyTimeSyncEnabled();
   void SetDailyTimeSyncEnabled(BOOL sw = true);

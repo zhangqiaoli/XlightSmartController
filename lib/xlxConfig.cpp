@@ -288,6 +288,7 @@ void ConfigClass::InitConfig()
   m_config.numDevices = 1;
   m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
   m_config.enableCloudSerialCmd = false;
+	m_config.enableSpeaker = false;
 	m_config.enableDailyTimeSync = true;
 	m_config.rfPowerLevel = RF24_PA_LEVEL_GW;
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
@@ -624,6 +625,19 @@ void ConfigClass::SetCloudSerialEnabled(BOOL sw)
 {
 	if( sw != m_config.enableCloudSerialCmd ) {
 		m_config.enableCloudSerialCmd = sw;
+		m_isChanged = true;
+	}
+}
+
+BOOL ConfigClass::ConfigClass::IsSpeakerEnabled()
+{
+	return m_config.enableSpeaker;
+}
+
+void ConfigClass::SetSpeakerEnabled(BOOL sw)
+{
+	if( sw != m_config.enableSpeaker ) {
+		m_config.enableSpeaker = sw;
 		m_isChanged = true;
 	}
 }
