@@ -288,10 +288,21 @@ BOOL SmartControllerClass::Start()
 
 	// Change Panel LED ring to the recent level
 	thePanel.SetDimmerValue(theConfig.GetBrightIndicator());
-	// ToDo: sync panel with dev-st
+
+	// Sync panel with dev-st
 	if( m_pMainDev ) {
-		thePanel.UpdateCCTValue(m_pMainDev->data.ring1.CCT);
-		ChangeLampCCT(NODEID_MAINDEVICE, m_pMainDev->data.ring1.CCT);
+		// Set panel ring on or off
+		thePanel.SetRingOnOff(m_pMainDev->data.ring1.State);
+		DevSoftSwitch(m_pMainDev->data.ring1.State, NODEID_MAINDEVICE);
+		// Set CCT or RGBW
+		if( IS_SUNNY(m_pMainDev->data.type) ) {
+			// Set CCT
+			thePanel.UpdateCCTValue(m_pMainDev->data.ring1.CCT);
+			ChangeLampCCT(NODEID_MAINDEVICE, m_pMainDev->data.ring1.CCT);
+		} else if( IS_RAINBOW(m_pMainDev->data.type) || IS_MIRAGE(m_pMainDev->data.type) ) {
+			// Rainbow or Mirage
+			// ToDo: set RGBW
+		}
 	}
 
 	return true;
@@ -1874,6 +1885,10 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
 		DevStatusRowPtr->data.ring1.State = _st;
+		DevStatusRowPtr->data.run_flag = EXECUTED;
+		DevStatusRowPtr->data.flash_flag = UNSAVED;
+		DevStatusRowPtr->data.op_flag = POST;
+
 		// Set panel ring on or off
 		thePanel.SetRingOnOff(_st);
 
@@ -1903,6 +1918,10 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 		if( DevStatusRowPtr->data.ring1.State != _st || DevStatusRowPtr->data.ring1.BR != _percentage ) {
 			DevStatusRowPtr->data.ring1.State = _st;
 			DevStatusRowPtr->data.ring1.BR = _percentage;
+			DevStatusRowPtr->data.run_flag = EXECUTED;
+			DevStatusRowPtr->data.flash_flag = UNSAVED;
+			DevStatusRowPtr->data.op_flag = POST;
+
 			// Set panel ring to new position
 			thePanel.UpdateDimmerValue(_percentage);
 			// Set panel ring off
@@ -1935,6 +1954,10 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct)
 	if (DevStatusRowPtr) {
 		if( DevStatusRowPtr->data.ring1.CCT != _cct ) {
 			DevStatusRowPtr->data.ring1.CCT = _cct;
+			DevStatusRowPtr->data.run_flag = EXECUTED;
+			DevStatusRowPtr->data.flash_flag = UNSAVED;
+			DevStatusRowPtr->data.op_flag = POST;
+
 			// Update cooresponding panel CCT value
 			thePanel.UpdateCCTValue(_cct);
 			thePanel.SetRingOnOff(DevStatusRowPtr->data.ring1.State);

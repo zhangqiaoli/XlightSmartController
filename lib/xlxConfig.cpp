@@ -309,9 +309,9 @@ BOOL ConfigClass::InitDevStatus(UC nodeID)
 	//ToDo: ensure radio pairing has occured before doing this step in the future
 	DevStatusRow_t first_row;
 
-	first_row.op_flag = (OP_FLAG)1;
-	first_row.flash_flag = (FLASH_FLAG)0;
-	first_row.run_flag = (RUN_FLAG)1;
+	first_row.op_flag = POST;						// 1
+	first_row.flash_flag = UNSAVED;			// 0
+	first_row.run_flag = EXECUTED;			// 1
 	first_row.uid = theSys.DevStatus_table.size();
 	first_row.node_id = nodeID;
 	first_row.present = 0;
@@ -824,10 +824,10 @@ BOOL ConfigClass::LoadDeviceStatus()
 		//check row values / error cases
 
 		for (int i = 0; i < MAX_DEVICE_PER_CONTROLLER; i++)
-		{
-			if (DevStatusArray[i].op_flag == (OP_FLAG)1
-				&& DevStatusArray[i].flash_flag == (FLASH_FLAG)1
-				&& DevStatusArray[i].run_flag == (RUN_FLAG)1
+		{	// 111
+			if (DevStatusArray[i].op_flag == POST
+				&& DevStatusArray[i].flash_flag == SAVED
+				&& DevStatusArray[i].run_flag == EXECUTED
 				&& DevStatusArray[i].uid == i)
 			{
 				if (theSys.DevStatus_table.add(DevStatusArray[i]))
@@ -884,18 +884,18 @@ BOOL ConfigClass::SaveDeviceStatus()
 				{
 				case DELETE:
 					//change flags to 000 to indicate flash row is empty
-					tmpRow.op_flag = (OP_FLAG)0;
-					tmpRow.flash_flag = (FLASH_FLAG)0;
-					tmpRow.run_flag = (RUN_FLAG)0;
+					tmpRow.op_flag = GET;
+					tmpRow.flash_flag = UNSAVED;
+					tmpRow.run_flag = UNEXECUTED;
 					break;
 
 				case PUT:
 				case POST:
 				case GET:
 					//change flags to 111 to indicate flash row is occupied
-					tmpRow.op_flag = (OP_FLAG)1;
-					tmpRow.flash_flag = (FLASH_FLAG)1;
-					tmpRow.run_flag = (RUN_FLAG)1;
+					tmpRow.op_flag = POST;
+					tmpRow.flash_flag = SAVED;
+					tmpRow.run_flag = EXECUTED;
 					break;
 				}
 
@@ -944,18 +944,18 @@ BOOL ConfigClass::SaveScheduleTable()
 			  {
 				case DELETE:
 					//change flags to 000 to indicate flash row is empty
-					tmpRow.op_flag = (OP_FLAG)0;
-					tmpRow.flash_flag = (FLASH_FLAG)0;
-					tmpRow.run_flag = (RUN_FLAG)0;
+					tmpRow.op_flag = GET;
+					tmpRow.flash_flag = UNSAVED;
+					tmpRow.run_flag = UNEXECUTED;
 					break;
 
 				case PUT:
 				case POST:
 				case GET:
 					//change flags to 111 to indicate flash row is occupied
-					tmpRow.op_flag = (OP_FLAG)1;
-					tmpRow.flash_flag = (FLASH_FLAG)1;
-					tmpRow.run_flag = (RUN_FLAG)1;
+					tmpRow.op_flag = POST;
+					tmpRow.flash_flag = SAVED;
+					tmpRow.run_flag = EXECUTED;
 					break;
 			  }
 
@@ -1009,17 +1009,17 @@ BOOL ConfigClass::SaveScenarioTable()
 			  {
 			  case DELETE:
 				  //change flags to indicate flash row is empty
-				  tmpRow.op_flag = (OP_FLAG)0;
-				  tmpRow.flash_flag = (FLASH_FLAG)0;
-				  tmpRow.run_flag = (RUN_FLAG)0;
+				  tmpRow.op_flag = GET;
+				  tmpRow.flash_flag = UNSAVED;
+				  tmpRow.run_flag = UNEXECUTED;
 				  break;
 			  case PUT:
 			  case POST:
 			  case GET:
 				  //change flags to 111 to indicate flash row is occupied
-				  tmpRow.op_flag = (OP_FLAG)1;
-				  tmpRow.flash_flag = (FLASH_FLAG)1;
-				  tmpRow.run_flag = (RUN_FLAG)1;
+				  tmpRow.op_flag = POST;
+				  tmpRow.flash_flag = SAVED;
+				  tmpRow.run_flag = EXECUTED;
 				  break;
 			  }
 
@@ -1070,9 +1070,9 @@ BOOL ConfigClass::LoadRuleTable()
 		{
 			for (int i = 0; i < MAX_RT_ROWS; i++) //interate through RuleArray for non-empty rows
 			{
-				if (RuleArray[i].op_flag == (OP_FLAG)1
-					&& RuleArray[i].flash_flag == (FLASH_FLAG)1
-					&& RuleArray[i].run_flag == (RUN_FLAG)1
+				if (RuleArray[i].op_flag == POST
+					&& RuleArray[i].flash_flag == SAVED
+					&& RuleArray[i].run_flag == EXECUTED
 					&& RuleArray[i].uid == i)
 				{
 					//change flags to be written into working memory chain
@@ -1124,17 +1124,17 @@ BOOL ConfigClass::SaveRuleTable()
 				{
 				case DELETE:
 					//change flags to indicate flash row is empty
-					tmpRow.op_flag = (OP_FLAG)0;
-					tmpRow.flash_flag = (FLASH_FLAG)0;
-					tmpRow.run_flag = (RUN_FLAG)0;
+					tmpRow.op_flag = GET;
+					tmpRow.flash_flag = UNSAVED;
+					tmpRow.run_flag = UNEXECUTED;
 					break;
 				case PUT:
 				case POST:
 				case GET:
 					//change flags to 111 to indicate flash row is occupied
-					tmpRow.op_flag = (OP_FLAG)1;
-					tmpRow.flash_flag = (FLASH_FLAG)1;
-					tmpRow.run_flag = (RUN_FLAG)1;
+					tmpRow.op_flag = POST;
+					tmpRow.flash_flag = SAVED;
+					tmpRow.run_flag = EXECUTED;
 					break;
 				}
 
