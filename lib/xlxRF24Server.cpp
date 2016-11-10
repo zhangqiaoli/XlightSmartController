@@ -387,12 +387,15 @@ bool RF24ServerClass::ProcessReceive()
 						bDataChanged |= theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
 					} else if( msgType == V_RGBW ) {
 						if( payload[0] ) {	// Succeed or not
+							static bool bFirstRGBW = true;		// Make sure the first message will be sent anyway
 							UC _devType = payload[1];
 							if( IS_SUNNY(_devType) ) {
 								// Sunny
 								US _CCTValue = payload[6] * 256 + payload[5];
 								bDataChanged |= theSys.ConfirmLampCCT(replyTo, _CCTValue);
 								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[3], payload[4]);
+								bDataChanged |= bFirstRGBW;
+								bFirstRGBW = false;
 							} else if( IS_RAINBOW(_devType) || IS_MIRAGE(_devType) ) {
 								// Rainbow or Mirage
 								// ToDo: set RGBW

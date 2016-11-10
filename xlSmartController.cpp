@@ -305,6 +305,14 @@ BOOL SmartControllerClass::Start()
 		}
 	}
 
+	// Publish local the main device status
+	UL tm = 0x4ff;	// Delay 1.5s in order to publish
+	while(tm-- > 0){ Particle.process(); }
+	QueryDeviceStatus(NODEID_MAINDEVICE);
+
+	// Request the main device to report status
+	RequestDeviceStatus(NODEID_MAINDEVICE);
+
 	return true;
 }
 
@@ -1091,7 +1099,13 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 		}
 		case CLS_CONFIGURATION:		// Sys Config
 		{
-			// ToDo:
+			if( op_flag == PUT ) {
+				if( data.containsKey("csc") ) {
+					// Change CSC
+					theConfig.SetCloudSerialEnabled(data["csc"] > 0);
+				}
+			}
+			// ToDo: more config
 			break;
 		}
 		default:
@@ -1878,6 +1892,14 @@ BOOL SmartControllerClass::ChangeLampCCT(UC _nodeID, US _cct)
 	return rc;
 }
 
+BOOL SmartControllerClass::RequestDeviceStatus(UC _nodeID)
+{
+	BOOL rc = false;
+	String strCmd = String::format("%d:12:%d", _nodeID);
+	rc = theRadio.ProcessSend(strCmd);
+	return rc;
+}
+
 BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 {
 	BOOL rc = false;
@@ -1888,6 +1910,7 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 		DevStatusRowPtr->data.run_flag = EXECUTED;
 		DevStatusRowPtr->data.flash_flag = UNSAVED;
 		DevStatusRowPtr->data.op_flag = POST;
+		theConfig.SetDSTChanged(true);
 
 		// Set panel ring on or off
 		thePanel.SetRingOnOff(_st);
@@ -1921,6 +1944,7 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 			DevStatusRowPtr->data.run_flag = EXECUTED;
 			DevStatusRowPtr->data.flash_flag = UNSAVED;
 			DevStatusRowPtr->data.op_flag = POST;
+			theConfig.SetDSTChanged(true);
 
 			// Set panel ring to new position
 			thePanel.UpdateDimmerValue(_percentage);
@@ -1957,6 +1981,7 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct)
 			DevStatusRowPtr->data.run_flag = EXECUTED;
 			DevStatusRowPtr->data.flash_flag = UNSAVED;
 			DevStatusRowPtr->data.op_flag = POST;
+			theConfig.SetDSTChanged(true);
 
 			// Update cooresponding panel CCT value
 			thePanel.UpdateCCTValue(_cct);
@@ -2010,13 +2035,20 @@ BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID)
 //------------------------------------------------------------------
 // Printing tables/working memory chains
 //------------------------------------------------------------------
-void SmartControllerClass::print_devStatus_table(int row)
+String SmartControllerClass::print_devStatus_table(int row)
 {
+	String strShortDesc;
+
 	SERIAL_LN("==== DevStatus Row %d ====", row);
 	SERIAL_LN("uid = %d, type = %d", DevStatus_table.get(row).uid, DevStatus_table.get(row).type);
 	SERIAL_LN("node_id = %d, present = %s", DevStatus_table.get(row).node_id, (DevStatus_table.get(row).present ? "true" : "false"));
   SERIAL_LN("Status: %s, BR: %d, CCT: %d\n\r", DevStatus_table.get(row).ring1.State ? "On" : "Off",
 				DevStatus_table.get(row).ring1.BR, DevStatus_table.get(row).ring1.CCT);
+
+	strShortDesc = String::format("nid:%d St:%d BR:%d, CCT:%d",
+				DevStatus_table.get(row).node_id, DevStatus_table.get(row).ring1.State,
+				DevStatus_table.get(row).ring1.BR, DevStatus_table.get(row).ring1.CCT);
+	return(strShortDesc);
 
 /*
 	SERIAL_LN("==========================");

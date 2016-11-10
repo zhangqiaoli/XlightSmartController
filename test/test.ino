@@ -23,6 +23,9 @@ test(serialconsole)
 {
   //String in ="";
   /// Format_1: Single row
+  /// Change csc to 1
+  theSys.CldJSONConfig("{'op':2, 'fl':0, 'run':0, 'uid':'c1','csc':1}");
+
   theSys.CldJSONConfig("{'op':1, 'fl':0, 'run':0, 'uid':'s1','ring1':[1,8,8,8,8,8], 'ring2':[1,8,8,8,8,8], 'ring3':[1,8,8,8,8,8], 'filter':0}");
   theSys.CldJSONCommand("{'cmd':0, 'data':'?'}");
   theSys.CldJSONCommand("{'cmd':0, 'data':'? show'}");

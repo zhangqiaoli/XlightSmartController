@@ -95,7 +95,7 @@ public:
   ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>((int)(MEM_RULES_LEN / sizeof(RuleRow_t))); // 65536/5 = 13107
 
   //Print LinkedLists (Working memory tables)
-  void print_devStatus_table(int row);
+  String print_devStatus_table(int row);
   void print_schedule_table(int row);
   void print_scenario_table(int row);
   void print_rule_table(int row);
@@ -116,6 +116,7 @@ public:
   BOOL ToggleLampOnOff(UC _nodeID = NODEID_MAINDEVICE);
   BOOL ChangeLampBrightness(UC _nodeID = NODEID_MAINDEVICE, UC _percentage = 50);
   BOOL ChangeLampCCT(UC _nodeID = NODEID_MAINDEVICE, US _cct = 3000);
+  BOOL RequestDeviceStatus(UC _nodeID);
   BOOL ConfirmLampOnOff(UC _nodeID, UC _st);
   BOOL ConfirmLampBrightness(UC _nodeID, UC _st, UC _percentage);
   BOOL ConfirmLampCCT(UC _nodeID, US _cct);

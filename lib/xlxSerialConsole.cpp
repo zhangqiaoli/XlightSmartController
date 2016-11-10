@@ -513,8 +513,10 @@ bool SerialConsoleClass::doShow(const char *cmd)
   } else if (strnicmp(sTopic, "device", 6) == 0) {
     SERIAL_LN("DST_ROW_SIZE: \t\t\t\t%u, items: %d", DST_ROW_SIZE, theSys.DevStatus_table.size());
     SERIAL_LN("DevStatus_table: ");
-		for (int i = 0; i < theSys.DevStatus_table.size(); i++)
+    CloudOutput(theSys.print_devStatus_table(0));
+		for (int i = 1; i < theSys.DevStatus_table.size(); i++) {
 			theSys.print_devStatus_table(i);
+    }
     SERIAL_LN("");
   } else if (strnicmp(sTopic, "remote", 6) == 0) {
     SERIAL("Main remote: %d type: %d", theConfig.m_stMainRemote.node_id, theConfig.m_stMainRemote.type);
