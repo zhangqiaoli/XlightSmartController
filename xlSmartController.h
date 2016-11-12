@@ -77,7 +77,7 @@ public:
 
   // Parsing Functions
   bool ParseCmdRow(JsonObject& data);
-  String CreateColorPayload(uint8_t ring, uint8_t State, uint8_t BR, uint8_t W, uint8_t R, uint8_t G, uint8_t B);
+  UC CreateColorPayload(UC *payl, uint8_t ring, uint8_t State, uint8_t BR, uint8_t W, uint8_t R, uint8_t G, uint8_t B);
 
   // Cloud Interface Action Types
   bool Change_Rule(RuleRow_t row);
@@ -118,8 +118,9 @@ public:
   BOOL ChangeLampCCT(UC _nodeID = NODEID_MAINDEVICE, US _cct = 3000);
   BOOL RequestDeviceStatus(UC _nodeID);
   BOOL ConfirmLampOnOff(UC _nodeID, UC _st);
-  BOOL ConfirmLampBrightness(UC _nodeID, UC _st, UC _percentage);
-  BOOL ConfirmLampCCT(UC _nodeID, US _cct);
+  BOOL ConfirmLampBrightness(UC _nodeID, UC _st, UC _percentage, UC _ringID = RING_ID_ALL);
+  BOOL ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID = RING_ID_ALL);
+  BOOL ConfirmLampHue(UC _nodeID, UC _white, UC _red, UC _green, UC _blue, UC _ringID = RING_ID_ALL);
   BOOL QueryDeviceStatus(UC _nodeID);
 
   // Utils

@@ -811,7 +811,7 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		char buf[64];
 		sprintf(buf, "%d;%d;%d;%d;%d;%s", node_id, S_CUSTOM, C_SET, 1, V_VAR1, payload.c_str());
 		String strCmd(buf);
-		ExecuteLightCommand(strCmd);		
+		ExecuteLightCommand(strCmd);
 	}
 
 	//COMMAND 3: Change brightness
@@ -1931,7 +1931,7 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 	return rc;
 }
 
-BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percentage)
+BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percentage, UC _ringID)
 {
 	BOOL rc = false;
 	//m_pMainDev->data.ring1.BR = _percentage;
@@ -1969,7 +1969,7 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 	return rc;
 }
 
-BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct)
+BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID)
 {
 	BOOL rc = false;
 	//m_pMainDev->data.ring1.CCT = _cct;
@@ -2001,6 +2001,13 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct)
 
 		rc = true;
 	}
+	return rc;
+}
+
+BOOL SmartControllerClass::ConfirmLampHue(UC _nodeID, UC _white, UC _red, UC _green, UC _blue, UC _ringID)
+{
+	BOOL rc = false;
+
 	return rc;
 }
 
@@ -2204,8 +2211,24 @@ String SmartControllerClass::hue_to_string(Hue_t hue)
 	return out;
 }
 
-String SmartControllerClass::CreateColorPayload(uint8_t ring, uint8_t State, uint8_t BR, uint8_t W, uint8_t R, uint8_t G, uint8_t B)
+UC SmartControllerClass::CreateColorPayload(UC *payl, uint8_t ring, uint8_t State, uint8_t BR, uint8_t W, uint8_t R, uint8_t G, uint8_t B)
 {
+	// Payload length
+	UC payl_len = 0;
+	if( payl ) {
+		payl_len = 10;
+		payl[0] = State;
+		payl[1] = BR;
+		payl[2] = W;
+		payl[3] = State;
+		payl[4] = State;
+		payl[5] = State;
+		payl[6] = State;
+		payl[7] = State;
+		payl[8] = State;
+		payl[9] = 0;
+	}
+
 	uint64_t i_payload = ring;
 	i_payload <<= 8;	i_payload += State;
 	i_payload <<= 8;	i_payload += BR;
@@ -2216,5 +2239,5 @@ String SmartControllerClass::CreateColorPayload(uint8_t ring, uint8_t State, uin
 
 	char buf[21];
 	PrintUint64(buf, i_payload, false);
-	return String(buf);
+	return payl_len;
 }

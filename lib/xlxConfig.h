@@ -82,9 +82,7 @@ typedef struct
   UC reserved             :7;
   UC type;                         // Type of lamp
   US token;
-  Hue_t ring1;
-  Hue_t ring2;
-  Hue_t ring3;
+  Hue_t ring[MAX_RING_NUM];
 } DevStatusRow_t;
 
 #define DST_ROW_SIZE sizeof(DevStatusRow_t)

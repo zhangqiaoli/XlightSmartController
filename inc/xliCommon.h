@@ -95,6 +95,7 @@ typedef enum
 } sensors_t;
 
 // Device (lamp) type
+#define MAX_RING_NUM                3
 typedef enum
 {
   devtypUnknown = 0,
@@ -109,6 +110,11 @@ typedef enum
   devtypMRing1,
   devtypDummy = 255
 } devicetype_t;
+
+#define RING_ID_ALL                 0
+#define RING_ID_1                   1
+#define RING_ID_2                   2
+#define RING_ID_3                   3
 
 #define IS_SUNNY(DevType)           ((DevType) >= devtypWRing3 && (DevType) <= devtypWRing1)
 #define IS_RAINBOW(DevType)         ((DevType) >= devtypCRing3 && (DevType) <= devtypCRing1)

@@ -245,6 +245,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 
 	case 12:  // Request lamp status in one
 		msg.build(getAddress(), lv_nNodeID, 1, C_REQ, V_RGBW, true);
+		msg.set((uint8_t)RING_ID_ALL);		// RING_ID_1 is also workable currently
 		bMsgReady = true;
 		SERIAL("Now sending get dev-status (V_RGBW) message...");
 		break;
@@ -380,7 +381,7 @@ bool RF24ServerClass::ProcessReceive()
 				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				BOOL bDataChanged = false;
 				if( _bIsAck ) {
-					SERIAL_LN("REQ ack:%d to: %d 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x", msgType, transTo, payload[0],payload[1], payload[2], payload[3], payload[4],payload[5],payload[6]);
+					//SERIAL_LN("REQ ack:%d to: %d 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x", msgType, transTo, payload[0],payload[1], payload[2], payload[3], payload[4],payload[5],payload[6]);
 					if( msgType == V_STATUS ||  msgType == V_PERCENTAGE ) {
 						bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
 					} else if( msgType == V_LEVEL ) {
@@ -389,10 +390,11 @@ bool RF24ServerClass::ProcessReceive()
 						if( payload[0] ) {	// Succeed or not
 							static bool bFirstRGBW = true;		// Make sure the first message will be sent anyway
 							UC _devType = payload[1];
+							UC _ringID = payload[3];
 							if( IS_SUNNY(_devType) ) {
 								// Sunny
 								US _CCTValue = payload[6] * 256 + payload[5];
-								bDataChanged |= theSys.ConfirmLampCCT(replyTo, _CCTValue);
+								bDataChanged |= theSys.ConfirmLampCCT(replyTo, _CCTValue, _ringID);
 								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[3], payload[4]);
 								bDataChanged |= bFirstRGBW;
 								bFirstRGBW = false;
