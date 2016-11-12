@@ -72,9 +72,9 @@ void AlarmTimerTriggered(uint32_t tag)
 
 	if (rowptr)
 	{
-		String ring1_payload = theSys.CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.BR, rowptr->data.ring1.CCT, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
-		String ring2_payload = theSys.CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.BR, rowptr->data.ring2.CCT, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
-		String ring3_payload = theSys.CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.BR, rowptr->data.ring3.CCT, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
+		String ring1_payload = theSys.CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.BR, rowptr->data.ring1.CCT % 256, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
+		String ring2_payload = theSys.CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.BR, rowptr->data.ring2.CCT % 256, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
+		String ring3_payload = theSys.CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.BR, rowptr->data.ring3.CCT % 256, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
 
 		char buf[64];
 
@@ -799,20 +799,19 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 			return 0;
 		}
 		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
-		const uint8_t ring = (*m_jpCldCmd)["ring"].as<int>();
-		const uint8_t State = (*m_jpCldCmd)["color"][0].as<uint8_t>();
-		const uint8_t CW = (*m_jpCldCmd)["color"][1].as<uint8_t>();
-		const uint8_t WW = (*m_jpCldCmd)["color"][2].as<uint8_t>();
-		const uint8_t R = (*m_jpCldCmd)["color"][3].as<uint8_t>();
-		const uint8_t G = (*m_jpCldCmd)["color"][4].as<uint8_t>();
-		const uint8_t B = (*m_jpCldCmd)["color"][5].as<uint8_t>();
+		const uint8_t ring = (*m_jpCldCmd)["ring"][0].as<uint8_t>();
+		const uint8_t State = (*m_jpCldCmd)["ring"][1].as<uint8_t>();
+		const uint8_t BR = (*m_jpCldCmd)["ring"][2].as<uint8_t>();
+		const uint8_t W = (*m_jpCldCmd)["ring"][3].as<uint8_t>();
+		const uint8_t R = (*m_jpCldCmd)["ring"][4].as<uint8_t>();
+		const uint8_t G = (*m_jpCldCmd)["ring"][5].as<uint8_t>();
+		const uint8_t B = (*m_jpCldCmd)["ring"][6].as<uint8_t>();
 
-		String payload = CreateColorPayload(ring, State, CW, WW, R, G, B);
-
+		String payload = CreateColorPayload(ring, State, BR, W, R, G, B);
 		char buf[64];
 		sprintf(buf, "%d;%d;%d;%d;%d;%s", node_id, S_CUSTOM, C_SET, 1, V_VAR1, payload.c_str());
 		String strCmd(buf);
-		ExecuteLightCommand(strCmd);
+		ExecuteLightCommand(strCmd);		
 	}
 
 	//COMMAND 3: Change brightness
@@ -847,9 +846,9 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		ListNode<ScenarioRow_t> *rowptr = SearchScenario(SNT_uid);
 		if (rowptr)
 		{
-			String ring1_payload = CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.BR, rowptr->data.ring1.CCT, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
-			String ring2_payload = CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.BR, rowptr->data.ring2.CCT, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
-			String ring3_payload = CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.BR, rowptr->data.ring3.CCT, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
+			String ring1_payload = CreateColorPayload(1, rowptr->data.ring1.State, rowptr->data.ring1.BR, rowptr->data.ring1.CCT % 256, rowptr->data.ring1.R, rowptr->data.ring1.G, rowptr->data.ring1.B);
+			String ring2_payload = CreateColorPayload(2, rowptr->data.ring2.State, rowptr->data.ring2.BR, rowptr->data.ring2.CCT % 256, rowptr->data.ring2.R, rowptr->data.ring2.G, rowptr->data.ring2.B);
+			String ring3_payload = CreateColorPayload(3, rowptr->data.ring3.State, rowptr->data.ring3.BR, rowptr->data.ring3.CCT % 256, rowptr->data.ring3.R, rowptr->data.ring3.G, rowptr->data.ring3.B);
 
 			char buf[64];
 
@@ -2205,15 +2204,15 @@ String SmartControllerClass::hue_to_string(Hue_t hue)
 	return out;
 }
 
-String SmartControllerClass::CreateColorPayload(uint8_t ring, uint8_t State, uint8_t CW, uint8_t WW, uint8_t R, uint8_t G, uint8_t B)
+String SmartControllerClass::CreateColorPayload(uint8_t ring, uint8_t State, uint8_t BR, uint8_t W, uint8_t R, uint8_t G, uint8_t B)
 {
-	uint64_t i_payload = (B / 16)* pow(16, 1)  +  (B % 16)* pow(16, 0) +
-								 		(G / 16)* pow(16, 3)  +  (G % 16)* pow(16, 2) +
-								 		(R / 16)* pow(16, 5)  +  (R % 16)* pow(16, 4) +
-								 		(WW / 16)* pow(16, 7)  +  (WW % 16)* pow(16, 6) +
-								 		(CW / 16)* pow(16, 9)  +  (CW % 16)* pow(16, 8) +
-								 		(State / 16)* pow(16, 11)  +  (State % 16)* pow(16, 10) +
-								 		(ring / 16)* pow(16, 13)  +  (ring % 16)* pow(16, 12);
+	uint64_t i_payload = ring;
+	i_payload <<= 8;	i_payload += State;
+	i_payload <<= 8;	i_payload += BR;
+	i_payload <<= 8;	i_payload += W;
+	i_payload <<= 8;	i_payload += R;
+	i_payload <<= 8;	i_payload += G;
+	i_payload <<= 8;	i_payload += B;
 
 	char buf[21];
 	PrintUint64(buf, i_payload, false);

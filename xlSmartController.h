@@ -77,7 +77,7 @@ public:
 
   // Parsing Functions
   bool ParseCmdRow(JsonObject& data);
-  String CreateColorPayload(uint8_t ring, uint8_t State, uint8_t CW, uint8_t WW, uint8_t R, uint8_t G, uint8_t B);
+  String CreateColorPayload(uint8_t ring, uint8_t State, uint8_t BR, uint8_t W, uint8_t R, uint8_t G, uint8_t B);
 
   // Cloud Interface Action Types
   bool Change_Rule(RuleRow_t row);
