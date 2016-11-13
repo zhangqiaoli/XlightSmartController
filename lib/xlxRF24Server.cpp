@@ -298,6 +298,7 @@ bool RF24ServerClass::ProcessReceive()
     return false;
 
   uint8_t len = receive(msgData);
+	uint8_t payl_len = msg.getLength();
   if( len < HEADER_SIZE )
   {
     LOGW(LOGTAG_MSG, "got corrupt dynamic payload!");
@@ -314,7 +315,7 @@ bool RF24ServerClass::ProcessReceive()
 	replyTo = msg.getSender();
   LOGD(LOGTAG_MSG, "Received from pipe %d msg-len=%d, from:%d to:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
         pipe, len, replyTo, to, msg.getDestination(), msg.getCommand(),
-        msgType, msg.getSensor(), msg.getLength());
+        msgType, msg.getSensor(), payl_len);
 	/*
   memset(strDisplay, 0x00, sizeof(strDisplay));
   msg.getJsonString(strDisplay);
@@ -377,7 +378,8 @@ bool RF24ServerClass::ProcessReceive()
 
 		case C_REQ:
 			// ToDo: verify token
-			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL || msgType == V_RGBW ) {
+			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL
+				  || msgType == V_RGBW || msgType == V_DISTANCE ) {
 				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 				BOOL bDataChanged = false;
 				if( _bIsAck ) {
@@ -389,19 +391,27 @@ bool RF24ServerClass::ProcessReceive()
 					} else if( msgType == V_RGBW ) {
 						if( payload[0] ) {	// Succeed or not
 							static bool bFirstRGBW = true;		// Make sure the first message will be sent anyway
-							UC _devType = payload[1];
+							UC _devType = payload[1];	// payload[2] is present status
 							UC _ringID = payload[3];
 							if( IS_SUNNY(_devType) ) {
 								// Sunny
-								US _CCTValue = payload[6] * 256 + payload[5];
+								US _CCTValue = payload[7] * 256 + payload[6];
 								bDataChanged |= theSys.ConfirmLampCCT(replyTo, _CCTValue, _ringID);
-								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[3], payload[4]);
+								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[4], payload[5], _ringID);
 								bDataChanged |= bFirstRGBW;
 								bFirstRGBW = false;
 							} else if( IS_RAINBOW(_devType) || IS_MIRAGE(_devType) ) {
-								// Rainbow or Mirage
-								// ToDo: set RGBW
+								// Rainbow or Mirage, set RBGW
+								bDataChanged |= theSys.ConfirmLampHue(replyTo, payload[6], payload[7], payload[8], payload[9], _ringID);
+								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[4], payload[5], _ringID);
+								bDataChanged |= bFirstRGBW;
+								bFirstRGBW = false;
 							}
+						}
+					} else if( msgType == V_DISTANCE && payload[0] ) {
+						UC _devType = payload[1];	// payload[2] is present status
+						if( IS_MIRAGE(_devType) ) {
+							bDataChanged |= theSys.ConfirmLampTop(replyTo, payload, payl_len);
 						}
 					}
 
@@ -410,7 +420,7 @@ bool RF24ServerClass::ProcessReceive()
 						transTo = BROADCAST_ADDRESS;
 					}
 				}
-				// ToDo: if lamp is not present, reture error
+				// ToDo: if lamp is not present, return error
 				if( transTo > 0 ) {
 					// Transfer message
 					msg.build(getAddress(), transTo, replyTo, C_REQ, msgType, _needAck, _bIsAck, true);
@@ -422,7 +432,7 @@ bool RF24ServerClass::ProcessReceive()
 
 		case C_SET:
 			// ToDo: verify token
-			// ToDo: if lamp is not present, reture error
+			// ToDo: if lamp is not present, return error
 			transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
 			if( transTo > 0 ) {
 				// Transfer message

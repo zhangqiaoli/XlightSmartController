@@ -191,9 +191,7 @@ typedef struct
 	FLASH_FLAG flash_flag		: 1;
 	RUN_FLAG run_flag			  : 1;
 	UC uid			            : 8;
-	Hue_t ring1;
-	Hue_t ring2;
-	Hue_t ring3;
+	Hue_t ring[MAX_RING_NUM];
 	UC filter		            : 8;
 } ScenarioRow_t;
 

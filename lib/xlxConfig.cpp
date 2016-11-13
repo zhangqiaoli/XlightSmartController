@@ -317,9 +317,9 @@ BOOL ConfigClass::InitDevStatus(UC nodeID)
 	first_row.present = 0;
 	first_row.token = 0;
 	first_row.type = devtypWRing3;  // White 3 rings
-	first_row.ring1 = whiteHue;
-	first_row.ring2 = whiteHue;
-	first_row.ring3 = whiteHue;
+	first_row.ring[0] = whiteHue;
+	first_row.ring[1] = whiteHue;
+	first_row.ring[2] = whiteHue;
 
 	return theSys.DevStatus_table.add(first_row);
 }

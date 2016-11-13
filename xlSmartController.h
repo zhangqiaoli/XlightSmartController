@@ -121,6 +121,7 @@ public:
   BOOL ConfirmLampBrightness(UC _nodeID, UC _st, UC _percentage, UC _ringID = RING_ID_ALL);
   BOOL ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID = RING_ID_ALL);
   BOOL ConfirmLampHue(UC _nodeID, UC _white, UC _red, UC _green, UC _blue, UC _ringID = RING_ID_ALL);
+  BOOL ConfirmLampTop(UC _nodeID, UC *_payl, UC _len);
   BOOL QueryDeviceStatus(UC _nodeID);
 
   // Utils
