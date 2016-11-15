@@ -122,7 +122,8 @@ public:
   BOOL ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID = RING_ID_ALL);
   BOOL ConfirmLampHue(UC _nodeID, UC _white, UC _red, UC _green, UC _blue, UC _ringID = RING_ID_ALL);
   BOOL ConfirmLampTop(UC _nodeID, UC *_payl, UC _len);
-  BOOL QueryDeviceStatus(UC _nodeID);
+  BOOL QueryDeviceStatus(UC _nodeID, UC _ringID = RING_ID_ALL);
+  BOOL IsAllRingHueSame(ListNode<DevStatusRow_t> *pDev);
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure
