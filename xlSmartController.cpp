@@ -2153,7 +2153,7 @@ BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID, UC _ringID)
 				(*jroot)["BR"] = DevStatusRowPtr->data.ring[0].BR;
 				(*jroot)["CCT"] = DevStatusRowPtr->data.ring[0].CCT;
 				jroot->printTo(buffer, 256);
-				return PublishDeviceStatus(buffer);				
+				return PublishDeviceStatus(buffer);
 			} else if( IS_RAINBOW(DevStatusRowPtr->data.type) || IS_MIRAGE(DevStatusRowPtr->data.type) ) {
 				UC r_index;
 				BOOL _bMore = false;
