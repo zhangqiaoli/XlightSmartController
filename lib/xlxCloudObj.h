@@ -40,7 +40,7 @@
 #define CLT_TTL_Alarm           1800              // 0.5 hour
 /// Sensor data update
 #define CLT_NAME_SensorData     "xlc-data-sensor"
-#define CLT_TTL_SensorData      SEN_DHT_SPEED_LOW
+#define CLT_TTL_SensorData      RTE_DELAY_PUBLISH
 /// LOG Message
 #define CLT_NAME_LOGMSG          "xlc-event-log"
 #define CLT_TTL_LOGMSG           3600              // 1 hour
