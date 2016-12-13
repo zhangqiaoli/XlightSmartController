@@ -594,7 +594,7 @@ bool SmartControllerClass::ProcessPanel()
 /// Input parameters:
 ///   sw: true = on; false = off
 ///   dev: device id or 0 (all devices under this controller)
-int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
+int SmartControllerClass::DevSoftSwitch(UC sw, UC dev)
 {
 	//String strCmd = String::format("%d;%d;%d;%d;%d;%d", dev, S_DIMMER, C_SET, 1, V_STATUS, (sw ? 1:0));
 	//ExecuteLightCommand(strCmd);
@@ -602,7 +602,7 @@ int SmartControllerClass::DevSoftSwitch(BOOL sw, UC dev)
 	//ToDo: if dev = 0, go through list of devices
 	// ToDo:
 	//SetStatus();
-	String strCmd = String::format("%d:7:%d", dev, sw ? 1 : 0);
+	String strCmd = String::format("%d:7:%d", dev, sw);
 	return theRadio.ProcessSend(strCmd);
 }
 
@@ -719,7 +719,7 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 {
 	//fast, simple control
 	UC bytDev = 1;		// Default value
-	BOOL blnOn = false;
+	UC blnOn;
 	swStr.toLowerCase();
 	int nPos = swStr.indexOf(':');
 	if( nPos > 0 ) {
@@ -727,7 +727,13 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 		if( bytDev > NODEID_MAX_DEVCIE ) return 1;
 	}
 	String strOn = swStr.substring(nPos + 1);
-	blnOn = (strOn == "1" || strOn == "on");
+	if(strOn == "0" || strOn == "off") {
+		blnOn = DEVICE_SW_OFF;
+	} else if(strOn == "1" || strOn == "on") {
+		blnOn = DEVICE_SW_ON;
+	} else {
+		blnOn = DEVICE_SW_TOGGLE;
+	}
 	return DevSoftSwitch(blnOn, bytDev);
 }
 

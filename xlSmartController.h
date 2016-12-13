@@ -63,7 +63,7 @@ public:
   bool ProcessPanel();
 
   // Device Control Functions
-  int DevSoftSwitch(BOOL sw, UC dev = 0);
+  int DevSoftSwitch(UC sw, UC dev = 0);
 
   // High speed system timer process
   void FastProcess();
