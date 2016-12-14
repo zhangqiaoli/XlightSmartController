@@ -117,6 +117,9 @@ void setup()
 
   // System Starts
   theSys.Start();
+
+	// Setp WD and reset the application if no reponds
+	ApplicationWatchdog wd(RTE_WATCHDOG_TIMEOUT, System.reset, 256);
 }
 
 // Notes: approximate RTE_DELAY_SELFCHECK ms per loop
@@ -150,7 +153,6 @@ void loop()
 
   // Self-test & alarm trigger, also insert delay between each loop
   IF_MAINLOOP_TIMER( theSys.SelfCheck(RTE_DELAY_SELFCHECK), "SelfCheck" );
-
 }
 
 #endif

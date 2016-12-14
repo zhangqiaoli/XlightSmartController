@@ -38,6 +38,7 @@
 #define RTE_DELAY_PUBLISH         60          // Maximum publish data refresh time in seconds
 #define RTE_DELAY_SYSTIMER        10          // System Timer interval, can be very fast, e.g. 50 means 25ms
 #define RTE_DELAY_SELFCHECK       100         // Self-check interval
+#define RTE_WATCHDOG_TIMEOUT      30000       // Maxium WD feed duration
 
 // Number of ticks on System Timer
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
