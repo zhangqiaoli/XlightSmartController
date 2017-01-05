@@ -239,7 +239,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
   } else if(strTopic.equals("test")) {
     SERIAL_LN(F("--- Command: test <action parameters> ---"));
     SERIAL_LN(F("To perform testing, where <action> could be:"));
-    SERIAL_LN(F("   ledring: check brightness LED indicator"));
+    SERIAL_LN(F("   ledring [0:5]: check brightness LED indicator"));
     SERIAL_LN(F("   ledrgb: check status RGB LED"));
     SERIAL_LN(F("   ping <ip address>: ping ip address"));
     SERIAL_LN(F("   send <NodeId:MessageId>: send test message to node"));
@@ -801,7 +801,7 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
     }
     else if (strnicmp(sTopic, "safe", 4) == 0) {
       SERIAL_LN(F("System is about to enter safe mode..."));
-      CloudOutput("System is about to enter safe mod");
+      CloudOutput("System is about to enter safe mode");
       delay(1000);
       System.enterSafeMode();
     }

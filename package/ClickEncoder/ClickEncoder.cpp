@@ -163,8 +163,10 @@ void ClickEncoder::service(void)
     if (digitalRead(_pinBTN) == _pinsActive) { // key is down
       keyDownTicks++;
       if (keyDownTicks > (ENC_HOLDTIME / ENC_buttonINTERVAL)) {
-        _heldStartTick = millis();
-        _button = BUTTON_HELD;
+        if( _button != BUTTON_HELD ) {
+          _heldStartTick = millis();
+          _button = BUTTON_HELD;
+        }
       }
     }
 

@@ -132,30 +132,29 @@ bool xlPanelClass::ProcessEncoder()
 	// Read button input
 	ButtonType b = m_pEncoder->getButton();
   if (b != BUTTON_OPEN) {
-    IF_SERIAL_DEBUG(SERIAL("Button: "));
     switch (b) {
       case BUTTON_PRESSED:
-        IF_SERIAL_DEBUG(SERIAL_LN("Pressed"));
+        LOGD(LOGTAG_ACTION, "Button Pressed");
         break;
       case BUTTON_HELD:
-        IF_SERIAL_DEBUG(SERIAL_LN("Held"));
+        LOGD(LOGTAG_ACTION, "Button Held");
         break;
       case BUTTON_RELEASED:
-        IF_SERIAL_DEBUG(SERIAL_LN("Released"));
+        LOGD(LOGTAG_ACTION, "Button Released: %d", m_pEncoder->getHeldDuration());
         // Clear CCT flag
         SetCCTFlag(false);
         // Check held duration
         CheckHeldTimeout(m_pEncoder->getHeldDuration());
         break;
       case BUTTON_CLICKED:
-        IF_SERIAL_DEBUG(SERIAL_LN("Clicked"));
+        LOGD(LOGTAG_ACTION, "Button Clicked");
         theSys.ToggleLampOnOff(NODEID_MAINDEVICE);
         // Clear CCT flag, but don't need to change HC595, cuz the toggle function will do it
         //SetCCTFlag(false);
         m_bCCTFlag = false;
         break;
       case BUTTON_DOUBLE_CLICKED:
-        IF_SERIAL_DEBUG(SERIAL_LN("DoubleClicked"));
+        LOGD(LOGTAG_ACTION, "Button DoubleClicked");
         ReverseCCTFlag();
         //m_pEncoder->setAccelerationEnabled(!m_pEncoder->getAccelerationEnabled());
         //SERIAL_LN("  Acceleration is %s", m_pEncoder->getAccelerationEnabled() ? "enabled" : "disabled");
@@ -329,12 +328,16 @@ void xlPanelClass::ReverseCCTFlag()
 void xlPanelClass::CheckHeldTimeout(const uint8_t nHeldDur)
 {
   if( nHeldDur >= RTE_TM_HELD_TO_DFU ) {
+    LOGE(LOGTAG_ACTION, "System is about to enter DFU mode");
     System.dfu();
   } else if( nHeldDur >= RTE_TM_HELD_TO_WIFI ) {
+    LOGW(LOGTAG_ACTION, "System is about to enter safe mode");
     System.enterSafeMode();
   } else if( nHeldDur >= RTE_TM_HELD_TO_RESET ) {
+    LOGW(LOGTAG_ACTION, "System is about to reset");
     theSys.Restart();
   } else if( nHeldDur >= RTE_TM_HELD_TO_BASENW ) {
     theRadio.enableBaseNetwork(true);
+    LOGN(LOGTAG_ACTION, "Base network is enabled.");
   }
 }
