@@ -76,7 +76,7 @@ bool NodeListClass::loadList()
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
-		} else if(  i == 1 && theConfig.GetNumNodes() == 2 ) {
+		} else if(  i == 1 && theConfig.GetNumNodes() <= 2 ) {
 			if( lv_Node.nid != NODEID_MIN_REMOTE ) {
 				lv_Node.nid = NODEID_MIN_REMOTE;
 				resetIdentity(lv_Node.identity);
@@ -228,7 +228,7 @@ BOOL NodeListClass::clearNodeId(UC nodeID)
 	if( nodeID == NODEID_GATEWAY || nodeID == NODEID_DUMMY ) return false;
 
 	NodeIdRow_t lv_Node;
-	if( nodeID == NODEID_MAINDEVICE || NODEID_MAINDEVICE == NODEID_MIN_REMOTE ) {
+	if( nodeID == NODEID_MAINDEVICE || nodeID == NODEID_MIN_REMOTE ) {
 		// Update with black item
 		lv_Node.nid = nodeID;
 		resetIdentity(lv_Node.identity);
@@ -355,6 +355,7 @@ BOOL ConfigClass::LoadConfig()
       || m_config.timeZone.offset < -780
       || m_config.timeZone.offset > 780
       || m_config.numDevices > MAX_DEVICE_PER_CONTROLLER
+			|| m_config.numNodes < 2
 			|| m_config.numNodes > MAX_NODE_PER_CONTROLLER
       || m_config.typeMainDevice == devtypUnknown
       || m_config.typeMainDevice >= devtypDummy
