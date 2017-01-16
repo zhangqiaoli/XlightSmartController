@@ -47,6 +47,7 @@
 #include "xlxLogger.h"
 #include "xlxPanel.h"
 #include "xlxRF24Server.h"
+#include "xlxASRInterface.h"
 
 //------------------------------------------------------------------
 // the one and only instance of SerialConsoleClass
@@ -243,7 +244,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   ledrgb: check status RGB LED"));
     SERIAL_LN(F("   ping <ip address>: ping ip address"));
     SERIAL_LN(F("   send <NodeId:MessageId>: send test message to node"));
-    SERIAL_LN(F("   send <message>: send MySensors format message\n\r"));
+    SERIAL_LN(F("   send <message>: send MySensors format message"));
+    SERIAL_LN(F("   asr <cmd>: send command to ASR module\n\r"));
     CloudOutput(F("test ping|send"));
   } else if(strTopic.equals("send")) {
     SERIAL_LN(F("--- Command: send <message> or <NodeId:MessageId> ---"));
@@ -601,6 +603,12 @@ bool SerialConsoleClass::doTest(const char *cmd)
       if( strlen(sParam) >= 3 ) {
         String strMsg = sParam;
         theRadio.ProcessSend(strMsg);
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "asr", 3) == 0) {
+      char *sParam = next();
+      if( strlen(sParam) > 0 ) {
+        theASR.sendCommand(atoi(sParam));
         retVal = true;
       }
     }

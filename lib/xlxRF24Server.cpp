@@ -118,6 +118,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 	int iValue;
 	float fValue;
 	char strBuffer[64];
+	uint8_t payload[MAX_PAYLOAD];
 
 	int nPos = strMsg.indexOf(':');
 	uint8_t lv_nNodeID;
@@ -249,6 +250,26 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		bMsgReady = true;
 		SERIAL("Now sending get dev-status (V_RGBW) message...");
 		break;
+
+	case 13:  // Set main lamp(ID:1) status in one, ack
+			msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_RGBW, true);
+			bytValue = 65;
+			iValue = 3000;
+			nPos = lv_sPayload.indexOf(':');
+			if (nPos > 0) {
+				// Extract brightness & cct
+				bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
+				iValue = lv_sPayload.substring(nPos + 1).toInt();
+				iValue = constrain(iValue, CT_MIN_VALUE, CT_MAX_VALUE);
+			}
+			payload[0] = 1;
+		  payload[1] = bytValue;
+		  payload[2] = iValue % 256;
+		  payload[3] = iValue / 256;
+			msg.set((void*)payload, 4);
+			bMsgReady = true;
+			SERIAL("Now sending set CCT V_RGBW (br=%d, cct=%d message...", bytValue, iValue);
+			break;
 	}
 
 	if (bMsgReady) {

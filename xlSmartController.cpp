@@ -29,6 +29,7 @@
 #include "xlxPanel.h"
 #include "xlxRF24Server.h"
 #include "xlxSerialConsole.h"
+#include "xlxASRInterface.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
@@ -122,6 +123,9 @@ void SmartControllerClass::Init()
 	// Initialize Logger
 	theLog.Init(m_SysID);
 	theLog.InitFlash(MEM_OFFLINE_DATA_OFFSET, MEM_OFFLINE_DATA_LEN);
+
+	// Open ASR Interface
+	theASR.Init(SERIALPORT_SPEED_LOW);
 
 	LOGN(LOGTAG_MSG, "SmartController is starting...SysID=%s", m_SysID.c_str());
 }
@@ -497,6 +501,9 @@ void SmartControllerClass::ProcessCommands()
 	// Process Console Command
   theConsole.processCommand();
 
+	// Process ASR Command
+	theASR.processCommand();
+
 	// ToDo: process commands from other sources (Wifi, BLE)
 	// ToDo: Potentially move ReadNewRules here
 }
@@ -794,7 +801,7 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 
 	//COMMAND 2: Change light color
 	if (_cmd == CMD_COLOR) {
-		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("ring") || !(*m_jpCldCmd).containsKey("color")) {
+		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("ring")) {
 			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
 			return 0;
 		}
@@ -1880,6 +1887,12 @@ BOOL SmartControllerClass::ChangeLampCCT(UC _nodeID, US _cct)
 	String strCmd = String::format("%d:11:%d", _nodeID, _cct);
 	rc = theRadio.ProcessSend(strCmd);
 	return rc;
+}
+
+BOOL SmartControllerClass::ChangeBR_CCT(UC _nodeID, UC _br, US _cct)
+{
+	String strCmd = String::format("%d:13:%d:%d", _nodeID, _br, _cct);
+	return theRadio.ProcessSend(strCmd);
 }
 
 BOOL SmartControllerClass::RequestDeviceStatus(UC _nodeID)
