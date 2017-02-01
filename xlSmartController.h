@@ -56,6 +56,9 @@ public:
   BOOL IsLANGood();
   BOOL IsWANGood();
 
+  BOOL connectWiFi();
+  BOOL connectCloud();
+
   // Process all kinds of commands
   void ProcessCommands();
   void CollectData(UC tick);

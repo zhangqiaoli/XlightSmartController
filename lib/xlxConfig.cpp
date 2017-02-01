@@ -276,10 +276,10 @@ void ConfigClass::InitConfig()
   m_config.timeZone.offset = -300;        // -5 hours
   m_config.timeZone.dst = 1;              // 1 or 0
   m_config.sensorBitmap = 0;
-	BITSET(m_config.sensorBitmap, sensorDHT);
-	//BITSET(m_config.sensorBitmap, sensorALS);
-	//BITSET(m_config.sensorBitmap, sensorMIC);
-	//BITSET(m_config.sensorBitmap, sensorPIR);
+	SetSensorEnabled(sensorDHT);
+	//SetSensorEnabled(sensorALS);
+	//SetSensorEnabled(sensorMIC);
+	//SetSensorEnabled(sensorPIR);
   strcpy(m_config.Organization, XLA_ORGANIZATION);
   strcpy(m_config.ProductName, XLA_PRODUCT_NAME);
   strcpy(m_config.Token, XLA_TOKEN);
@@ -292,6 +292,8 @@ void ConfigClass::InitConfig()
 	m_config.enableDailyTimeSync = true;
 	m_config.rfPowerLevel = RF24_PA_LEVEL_GW;
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
+	m_config.useCloud = CLOUD_ENABLE;
+	m_config.stWiFi = 1;
 }
 
 BOOL ConfigClass::InitDevStatus(UC nodeID)
@@ -359,7 +361,8 @@ BOOL ConfigClass::LoadConfig()
 			|| m_config.numNodes > MAX_NODE_PER_CONTROLLER
       || m_config.typeMainDevice == devtypUnknown
       || m_config.typeMainDevice >= devtypDummy
-			|| m_config.rfPowerLevel > RF24_PA_MAX )
+			|| m_config.rfPowerLevel > RF24_PA_MAX
+		 	|| m_config.useCloud > CLOUD_MUST_CONNECT )
     {
       InitConfig();
       m_isChanged = true;
@@ -796,6 +799,37 @@ BOOL ConfigClass::SetMaxBaseNetworkDur(US dur)
 		return true;
 	}
 	return false;
+}
+
+UC ConfigClass::GetUseCloud()
+{
+	return m_config.useCloud;
+}
+
+BOOL ConfigClass::SetUseCloud(UC opt)
+{
+	if( opt != m_config.useCloud && opt <= CLOUD_MUST_CONNECT ) {
+		m_config.useCloud = opt;
+		m_isChanged = true;
+		return true;
+	}
+	return false;
+}
+
+BOOL ConfigClass::GetWiFiStatus()
+{
+  return m_config.stWiFi;
+}
+
+BOOL ConfigClass::SetWiFiStatus(BOOL _st)
+{
+  if( _st != m_config.stWiFi ) {
+    m_config.stWiFi = _st;
+    m_isChanged = true;
+		LOGN(LOGTAG_STATUS, F("Wi-Fi status set to %d"), _st);
+    return true;
+  }
+  return false;
 }
 
 UC ConfigClass::GetRFPowerLevel()

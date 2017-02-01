@@ -121,6 +121,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 	uint8_t payload[MAX_PAYLOAD];
 
 	int nPos = strMsg.indexOf(':');
+	int nPos2;
 	uint8_t lv_nNodeID;
 	uint8_t lv_nMsgID;
 	String lv_sPayload;
@@ -128,7 +129,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		// Extract NodeID & MessageID
 		lv_nNodeID = (uint8_t)(strMsg.substring(0, nPos).toInt());
 		lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1).toInt());
-		int nPos2 = strMsg.indexOf(':', nPos + 1);
+		nPos2 = strMsg.indexOf(':', nPos + 1);
 		if (nPos2 > 0) {
 			lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1, nPos2).toInt());
 			lv_sPayload = strMsg.substring(nPos2 + 1);
@@ -253,20 +254,46 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 
 	case 13:  // Set main lamp(ID:1) status in one, ack
 			msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_RGBW, true);
-			bytValue = 65;
-			iValue = 3000;
+			payload[0] = RING_ID_ALL;
+			payload[1] = 1;
+			payload[2] = 65;
 			nPos = lv_sPayload.indexOf(':');
 			if (nPos > 0) {
-				// Extract brightness & cct
+				// Extract brightness, cct or WRGB
 				bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
+				payload[1] = bytValue;
 				iValue = lv_sPayload.substring(nPos + 1).toInt();
-				iValue = constrain(iValue, CT_MIN_VALUE, CT_MAX_VALUE);
+				if( iValue < 256 ) {
+					// WRGB
+					payload[3] = iValue % 256;	// W
+					payload[4] = 0;	// R
+					payload[5] = 0;	// G
+					payload[6] = 0;
+					for( int cindex = 3; cindex < 7; cindex++ ) {
+						nPos2 = strMsg.indexOf(':', nPos + 1);
+						if (nPos2 == 0) {
+							bytValue = (uint8_t)(lv_sPayload.substring(nPos + 1).toInt());
+							payload[cindex] = bytValue;
+							break;
+						}
+						bytValue = (uint8_t)(lv_sPayload.substring(nPos + 1, nPos2).toInt());
+						payload[cindex] = bytValue;
+						nPos = nPos2;
+					}
+					msg.set((void*)payload, 7);
+				} else {
+					// CCT
+					iValue = constrain(iValue, CT_MIN_VALUE, CT_MAX_VALUE);
+					payload[3] = iValue % 256;
+				  payload[4] = iValue / 256;
+					msg.set((void*)payload, 5);
+				}
+			} else {
+				iValue = 3000;
+				payload[3] = iValue % 256;
+			  payload[4] = iValue / 256;
+				msg.set((void*)payload, 5);
 			}
-			payload[0] = 1;
-		  payload[1] = bytValue;
-		  payload[2] = iValue % 256;
-		  payload[3] = iValue / 256;
-			msg.set((void*)payload, 4);
 			bMsgReady = true;
 			SERIAL("Now sending set CCT V_RGBW (br=%d, cct=%d message...", bytValue, iValue);
 			break;

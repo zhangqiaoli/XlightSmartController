@@ -61,8 +61,10 @@ typedef struct
   BOOL Reserved_bool          :5;           // Reserved for boolean flags
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
   UC rfPowerLevel             :2;           // RF Power Level 0..3
-  UC Reserved1                :6;           // Reserved bits
+  BOOL stWiFi                 :1;           // Wi-Fi status: On / Off
+  UC Reserved1                :5;           // Reserved bits
   US maxBaseNetworkDuration;
+  UC useCloud;                              // How to depend on the Cloud
 } Config_t;
 
 //------------------------------------------------------------------
@@ -342,6 +344,12 @@ public:
 
   US GetMaxBaseNetworkDur();
   BOOL SetMaxBaseNetworkDur(US dur);
+
+  UC GetUseCloud();
+  BOOL SetUseCloud(UC opt);
+
+  BOOL GetWiFiStatus();
+  BOOL SetWiFiStatus(BOOL _st);
 
   UC GetRFPowerLevel();
   BOOL SetRFPowerLevel(UC level);

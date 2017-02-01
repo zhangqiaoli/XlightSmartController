@@ -111,7 +111,9 @@ void SmartControllerClass::Init()
 
 #ifdef SYS_SERIAL_DEBUG
 	// Wait Serial connection so that we can see the starting information
-	while(!TheSerial.available()) { Particle.process(); }
+	while(!TheSerial.available()) {
+		if( Particle.connected() == true ) { Particle.process(); }
+	}
 	SERIAL_LN(F("SmartController is starting..."));
 #endif
 
@@ -134,6 +136,9 @@ void SmartControllerClass::Init()
 /// check RF2.4 & BLE
 void SmartControllerClass::InitRadio()
 {
+	// Set NetworkID
+	while(theRadio.GetNetworkID() == 0) delay(50);
+
 	// Check RF2.4
 	if( CheckRF() ) {
   	if (IsRFGood())
@@ -264,8 +269,10 @@ void SmartControllerClass::InitCloudObj()
 	// Set cloud variable initial value
 	m_tzString = theConfig.GetTimeZoneJSON();
 
-	CloudObjClass::InitCloudObj();
-	LOGN(LOGTAG_MSG, F("Cloud Objects registered."));
+	if( theConfig.GetUseCloud() != CLOUD_DISABLE ) {
+		CloudObjClass::InitCloudObj();
+		LOGN(LOGTAG_MSG, F("Cloud Objects registered."));
+	}
 }
 
 // Get the controller started
@@ -304,8 +311,10 @@ BOOL SmartControllerClass::Start()
 	}
 
 	// Publish local the main device status
-	UL tm = 0x4ff;	// Delay 1.5s in order to publish
-	while(tm-- > 0){ Particle.process(); }
+	if( Particle.connected() == true ) {
+		UL tm = 0x4ff;	// Delay 1.5s in order to publish
+		while(tm-- > 0){ Particle.process(); }
+	}
 	QueryDeviceStatus(NODEID_MAINDEVICE);
 
 	// Request the main device to report status
@@ -316,6 +325,7 @@ BOOL SmartControllerClass::Start()
 
 void SmartControllerClass::Restart()
 {
+	theConfig.SaveConfig();
 	SetStatus(STATUS_RST);
 	delay(1000);
 	System.reset();
@@ -334,6 +344,35 @@ BOOL SmartControllerClass::SetStatus(UC st)
 		m_SysStatus = st;
 	}
 	return true;
+}
+
+// Connect to the Cloud
+BOOL SmartControllerClass::connectCloud()
+{
+	BOOL retVal = Particle.connected();
+	if( !retVal ) {
+		SERIAL("Cloud connecting...");
+	  Particle.connect();
+	  waitFor(Particle.connected, RTE_CLOUD_CONN_TIMEOUT);
+	  retVal = Particle.connected();
+		SERIAL_LN("%s", retVal ? "OK" : "Failed");
+	}
+  return retVal;
+}
+
+// Connect Wi-Fi
+BOOL SmartControllerClass::connectWiFi()
+{
+	BOOL retVal = WiFi.ready();
+	if( !retVal ) {
+		SERIAL("Wi-Fi connecting...");
+	  WiFi.connect();
+	  waitFor(WiFi.ready, RTE_WIFI_CONN_TIMEOUT);
+	  retVal = WiFi.ready();
+		SERIAL_LN("%s", retVal ? "OK" : "Failed");
+	}
+  theConfig.SetWiFiStatus(retVal);
+  return retVal;
 }
 
 // Close and reopen serial port to avoid buffer overrun
@@ -413,6 +452,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 	static US tickSaveConfig = 0;				// must be static
 	static US tickCheckRadio = 0;				// must be static
 	static UC tickAcitveCheck = 0;
+	static UC tickWiFiOff = 0;
 
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);
@@ -438,8 +478,39 @@ BOOL SmartControllerClass::SelfCheck(US ms)
     }
 
 		// Check Network
-		if( !IsWANGood() || tickAcitveCheck % 5 == 0 || GetStatus() == STATUS_DIS ) {
-			InitNetwork();
+		if( theConfig.GetWiFiStatus() ) {
+			if( !IsWANGood() || tickAcitveCheck % 5 == 0 || GetStatus() == STATUS_DIS ) {
+				InitNetwork();
+			}
+
+			if( IsWANGood() ) { // WLAN is good
+				tickWiFiOff = 0;
+				if( !Particle.connected() ) {
+					// Cloud disconnected, try to recover
+					if( theConfig.GetUseCloud() != CLOUD_DISABLE ) {
+						connectCloud();
+					}
+				} else {
+					if( theConfig.GetUseCloud() == CLOUD_DISABLE ) {
+						Particle.disconnect();
+					}
+				}
+			} else { // WLAN is wrong
+				if( ++tickWiFiOff > 5 ) {
+					theConfig.SetWiFiStatus(false);
+					if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
+						SERIAL_LN("System is about to reset due to lost of network...");
+						Restart();
+					} else {
+						// Avoid keeping trying
+						LOGE(LOGTAG_MSG, F("Turn off WiFi!"));
+						WiFi.disconnect();
+						WiFi.off();	// In order to resume Wi-Fi, restart the application
+					}
+				}
+			}
+		} else if( WiFi.ready() ) {
+			theConfig.SetWiFiStatus(true);
 		}
 
 		// Daily Cloud Synchronization
