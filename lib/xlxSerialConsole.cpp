@@ -209,7 +209,6 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("To show value or summary information, where <object> could be:"));
     SERIAL_LN(F("   ble:     show BLE summary"));
     SERIAL_LN(F("   debug:   show debug channel and level"));
-    SERIAL_LN(F("   dev:     show device list"));
     SERIAL_LN(F("   flag:    show system flags"));
     SERIAL_LN(F("   net:     show network summary"));
     SERIAL_LN(F("   node:    show node summary"));
@@ -307,10 +306,12 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN(F("     , to set value of variable, use '? set var' for detail"));
       SERIAL_LN(F("e.g. set cloud [0|1|2]"));
       SERIAL_LN(F("     , cloud option disable|enable|must"));
+      SERIAL_LN(F("e.g. set maindev <nodeid>"));
+      SERIAL_LN(F("     , to change the main device"));
       SERIAL_LN(F("e.g. set debug [log:level]"));
       SERIAL_LN(F("     , where log is [serial|flash|syslog|cloud|all"));
       SERIAL_LN(F("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r"));
-      CloudOutput(F("set tz|dst|nodeid|base|spkr|flag|var|cloud|debug"));
+      CloudOutput(F("set tz|dst|nodeid|base|spkr|flag|var|cloud|maindev|debug"));
     }
   } else if(strTopic.equals("sys")) {
     SERIAL_LN(F("--- Command: sys <mode> ---"));
@@ -475,6 +476,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
 		SERIAL_LN("theSys.m_brightness = \t\t\t%u", theSys.m_brightness);
 		SERIAL_LN("theSys.m_motion = \t\t\t%s", (theSys.m_motion ? "true" : "false"));
     SERIAL_LN("");
+    SERIAL_LN("Main DeviceID = \t\t\t%d", CURRENT_DEVICE);
     SERIAL_LN("mConfig.typeMainDevice = \t\t%d", theConfig.GetMainDeviceType());
     SERIAL_LN("mConfig.numDevices = \t\t\t%d", theConfig.GetNumDevices());
     SERIAL_LN("mConfig.numNodes = \t\t\t%d", theConfig.GetNumNodes());
@@ -789,6 +791,18 @@ bool SerialConsoleClass::doSet(const char *cmd)
         retVal = true;
       } else {
         SERIAL_LN("Require Cloud option [0|1|2], use '? set cloud' for detail\n\r");
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "maindev", 7) == 0) {
+      // Cloud Option
+      sParam1 = next();
+      if( sParam1) {
+        theConfig.SetMainDeviceID(atoi(sParam1));
+        SERIAL_LN("Main device changed to %d\n\r", CURRENT_DEVICE);
+        CloudOutput("MainDev: %d", CURRENT_DEVICE);
+        retVal = true;
+      } else {
+        SERIAL_LN("Require a valid nodeID\n\r");
         retVal = true;
       }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {

@@ -18,6 +18,9 @@
 */
 
 #define PACK //MSVS intellisense doesn't work when structs are packed
+
+#define CURRENT_DEVICE        (theConfig.GetMainDeviceID())
+
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------
@@ -65,6 +68,7 @@ typedef struct
   UC Reserved1                :5;           // Reserved bits
   US maxBaseNetworkDuration;
   UC useCloud;                              // How to depend on the Cloud
+  UC mainDevID;                             // NodeID for main device
 } Config_t;
 
 //------------------------------------------------------------------
@@ -332,6 +336,9 @@ public:
 
   UC GetBrightIndicator();
   BOOL SetBrightIndicator(UC level);
+
+  UC GetMainDeviceID();
+  BOOL SetMainDeviceID(UC devID);
 
   UC GetMainDeviceType();
   BOOL SetMainDeviceType(UC type);

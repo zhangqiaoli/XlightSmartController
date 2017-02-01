@@ -117,7 +117,8 @@ void NodeListClass::showList()
 	char strDisplay[64];
 	UL lv_now = Time.now();
 	for(int i=0; i < _count; i++) {
-		SERIAL_LN("No.%d - NodeID: %d (%s) actived %ds ago", i,
+		SERIAL_LN("%cNo.%d - NodeID: %d (%s) actived %ds ago",
+				_pItems[i].nid == CURRENT_DEVICE ? '*' : ' ', i,
 		    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identity),
 				(_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1));
 	}
@@ -284,6 +285,7 @@ void ConfigClass::InitConfig()
   strcpy(m_config.ProductName, XLA_PRODUCT_NAME);
   strcpy(m_config.Token, XLA_TOKEN);
   m_config.indBrightness = 0;
+	m_config.mainDevID = NODEID_MAINDEVICE;
   m_config.typeMainDevice = (UC)devtypWRing3;
   m_config.numDevices = 1;
   m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
@@ -362,7 +364,8 @@ BOOL ConfigClass::LoadConfig()
       || m_config.typeMainDevice == devtypUnknown
       || m_config.typeMainDevice >= devtypDummy
 			|| m_config.rfPowerLevel > RF24_PA_MAX
-		 	|| m_config.useCloud > CLOUD_MUST_CONNECT )
+		 	|| m_config.useCloud > CLOUD_MUST_CONNECT
+		 	|| IS_NOT_DEVICE_NODEID(m_config.useCloud) )
     {
       InitConfig();
       m_isChanged = true;
@@ -726,6 +729,24 @@ BOOL ConfigClass::SetBrightIndicator(UC level)
   }
 
   return false;
+}
+
+UC ConfigClass::GetMainDeviceID()
+{
+	return m_config.mainDevID;
+}
+
+BOOL ConfigClass::SetMainDeviceID(UC devID)
+{
+	if( IS_NOT_DEVICE_NODEID(devID) )
+		return false;
+
+  if( devID != m_config.mainDevID )
+  {
+    m_config.mainDevID = devID;
+    m_isChanged = true;
+  }
+  return true;
 }
 
 UC ConfigClass::GetMainDeviceType()

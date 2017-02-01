@@ -279,7 +279,7 @@ void SmartControllerClass::InitCloudObj()
 BOOL SmartControllerClass::Start()
 {
 	// ToDo:bring controller up along with all modules (RF, wifi, BLE)
-	m_pMainDev = SearchDevStatus(NODEID_MAINDEVICE);
+	m_pMainDev = SearchDevStatus(CURRENT_DEVICE);
 
 	LOGI(LOGTAG_MSG, F("SmartController started."));
 	LOGI(LOGTAG_MSG, "Product Info: %s-%s-%d",
@@ -298,12 +298,12 @@ BOOL SmartControllerClass::Start()
 	if( m_pMainDev ) {
 		// Set panel ring on or off
 		thePanel.SetRingOnOff(m_pMainDev->data.ring[0].State);
-		DevSoftSwitch(m_pMainDev->data.ring[0].State, NODEID_MAINDEVICE);
+		DevSoftSwitch(m_pMainDev->data.ring[0].State, CURRENT_DEVICE);
 		// Set CCT or RGBW
 		if( IS_SUNNY(m_pMainDev->data.type) ) {
 			// Set CCT
 			thePanel.UpdateCCTValue(m_pMainDev->data.ring[0].CCT);
-			ChangeLampCCT(NODEID_MAINDEVICE, m_pMainDev->data.ring[0].CCT);
+			ChangeLampCCT(CURRENT_DEVICE, m_pMainDev->data.ring[0].CCT);
 		} else if( IS_RAINBOW(m_pMainDev->data.type) || IS_MIRAGE(m_pMainDev->data.type) ) {
 			// Rainbow or Mirage
 			// ToDo: set RGBW
@@ -315,10 +315,10 @@ BOOL SmartControllerClass::Start()
 		UL tm = 0x4ff;	// Delay 1.5s in order to publish
 		while(tm-- > 0){ Particle.process(); }
 	}
-	QueryDeviceStatus(NODEID_MAINDEVICE);
+	QueryDeviceStatus(CURRENT_DEVICE);
 
 	// Request the main device to report status
-	RequestDeviceStatus(NODEID_MAINDEVICE);
+	RequestDeviceStatus(CURRENT_DEVICE);
 
 	return true;
 }
@@ -2309,12 +2309,13 @@ String SmartControllerClass::print_devStatus_table(int row)
 	String strShortDesc;
 
 	SERIAL_LN("==== DevStatus Row %d ====", row);
-	SERIAL_LN("uid = %d, type = %d", DevStatus_table.get(row).uid, DevStatus_table.get(row).type);
+	SERIAL_LN("%cuid = %d, type = %d", DevStatus_table.get(row).node_id == CURRENT_DEVICE ? '*' : ' ', DevStatus_table.get(row).uid, DevStatus_table.get(row).type);
 	SERIAL_LN("node_id = %d, present = %s", DevStatus_table.get(row).node_id, (DevStatus_table.get(row).present ? "true" : "false"));
   SERIAL_LN("Status: %s, BR: %d, CCT: %d\n\r", DevStatus_table.get(row).ring[0].State ? "On" : "Off",
 				DevStatus_table.get(row).ring[0].BR, DevStatus_table.get(row).ring[0].CCT);
 
-	strShortDesc = String::format("nid:%d St:%d BR:%d, CCT:%d",
+	strShortDesc = String::format("%cnid:%d St:%d BR:%d, CCT:%d",
+				DevStatus_table.get(row).node_id == CURRENT_DEVICE ? '*' : ' ',
 				DevStatus_table.get(row).node_id, DevStatus_table.get(row).ring[0].State,
 				DevStatus_table.get(row).ring[0].BR, DevStatus_table.get(row).ring[0].CCT);
 	return(strShortDesc);
