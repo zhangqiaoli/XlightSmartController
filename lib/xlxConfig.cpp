@@ -365,7 +365,7 @@ BOOL ConfigClass::LoadConfig()
       || m_config.typeMainDevice >= devtypDummy
 			|| m_config.rfPowerLevel > RF24_PA_MAX
 		 	|| m_config.useCloud > CLOUD_MUST_CONNECT
-		 	|| IS_NOT_DEVICE_NODEID(m_config.useCloud) )
+		 	|| IS_NOT_DEVICE_NODEID(m_config.mainDevID) )
     {
       InitConfig();
       m_isChanged = true;
