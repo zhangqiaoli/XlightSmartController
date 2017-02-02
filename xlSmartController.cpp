@@ -1989,7 +1989,9 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 		theConfig.SetDSTChanged(true);
 
 		// Set panel ring on or off
-		thePanel.SetRingOnOff(_st);
+		if( _nodeID == CURRENT_DEVICE ) {
+			thePanel.SetRingOnOff(_st);
+		}
 
 		// Publish device status event
 		StaticJsonBuffer<256> jBuf;
@@ -2029,11 +2031,13 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 			DevStatusRowPtr->data.op_flag = POST;
 			theConfig.SetDSTChanged(true);
 
-			if( r_index == 0 ) {
-				// Set panel ring to new position
-				thePanel.UpdateDimmerValue(_percentage);
-				// Set panel ring off
-				thePanel.SetRingOnOff(_st);
+			if( _nodeID == CURRENT_DEVICE ) {
+				if( r_index == 0 ) {
+					// Set panel ring to new position
+					thePanel.UpdateDimmerValue(_percentage);
+					// Set panel ring off
+					thePanel.SetRingOnOff(_st);
+				}
 			}
 
 			// Publish device status event
@@ -2076,10 +2080,12 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID)
 			DevStatusRowPtr->data.op_flag = POST;
 			theConfig.SetDSTChanged(true);
 
-			if( r_index == 0 ) {
-				// Update cooresponding panel CCT value
-				thePanel.UpdateCCTValue(_cct);
-				thePanel.SetRingOnOff(DevStatusRowPtr->data.ring[0].State);
+			if( _nodeID == CURRENT_DEVICE ) {
+				if( r_index == 0 ) {
+					// Update cooresponding panel CCT value
+					thePanel.UpdateCCTValue(_cct);
+					thePanel.SetRingOnOff(DevStatusRowPtr->data.ring[0].State);
+				}
 			}
 
 			// Publish device status event
