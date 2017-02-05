@@ -2317,13 +2317,26 @@ String SmartControllerClass::print_devStatus_table(int row)
 	SERIAL_LN("==== DevStatus Row %d ====", row);
 	SERIAL_LN("%cuid = %d, type = %d", DevStatus_table.get(row).node_id == CURRENT_DEVICE ? '*' : ' ', DevStatus_table.get(row).uid, DevStatus_table.get(row).type);
 	SERIAL_LN("node_id = %d, present = %s", DevStatus_table.get(row).node_id, (DevStatus_table.get(row).present ? "true" : "false"));
-  SERIAL_LN("Status: %s, BR: %d, CCT: %d\n\r", DevStatus_table.get(row).ring[0].State ? "On" : "Off",
-				DevStatus_table.get(row).ring[0].BR, DevStatus_table.get(row).ring[0].CCT);
 
-	strShortDesc = String::format("%cnid:%d St:%d BR:%d, CCT:%d",
+	if( IS_SUNNY(DevStatus_table.get(row).type) ) {
+		SERIAL_LN("Status: %s, BR: %d, CCT: %d\n\r", DevStatus_table.get(row).ring[0].State ? "On" : "Off",
+					DevStatus_table.get(row).ring[0].BR, DevStatus_table.get(row).ring[0].CCT);
+		strShortDesc = String::format("%cnid:%d St:%d BR:%d, CCT:%d",
 				DevStatus_table.get(row).node_id == CURRENT_DEVICE ? '*' : ' ',
 				DevStatus_table.get(row).node_id, DevStatus_table.get(row).ring[0].State,
 				DevStatus_table.get(row).ring[0].BR, DevStatus_table.get(row).ring[0].CCT);
+	} else {
+		SERIAL_LN("Status: %s, BR: %d, WRGB: %d,%d,%d,%d\n\r", DevStatus_table.get(row).ring[0].State ? "On" : "Off",
+					DevStatus_table.get(row).ring[0].BR, DevStatus_table.get(row).ring[0].CCT,
+				  DevStatus_table.get(row).ring[0].R, DevStatus_table.get(row).ring[0].G,
+					DevStatus_table.get(row).ring[0].B);
+		strShortDesc = String::format("%cnid:%d St:%d BR:%d, WRGB:%d,%d,%d,%d",
+				DevStatus_table.get(row).node_id == CURRENT_DEVICE ? '*' : ' ',
+				DevStatus_table.get(row).node_id, DevStatus_table.get(row).ring[0].State,
+				DevStatus_table.get(row).ring[0].BR, DevStatus_table.get(row).ring[0].CCT,
+			  DevStatus_table.get(row).ring[0].R, DevStatus_table.get(row).ring[0].G,
+			  DevStatus_table.get(row).ring[0].B);
+	}
 	return(strShortDesc);
 
 /*

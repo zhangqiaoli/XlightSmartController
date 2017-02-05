@@ -261,41 +261,44 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 			if (nPos > 0) {
 				// Extract brightness, cct or WRGB
 				bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
-				payload[1] = bytValue;
+				payload[2] = bytValue;
 				iValue = lv_sPayload.substring(nPos + 1).toInt();
 				if( iValue < 256 ) {
 					// WRGB
-					payload[3] = iValue % 256;	// W
+					payload[3] = iValue;	// W
 					payload[4] = 0;	// R
 					payload[5] = 0;	// G
-					payload[6] = 0;
+					payload[6] = 0;	// B
 					for( int cindex = 3; cindex < 7; cindex++ ) {
-						nPos2 = strMsg.indexOf(':', nPos + 1);
-						if (nPos2 == 0) {
-							bytValue = (uint8_t)(lv_sPayload.substring(nPos + 1).toInt());
+						lv_sPayload = lv_sPayload.substring(nPos + 1);
+						nPos = lv_sPayload.indexOf(':');
+						if (nPos <= 0) {
+							bytValue = (uint8_t)(lv_sPayload.toInt());
 							payload[cindex] = bytValue;
 							break;
 						}
-						bytValue = (uint8_t)(lv_sPayload.substring(nPos + 1, nPos2).toInt());
+						bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
 						payload[cindex] = bytValue;
-						nPos = nPos2;
 					}
 					msg.set((void*)payload, 7);
+					SERIAL("Now sending set BR=%d WRGB=(%d,%d,%d,%d)...",
+							payload[2], payload[3], payload[4], payload[5], payload[6]);
 				} else {
 					// CCT
 					iValue = constrain(iValue, CT_MIN_VALUE, CT_MAX_VALUE);
 					payload[3] = iValue % 256;
 				  payload[4] = iValue / 256;
 					msg.set((void*)payload, 5);
+					SERIAL("Now sending set BR=%d CCT=%d...", bytValue, iValue);
 				}
 			} else {
 				iValue = 3000;
 				payload[3] = iValue % 256;
 			  payload[4] = iValue / 256;
 				msg.set((void*)payload, 5);
+				SERIAL("Now sending set BR=%d CCT=%d...", bytValue, iValue);
 			}
 			bMsgReady = true;
-			SERIAL("Now sending set CCT V_RGBW (br=%d, cct=%d message...", bytValue, iValue);
 			break;
 	}
 

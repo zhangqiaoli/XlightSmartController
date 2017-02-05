@@ -462,7 +462,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
 		SERIAL_LN("theSys.mSysID = \t\t\t%s", theSys.m_SysID.c_str());
 		SERIAL_LN("theSys.m_SysVersion = \t\t\t%s", theSys.m_SysVersion.c_str());
 		SERIAL_LN("theSys.m_SysStatus = \t\t\t%d", theSys.m_SysStatus);
-    SERIAL_LN("theConfig.useCloud = \t\t%d", theConfig.GetUseCloud());
+    SERIAL_LN("theConfig.useCloud = \t\t\t%d", theConfig.GetUseCloud());
 		SERIAL_LN("theSys.m_tzString = \t\t\t%s", theSys.m_tzString.c_str());
 		SERIAL_LN("theSys.m_jsonData = \t\t\t%s", theSys.m_jsonData.c_str());
     SERIAL_LN("theSys.m_strCldCmd = \t\t%s\n\r", theSys.m_strCldCmd.c_str());
