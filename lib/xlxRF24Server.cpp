@@ -343,6 +343,7 @@ bool RF24ServerClass::ProcessReceive()
   uint8_t to = 0;
   uint8_t pipe;
 	UC replyTo;
+	UC _sensor;
 	UC msgType;
 	UC transTo;
   if (!available(&to, &pipe))
@@ -362,11 +363,12 @@ bool RF24ServerClass::ProcessReceive()
 
   char strDisplay[SENSORDATA_JSON_SIZE];
   _received++;
+	_sensor = msg.getSensor();
 	msgType = msg.getType();
 	replyTo = msg.getSender();
   LOGD(LOGTAG_MSG, "Received from pipe %d msg-len=%d, from:%d to:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
         pipe, len, replyTo, to, msg.getDestination(), msg.getCommand(),
-        msgType, msg.getSensor(), payl_len);
+        msgType, _sensor, payl_len);
 	/*
   memset(strDisplay, 0x00, sizeof(strDisplay));
   msg.getJsonString(strDisplay);
@@ -387,7 +389,7 @@ bool RF24ServerClass::ProcessReceive()
       if( msgType == I_ID_REQUEST && (replyTo == AUTO || replyTo == BASESERVICE_ADDRESS) ) {
         // On ID Request message:
         /// Get new ID
-				char cNodeType = (char)msg.getSensor();
+				char cNodeType = (char)_sensor;
 				uint64_t nIdentity = msg.getUInt64();
         UC newID = theConfig.lstNodes.requestNodeID(cNodeType, nIdentity);
 
@@ -404,19 +406,18 @@ bool RF24ServerClass::ProcessReceive()
       break;
 
 		case C_PRESENTATION:
-			if( msgType == S_LIGHT || msgType == S_DIMMER ) {
+			if( _sensor == S_LIGHT || _sensor == S_DIMMER ) {
 				US token;
 				if( _needAck ) {
 					// Presentation message: appear of Smart Lamp
 					// Verify credential, return token if true, and change device status
 					UC lv_nNodeID = msg.getSender();
-					UC lampType = msg.getSensor();
 					uint64_t nIdentity = msg.getUInt64();
-					token = theSys.VerifyDevicePresence(lv_nNodeID, lampType, nIdentity);
+					token = theSys.VerifyDevicePresence(lv_nNodeID, msgType, nIdentity);
 					if( token ) {
 						// return token
 						// Notes: lampType & S_LIGHT are not necessary
-		        msg.build(getAddress(), replyTo, lampType, C_PRESENTATION, msgType, false, true);
+		        msg.build(getAddress(), replyTo, _sensor, C_PRESENTATION, msgType, false, true);
 						msg.set((unsigned int)token);
 						msgReady = true;
 						// ToDo: send status req to this lamp
@@ -424,6 +425,12 @@ bool RF24ServerClass::ProcessReceive()
 						LOGW(LOGTAG_MSG, "Unqualitied device connect attemp received");
 					}
 				}
+			} else if( _sensor == S_IR ) {
+				if( msgType == V_STATUS) { // PIR
+					theSys.UpdateMotion(msg.getByte()!=DEVICE_SW_OFF);
+				}
+			} else if( _sensor == S_LIGHT_LEVEL ) { // ALS
+				//theSys.UpdateBrightness();
 			}
 			break;
 
@@ -431,7 +438,7 @@ bool RF24ServerClass::ProcessReceive()
 			// ToDo: verify token
 			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL
 				  || msgType == V_RGBW || msgType == V_DISTANCE ) {
-				transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
+				transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 				BOOL bDataChanged = false;
 				if( _bIsAck ) {
 					//SERIAL_LN("REQ ack:%d to: %d 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x", msgType, transTo, payload[0],payload[1], payload[2], payload[3], payload[4],payload[5],payload[6]);
@@ -484,7 +491,7 @@ bool RF24ServerClass::ProcessReceive()
 		case C_SET:
 			// ToDo: verify token
 			// ToDo: if lamp is not present, return error
-			transTo = (msg.getDestination() == getAddress() ? msg.getSensor() : msg.getDestination());
+			transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 			if( transTo > 0 ) {
 				// Transfer message
 				msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);

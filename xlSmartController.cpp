@@ -593,14 +593,14 @@ void SmartControllerClass::CollectData(UC tick)
 			if (tick % SEN_DHT_SPEED_NORMAL == 0)
 				blnReadDHT = true;
 		}
-		/*if (theConfig.IsSensorEnabled(sensorALS)) {
-			if (tick % SEN_ALS_SPEED_NORMAL == 0)
+		if (theConfig.IsSensorEnabled(sensorALS)) {
+			if (tick % SEN_DHT_SPEED_NORMAL == 0)
 				blnReadALS = true;
 		}
 		if (theConfig.IsSensorEnabled(sensorPIR)) {
-			if (tick % SEN_PIR_SPEED_NORMAL == 0)
+			if (tick % SEN_DHT_SPEED_NORMAL == 0)
 				blnReadPIR = true;
-		}*/
+		}
 		break;
 
 	case STATUS_SLP:    // Lower speed in sleep mode
@@ -608,14 +608,14 @@ void SmartControllerClass::CollectData(UC tick)
 			if (tick % SEN_DHT_SPEED_LOW == 0)
 				blnReadDHT = true;
 		}
-		/*if (theConfig.IsSensorEnabled(sensorALS)) {
+		if (theConfig.IsSensorEnabled(sensorALS)) {
 			if (tick % SEN_ALS_SPEED_LOW == 0)
 				blnReadALS = true;
 		}
 		if (theConfig.IsSensorEnabled(sensorPIR)) {
 			if (tick % SEN_PIR_SPEED_LOW == 0)
 				blnReadPIR = true;
-		}*/
+		}
 		break;
 
 	default:

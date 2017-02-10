@@ -52,8 +52,8 @@
 #define SEN_DHT_SPEED_HIGH        2
 
 #define SEN_ALS_SPEED_LOW         10
-#define SEN_ALS_SPEED_NORMAL      2
-#define SEN_ALS_SPEED_HIGH        1
+#define SEN_ALS_SPEED_NORMAL      5
+#define SEN_ALS_SPEED_HIGH        2
 
 #define SEN_PIR_SPEED_LOW         4
 #define SEN_PIR_SPEED_NORMAL      2

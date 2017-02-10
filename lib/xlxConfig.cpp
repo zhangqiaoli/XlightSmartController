@@ -278,9 +278,9 @@ void ConfigClass::InitConfig()
   m_config.timeZone.dst = 1;              // 1 or 0
   m_config.sensorBitmap = 0;
 	SetSensorEnabled(sensorDHT);
-	//SetSensorEnabled(sensorALS);
+	SetSensorEnabled(sensorALS);
 	//SetSensorEnabled(sensorMIC);
-	//SetSensorEnabled(sensorPIR);
+	SetSensorEnabled(sensorPIR);
   strcpy(m_config.Organization, XLA_ORGANIZATION);
   strcpy(m_config.ProductName, XLA_PRODUCT_NAME);
   strcpy(m_config.Token, XLA_TOKEN);
