@@ -2,7 +2,7 @@
 /// SBS updated 20150429 in accordance with EF H/W design
 /// SBS updated 20161027:
 ///  available pins:
-///    D1 (35), D5 (53), D6 (55), D7 (54)
+///    D1 (35), D5 (53), D6 (55), D7 (54), A7 (30),
 ///    P1S3 (40), P1S4 (47), P1S5 (48)
 ///  PIN_SEN_PIR & PIN_SEN_LIGHT moved to the light
 ///  no need MIC if use voice recognition module
@@ -48,13 +48,13 @@
 #define PIN_KNOB_B_PHASE          D2          // Knob: B_PHASE
 #define PIN_KNOB_A_PHASE          D3          // Knob: A_PHASE
 #define PIN_KNOB_BUTTON           D4          // Knob: button
-#define PIN_SEN_PIR               D7          // Sensor: infra red motion, may also be PWM
+//#define PIN_SEN_PIR               D7          // Sensor: infra red motion, may also be PWM
 
 // Analog GPIO pins (12-bit A0 - A7), can also be used as digital GPIOs
 #define PIN_RF24_CE		   		      A0
 #define PIN_RF24_CS		   	 	      A2
 #define PIN_SEN_MIC               A6          // Sensor: ECT MIC, DAC
-#define PIN_SEN_LIGHT             A7          // Sensor: ALS, may also be PWM
+//#define PIN_SEN_LIGHT             A7          // Sensor: ALS, may also be PWM
 
 /*
   RF24L01 connector pinout:

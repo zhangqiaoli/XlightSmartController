@@ -33,8 +33,8 @@
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
-#include "LightSensor.h"
-#include "MotionSensor.h"
+//#include "LightSensor.h"
+//#include "MotionSensor.h"
 #include "TimeAlarms.h"
 
 //------------------------------------------------------------------
@@ -44,8 +44,8 @@
 SmartControllerClass theSys;
 
 DHT senDHT(PIN_SEN_DHT, SEN_TYPE_DHT);
-LightSensor senLight(PIN_SEN_LIGHT);
-MotionSensor senMotion(PIN_SEN_PIR);
+//LightSensor senLight(PIN_SEN_LIGHT);
+//MotionSensor senMotion(PIN_SEN_PIR);
 
 //------------------------------------------------------------------
 // Alarm Triggered Actions
@@ -209,15 +209,13 @@ void SmartControllerClass::InitPins()
 #ifndef MCU_TYPE_Particle
 	pinMode(PIN_BTN_UP, INPUT);
 	pinMode(PIN_BTN_OK, INPUT);
-	pinMode(PIN_BTN_DOWN, INPUT);
-	pinMode(PIN_ANA_WKP, INPUT);
 
 	// Set Sensors pin Mode
 	//pinModes are already defined in the ::begin() method of each sensor library, may need to be ommitted from here
 	pinMode(PIN_SEN_DHT, INPUT);
-	pinMode(PIN_SEN_LIGHT, INPUT);
-	pinMode(PIN_SEN_MIC, INPUT);
-	pinMode(PIN_SEN_PIR, INPUT);
+//	pinMode(PIN_SEN_LIGHT, INPUT);
+//	pinMode(PIN_SEN_MIC, INPUT);
+//	pinMode(PIN_SEN_PIR, INPUT);
 #endif
 
 	// Brightness level indicator to LS138
@@ -246,18 +244,18 @@ void SmartControllerClass::InitSensors()
 	}
 
 	// Light
-	if (theConfig.IsSensorEnabled(sensorALS)) {
+	/*if (theConfig.IsSensorEnabled(sensorALS)) {
 		senLight.begin(SEN_LIGHT_MAX, SEN_LIGHT_MIN);	// Reversed threshold
 		LOGD(LOGTAG_MSG, F("Light sensor works."));
-	}
+	}*/
 
 	// Brightness indicator
 
 	// PIR
-	if (theConfig.IsSensorEnabled(sensorPIR)) {
+	/*if (theConfig.IsSensorEnabled(sensorPIR)) {
 		senMotion.begin();
 		LOGD(LOGTAG_MSG, F("Motion sensor works."));
-	}
+	}*/
 
 
 	// ToDo:
@@ -595,14 +593,14 @@ void SmartControllerClass::CollectData(UC tick)
 			if (tick % SEN_DHT_SPEED_NORMAL == 0)
 				blnReadDHT = true;
 		}
-		if (theConfig.IsSensorEnabled(sensorALS)) {
+		/*if (theConfig.IsSensorEnabled(sensorALS)) {
 			if (tick % SEN_ALS_SPEED_NORMAL == 0)
 				blnReadALS = true;
 		}
 		if (theConfig.IsSensorEnabled(sensorPIR)) {
 			if (tick % SEN_PIR_SPEED_NORMAL == 0)
 				blnReadPIR = true;
-		}
+		}*/
 		break;
 
 	case STATUS_SLP:    // Lower speed in sleep mode
@@ -610,14 +608,14 @@ void SmartControllerClass::CollectData(UC tick)
 			if (tick % SEN_DHT_SPEED_LOW == 0)
 				blnReadDHT = true;
 		}
-		if (theConfig.IsSensorEnabled(sensorALS)) {
+		/*if (theConfig.IsSensorEnabled(sensorALS)) {
 			if (tick % SEN_ALS_SPEED_LOW == 0)
 				blnReadALS = true;
 		}
 		if (theConfig.IsSensorEnabled(sensorPIR)) {
 			if (tick % SEN_PIR_SPEED_LOW == 0)
 				blnReadPIR = true;
-		}
+		}*/
 		break;
 
 	default:
@@ -638,14 +636,14 @@ void SmartControllerClass::CollectData(UC tick)
 	}
 
 	// Read from ALS
-	if (blnReadALS) {
+	/*if (blnReadALS) {
 		UpdateBrightness(senLight.getLevel());
-	}
+	}*/
 
 	// Motion detection
-	if (blnReadPIR) {
+	/*if (blnReadPIR) {
 		UpdateMotion(senMotion.getMotion());
-	}
+	}*/
 
 	// Update json data and publish on to the cloud
 	if (blnReadDHT || blnReadALS || blnReadPIR) {
