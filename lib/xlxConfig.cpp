@@ -365,7 +365,7 @@ BOOL ConfigClass::LoadConfig()
       || m_config.typeMainDevice >= devtypDummy
 			|| m_config.rfPowerLevel > RF24_PA_MAX
 		 	|| m_config.useCloud > CLOUD_MUST_CONNECT
-		 	|| IS_NOT_DEVICE_NODEID(m_config.mainDevID) )
+		 	|| (IS_NOT_DEVICE_NODEID(m_config.mainDevID) && m_config.mainDevID != NODEID_DUMMY) )
     {
       InitConfig();
       m_isChanged = true;
@@ -738,12 +738,13 @@ UC ConfigClass::GetMainDeviceID()
 
 BOOL ConfigClass::SetMainDeviceID(UC devID)
 {
-	if( IS_NOT_DEVICE_NODEID(devID) )
+	if( IS_NOT_DEVICE_NODEID(devID) && devID != NODEID_DUMMY )
 		return false;
 
   if( devID != m_config.mainDevID )
   {
     m_config.mainDevID = devID;
+		theSys.FindCurrentDevice();		// Refresh current device pointer
     m_isChanged = true;
   }
   return true;

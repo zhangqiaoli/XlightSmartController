@@ -277,7 +277,7 @@ void SmartControllerClass::InitCloudObj()
 BOOL SmartControllerClass::Start()
 {
 	// ToDo:bring controller up along with all modules (RF, wifi, BLE)
-	m_pMainDev = SearchDevStatus(CURRENT_DEVICE);
+	FindCurrentDevice();
 
 	LOGI(LOGTAG_MSG, F("SmartController started."));
 	LOGI(LOGTAG_MSG, "Product Info: %s-%s-%d",
@@ -1871,6 +1871,16 @@ ListNode<DevStatusRow_t>* SmartControllerClass::SearchDevStatus(UC dest_id)
 //------------------------------------------------------------------
 // Device Operations
 //------------------------------------------------------------------
+BOOL SmartControllerClass::FindCurrentDevice()
+{
+	if( CURRENT_DEVICE == NODEID_DUMMY ) {
+		m_pMainDev = SearchDevStatus(NODEID_MAINDEVICE);
+	} else {
+		m_pMainDev = SearchDevStatus(CURRENT_DEVICE);
+	}
+	return(m_pMainDev != NULL);
+}
+
 US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t _identity)
 {
 	NodeIdRow_t lv_Node;
@@ -1925,10 +1935,15 @@ US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t 
 
 BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 {
-	BOOL rc = false;
-	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	BOOL rc = false, _st;
+	ListNode<DevStatusRow_t> *DevStatusRowPtr;
+	if( IS_CURRENT_DEVICE(_nodeID) ) {
+		DevStatusRowPtr = m_pMainDev;
+	} else {
+		DevStatusRowPtr = SearchDevStatus(_nodeID);
+	}
 	if (DevStatusRowPtr) {
-		BOOL _st = (DevStatusRowPtr->data.ring[0].BR < BR_MIN_VALUE ? true : !DevStatusRowPtr->data.ring[0].State);
+		_st = (DevStatusRowPtr->data.ring[0].BR < BR_MIN_VALUE ? true : !DevStatusRowPtr->data.ring[0].State);
 		rc = DevSoftSwitch(_st, _nodeID);
 		// Wait for confirmation or not
 		if( !rc ) {
@@ -1987,7 +2002,7 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 		theConfig.SetDSTChanged(true);
 
 		// Set panel ring on or off
-		if( _nodeID == CURRENT_DEVICE ) {
+		if( IS_CURRENT_DEVICE(_nodeID) ) {
 			thePanel.SetRingOnOff(_st);
 		}
 
@@ -2029,7 +2044,7 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 			DevStatusRowPtr->data.op_flag = POST;
 			theConfig.SetDSTChanged(true);
 
-			if( _nodeID == CURRENT_DEVICE ) {
+			if( IS_CURRENT_DEVICE(_nodeID) ) {
 				if( r_index == 0 ) {
 					// Set panel ring to new position
 					thePanel.UpdateDimmerValue(_percentage);
@@ -2078,7 +2093,7 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID)
 			DevStatusRowPtr->data.op_flag = POST;
 			theConfig.SetDSTChanged(true);
 
-			if( _nodeID == CURRENT_DEVICE ) {
+			if( IS_CURRENT_DEVICE(_nodeID) ) {
 				if( r_index == 0 ) {
 					// Update cooresponding panel CCT value
 					thePanel.UpdateCCTValue(_cct);
