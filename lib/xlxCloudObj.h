@@ -83,7 +83,7 @@ public:
 
   BOOL UpdateTemperature(float value);
   BOOL UpdateHumidity(float value);
-  BOOL UpdateBrightness(uint16_t value);
+  BOOL UpdateBrightness(uint8_t value);
   BOOL UpdateMotion(bool value);
   void UpdateJSONData();
   BOOL PublishLog(const char *msg);

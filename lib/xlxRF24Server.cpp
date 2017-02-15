@@ -124,7 +124,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 	int nPos2;
 	uint8_t lv_nNodeID;
 	uint8_t lv_nMsgID;
-	String lv_sPayload;
+	String lv_sPayload = "";
 	if (nPos > 0) {
 		// Extract NodeID & MessageID
 		lv_nNodeID = (uint8_t)(strMsg.substring(0, nPos).toInt());
@@ -135,7 +135,6 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 			lv_sPayload = strMsg.substring(nPos2 + 1);
 		} else {
 			lv_nMsgID = (uint8_t)(strMsg.substring(nPos + 1).toInt());
-			lv_sPayload = "";
 		}
 	}
 	else {
@@ -190,6 +189,9 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 	case 4:   // Temperature set to 23.5, req no ack
 		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_TEMP, false);
 		fValue = 23.5;
+		if( lv_sPayload.length() > 0 ) {
+			fValue = lv_sPayload.toFloat();
+		}
 		msg.set(fValue, 2);
 		bMsgReady = true;
 		SERIAL("Now sending set temperature message...");
@@ -198,6 +200,9 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 	case 5:   // Humidity set to 45, req no ack
 		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_HUM, false);
 		iValue = 45;
+		if( lv_sPayload.length() > 0 ) {
+			iValue = lv_sPayload.toInt();
+		}
 		msg.set(iValue);
 		bMsgReady = true;
 		SERIAL("Now sending set humidity message...");
@@ -225,7 +230,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 
 	case 9:   // Set main lamp(ID:1) dimmer (V_PERCENTAGE:3), ack
 		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_PERCENTAGE, true);
-		bytValue = constrain(atoi(lv_sPayload), 0, 100);
+		bytValue = constrain(lv_sPayload.toInt(), 0, 100);
 		msg.set((uint8_t)OPERATOR_SET, bytValue);
 		bMsgReady = true;
 		SERIAL("Now sending set V_PERCENTAGE:%d message...", bytValue);
@@ -239,7 +244,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 
 	case 11:  // Set main lamp(ID:1) color temperature (V_LEVEL), ack
 		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_LEVEL, true);
-		iValue = constrain(atoi(lv_sPayload), CT_MIN_VALUE, CT_MAX_VALUE);
+		iValue = constrain(lv_sPayload.toInt(), CT_MIN_VALUE, CT_MAX_VALUE);
 		msg.set((uint8_t)OPERATOR_SET, (unsigned int)iValue);
 		bMsgReady = true;
 		SERIAL("Now sending set CCT V_LEVEL %d message...", iValue);
@@ -429,8 +434,10 @@ bool RF24ServerClass::ProcessReceive()
 				if( msgType == V_STATUS) { // PIR
 					theSys.UpdateMotion(msg.getByte()!=DEVICE_SW_OFF);
 				}
-			} else if( _sensor == S_LIGHT_LEVEL ) { // ALS
-				//theSys.UpdateBrightness();
+			} else if( _sensor == S_LIGHT_LEVEL ) {
+				if( msgType == V_LIGHT_LEVEL) { // ALS
+					theSys.UpdateBrightness(msg.getByte());
+				}
 			}
 			break;
 

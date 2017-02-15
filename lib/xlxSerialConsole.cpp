@@ -242,17 +242,17 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN(F("   ledring [0:5]: check brightness LED indicator"));
     SERIAL_LN(F("   ledrgb: check status RGB LED"));
     SERIAL_LN(F("   ping <ip address>: ping ip address"));
-    SERIAL_LN(F("   send <NodeId:MessageId>: send test message to node"));
+    SERIAL_LN(F("   send <NodeId:MessageId[:Payload]>: send test message to node"));
     SERIAL_LN(F("   send <message>: send MySensors format message"));
     SERIAL_LN(F("   asr <cmd>: send command to ASR module\n\r"));
     CloudOutput(F("test ping|send"));
   } else if(strTopic.equals("send")) {
-    SERIAL_LN(F("--- Command: send <message> or <NodeId:MessageId> ---"));
+    SERIAL_LN(F("--- Command: send <message> or <NodeId:MessageId[:Payload]> ---"));
     SERIAL_LN(F("To send testing message"));
     SERIAL_LN(F("e.g. send 0:1"));
     SERIAL_LN(F("e.g. send 0;1;0;0;6;"));
     SERIAL_LN(F("e.g. send 0;1;1;0;0;23.5\n\r"));
-    CloudOutput(F("send <message> or <NodeId:MessageId>"));
+    CloudOutput(F("send <msg> or <NodeId:MsgId[:Pload]>"));
   } else if(strTopic.equals("set")) {
     char *sObj = next();
     if( sObj ) {
