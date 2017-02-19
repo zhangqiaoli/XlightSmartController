@@ -53,6 +53,7 @@ UC *msgData = (UC *)&(msg.msg);
 
 RF24ServerClass::RF24ServerClass(uint8_t ce, uint8_t cs, uint8_t paLevel)
 	:	MyTransportNRF24(ce, cs, paLevel)
+	, CDataQueue(MAX_MESSAGE_LENGTH * MQ_MAX_RF_MSG)
 {
 	_times = 0;
 	_succ = 0;
@@ -339,183 +340,203 @@ bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
 	return false;
 }
 
-bool RF24ServerClass::ProcessReceive()
+bool RF24ServerClass::PeekMessage()
 {
 	if( !isValid() ) return false;
 
+	UC to = 0;
+  UC pipe;
+	UC len;
+	MyMessage lv_msg;
+	UC *lv_pData = (UC *)&(lv_msg.msg);
+
+	while (available(&to, &pipe)) {
+		len = receive(lv_pData);
+
+		// rough check
+	  if( len < HEADER_SIZE )
+	  {
+	    LOGW(LOGTAG_MSG, "got corrupt dynamic payload!");
+	    return false;
+	  } else if( len > MAX_MESSAGE_LENGTH )
+	  {
+	    LOGW(LOGTAG_MSG, "message length exceeded: %d", len);
+	    return false;
+	  }
+
+	  _received++;
+	  LOGD(LOGTAG_MSG, "Received from pipe %d msg-len=%d, from:%d to:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
+	        pipe, len, lv_msg.getSender(), to, lv_msg.getDestination(), lv_msg.getCommand(),
+	        lv_msg.getType(), lv_msg.getSensor(), lv_msg.getLength());
+		if( !Append(lv_pData, len) ) return false;
+	}
+	return true;
+}
+
+bool RF24ServerClass::ProcessReceive()
+{
 	bool msgReady = false;
   bool sentOK = false;
-  uint8_t to = 0;
-  uint8_t pipe;
-	UC replyTo;
-	UC _sensor;
-	UC msgType;
-	UC transTo;
-  if (!available(&to, &pipe))
-    return false;
-
-  uint8_t len = receive(msgData);
-	uint8_t payl_len = msg.getLength();
-  if( len < HEADER_SIZE )
-  {
-    LOGW(LOGTAG_MSG, "got corrupt dynamic payload!");
-    return false;
-  } else if( len > MAX_MESSAGE_LENGTH )
-  {
-    LOGW(LOGTAG_MSG, "message length exceeded: %d", len);
-    return false;
-  }
-
-  char strDisplay[SENSORDATA_JSON_SIZE];
-  _received++;
-	_sensor = msg.getSensor();
-	msgType = msg.getType();
-	replyTo = msg.getSender();
-  LOGD(LOGTAG_MSG, "Received from pipe %d msg-len=%d, from:%d to:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
-        pipe, len, replyTo, to, msg.getDestination(), msg.getCommand(),
-        msgType, _sensor, payl_len);
-	/*
-  memset(strDisplay, 0x00, sizeof(strDisplay));
-  msg.getJsonString(strDisplay);
-  SERIAL_LN("  JSON: %s, len: %d", strDisplay, strlen(strDisplay));
-  memset(strDisplay, 0x00, sizeof(strDisplay));
-  SERIAL_LN("  Serial: %s, len: %d", msg.getSerialString(strDisplay), strlen(strDisplay));
-	*/
-
-	bool _bIsAck = msg.isAck();
-	bool _needAck = msg.isReqAck();
-	uint8_t *payload = (uint8_t *)msg.getCustom();
+	UC pipe, len, payl_len;
+	UC replyTo, _sensor, msgType, transTo;
+	bool _bIsAck, _needAck;
+	UC *payload;
 	UC _bValue;
 	US _iValue;
+	char strDisplay[SENSORDATA_JSON_SIZE];
 
-  switch( msg.getCommand() )
-  {
-    case C_INTERNAL:
-      if( msgType == I_ID_REQUEST && (replyTo == AUTO || replyTo == BASESERVICE_ADDRESS) ) {
-        // On ID Request message:
-        /// Get new ID
-				char cNodeType = (char)_sensor;
-				uint64_t nIdentity = msg.getUInt64();
-        UC newID = theConfig.lstNodes.requestNodeID(cNodeType, nIdentity);
+  while (Length() > 0) {
 
-        /// Send response message
-        msg.build(getAddress(), replyTo, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
-				if( newID > 0 ) {
-	        msg.set(getMyNetworkID());
-	        LOGN(LOGTAG_EVENT, "Allocated NodeID:%d type:%c to %s", newID, cNodeType, PrintUint64(strDisplay, nIdentity));
-				} else {
-					LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentity));
-				}
-				msgReady = true;
-      }
-      break;
+	  len = Remove(MAX_MESSAGE_LENGTH, msgData);
+		pipe = PRIVATE_NET_PIPE;
+		payl_len = msg.getLength();
+		_sensor = msg.getSensor();
+		msgType = msg.getType();
+		replyTo = msg.getSender();
+		_bIsAck = msg.isAck();
+		_needAck = msg.isReqAck();
+		payload = (uint8_t *)msg.getCustom();
 
-		case C_PRESENTATION:
-			if( _sensor == S_LIGHT || _sensor == S_DIMMER ) {
-				US token;
-				if( _needAck ) {
-					// Presentation message: appear of Smart Lamp
-					// Verify credential, return token if true, and change device status
-					UC lv_nNodeID = msg.getSender();
+		/*
+	  memset(strDisplay, 0x00, sizeof(strDisplay));
+	  msg.getJsonString(strDisplay);
+	  SERIAL_LN("  JSON: %s, len: %d", strDisplay, strlen(strDisplay));
+	  memset(strDisplay, 0x00, sizeof(strDisplay));
+	  SERIAL_LN("  Serial: %s, len: %d", msg.getSerialString(strDisplay), strlen(strDisplay));
+		*/
+		LOGD(LOGTAG_MSG, "Will process cmd:%d from:%d type:%d sensor:%d",
+					msg.getCommand(), msg.getSender(), msgType, _sensor);
+
+	  switch( msg.getCommand() )
+	  {
+	    case C_INTERNAL:
+	      if( msgType == I_ID_REQUEST && (replyTo == AUTO || replyTo == BASESERVICE_ADDRESS) ) {
+	        // On ID Request message:
+	        /// Get new ID
+					char cNodeType = (char)_sensor;
 					uint64_t nIdentity = msg.getUInt64();
-					token = theSys.VerifyDevicePresence(lv_nNodeID, msgType, nIdentity);
-					if( token ) {
-						// return token
-						// Notes: lampType & S_LIGHT are not necessary
-		        msg.build(getAddress(), replyTo, _sensor, C_PRESENTATION, msgType, false, true);
-						msg.set((unsigned int)token);
-						msgReady = true;
-						// ToDo: send status req to this lamp
+	        UC newID = theConfig.lstNodes.requestNodeID(cNodeType, nIdentity);
+					pipe = CURRENT_NODE_PIPE;  // Use Base Network
+
+	        /// Send response message
+	        msg.build(getAddress(), replyTo, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
+					if( newID > 0 ) {
+		        msg.set(getMyNetworkID());
+		        LOGN(LOGTAG_EVENT, "Allocated NodeID:%d type:%c to %s", newID, cNodeType, PrintUint64(strDisplay, nIdentity));
 					} else {
-						LOGW(LOGTAG_MSG, "Unqualitied device connect attemp received");
+						LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentity));
+					}
+					msgReady = true;
+	      }
+	      break;
+
+			case C_PRESENTATION:
+				if( _sensor == S_LIGHT || _sensor == S_DIMMER ) {
+					US token;
+					if( _needAck ) {
+						// Presentation message: appear of Smart Lamp
+						// Verify credential, return token if true, and change device status
+						UC lv_nNodeID = msg.getSender();
+						uint64_t nIdentity = msg.getUInt64();
+						token = theSys.VerifyDevicePresence(lv_nNodeID, msgType, nIdentity);
+						if( token ) {
+							// return token
+							// Notes: lampType & S_LIGHT are not necessary
+			        msg.build(getAddress(), replyTo, _sensor, C_PRESENTATION, msgType, false, true);
+							msg.set((unsigned int)token);
+							msgReady = true;
+							// ToDo: send status req to this lamp
+						} else {
+							LOGW(LOGTAG_MSG, "Unqualitied device connect attemp received");
+						}
+					}
+				} else if( _sensor == S_IR ) {
+					if( msgType == V_STATUS) { // PIR
+						theSys.UpdateMotion(msg.getByte()!=DEVICE_SW_OFF);
+					}
+				} else if( _sensor == S_LIGHT_LEVEL ) {
+					if( msgType == V_LIGHT_LEVEL) { // ALS
+						theSys.UpdateBrightness(msg.getByte());
 					}
 				}
-			} else if( _sensor == S_IR ) {
-				if( msgType == V_STATUS) { // PIR
-					theSys.UpdateMotion(msg.getByte()!=DEVICE_SW_OFF);
-				}
-			} else if( _sensor == S_LIGHT_LEVEL ) {
-				if( msgType == V_LIGHT_LEVEL) { // ALS
-					theSys.UpdateBrightness(msg.getByte());
-				}
-			}
-			break;
+				break;
 
-		case C_REQ:
-			// ToDo: verify token
-			if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL
-				  || msgType == V_RGBW || msgType == V_DISTANCE ) {
-				transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
-				BOOL bDataChanged = false;
-				if( _bIsAck ) {
-					//SERIAL_LN("REQ ack:%d to: %d 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x", msgType, transTo, payload[0],payload[1], payload[2], payload[3], payload[4],payload[5],payload[6]);
-					if( msgType == V_STATUS ||  msgType == V_PERCENTAGE ) {
-						bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
-					} else if( msgType == V_LEVEL ) {
-						bDataChanged |= theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
-					} else if( msgType == V_RGBW ) {
-						if( payload[0] ) {	// Succeed or not
-							static bool bFirstRGBW = true;		// Make sure the first message will be sent anyway
+			case C_REQ:
+				// ToDo: verify token
+				if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL
+					  || msgType == V_RGBW || msgType == V_DISTANCE ) {
+					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
+					BOOL bDataChanged = false;
+					if( _bIsAck ) {
+						//SERIAL_LN("REQ ack:%d to: %d 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x", msgType, transTo, payload[0],payload[1], payload[2], payload[3], payload[4],payload[5],payload[6]);
+						if( msgType == V_STATUS ||  msgType == V_PERCENTAGE ) {
+							bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
+						} else if( msgType == V_LEVEL ) {
+							bDataChanged |= theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
+						} else if( msgType == V_RGBW ) {
+							if( payload[0] ) {	// Succeed or not
+								static bool bFirstRGBW = true;		// Make sure the first message will be sent anyway
+								UC _devType = payload[1];	// payload[2] is present status
+								UC _ringID = payload[3];
+								if( IS_SUNNY(_devType) ) {
+									// Sunny
+									US _CCTValue = payload[7] * 256 + payload[6];
+									bDataChanged |= theSys.ConfirmLampCCT(replyTo, _CCTValue, _ringID);
+									bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[4], payload[5], _ringID);
+									bDataChanged |= bFirstRGBW;
+									bFirstRGBW = false;
+								} else if( IS_RAINBOW(_devType) || IS_MIRAGE(_devType) ) {
+									// Rainbow or Mirage, set RBGW
+									bDataChanged |= theSys.ConfirmLampHue(replyTo, payload[6], payload[7], payload[8], payload[9], _ringID);
+									bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[4], payload[5], _ringID);
+									bDataChanged |= bFirstRGBW;
+									bFirstRGBW = false;
+								}
+							}
+						} else if( msgType == V_DISTANCE && payload[0] ) {
 							UC _devType = payload[1];	// payload[2] is present status
-							UC _ringID = payload[3];
-							if( IS_SUNNY(_devType) ) {
-								// Sunny
-								US _CCTValue = payload[7] * 256 + payload[6];
-								bDataChanged |= theSys.ConfirmLampCCT(replyTo, _CCTValue, _ringID);
-								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[4], payload[5], _ringID);
-								bDataChanged |= bFirstRGBW;
-								bFirstRGBW = false;
-							} else if( IS_RAINBOW(_devType) || IS_MIRAGE(_devType) ) {
-								// Rainbow or Mirage, set RBGW
-								bDataChanged |= theSys.ConfirmLampHue(replyTo, payload[6], payload[7], payload[8], payload[9], _ringID);
-								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[4], payload[5], _ringID);
-								bDataChanged |= bFirstRGBW;
-								bFirstRGBW = false;
+							if( IS_MIRAGE(_devType) ) {
+								bDataChanged |= theSys.ConfirmLampTop(replyTo, payload, payl_len);
 							}
 						}
-					} else if( msgType == V_DISTANCE && payload[0] ) {
-						UC _devType = payload[1];	// payload[2] is present status
-						if( IS_MIRAGE(_devType) ) {
-							bDataChanged |= theSys.ConfirmLampTop(replyTo, payload, payl_len);
+
+						// If data changed, new status must broadcast to all end points
+						if( bDataChanged ) {
+							transTo = BROADCAST_ADDRESS;
 						}
 					}
-
-					// If data changed, new status must broadcast to all end points
-					if( bDataChanged ) {
-						transTo = BROADCAST_ADDRESS;
+					// ToDo: if lamp is not present, return error
+					if( transTo > 0 ) {
+						// Transfer message
+						msg.build(getAddress(), transTo, replyTo, C_REQ, msgType, _needAck, _bIsAck, true);
+						// Keep payload unchanged
+						msgReady = true;
 					}
 				}
+				break;
+
+			case C_SET:
+				// ToDo: verify token
 				// ToDo: if lamp is not present, return error
+				transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 				if( transTo > 0 ) {
 					// Transfer message
-					msg.build(getAddress(), transTo, replyTo, C_REQ, msgType, _needAck, _bIsAck, true);
+					msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
 					// Keep payload unchanged
 					msgReady = true;
 				}
-			}
-			break;
+				break;
 
-		case C_SET:
-			// ToDo: verify token
-			// ToDo: if lamp is not present, return error
-			transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
-			if( transTo > 0 ) {
-				// Transfer message
-				msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
-				// Keep payload unchanged
-				msgReady = true;
-			}
-			break;
+	    default:
+	      break;
+	  }
 
-    default:
-      break;
-  }
-
-	// Send reply message
-	if( msgReady ) {
-		_times++;
-		sentOK = send(msg.getDestination(), msg, pipe);
-		if( sentOK ) _succ++;
+		// Send reply message
+		if( msgReady ) {
+			_times++;
+			sentOK = send(msg.getDestination(), msg, pipe);
+			if( sentOK ) _succ++;
+		}
 	}
 
   return true;

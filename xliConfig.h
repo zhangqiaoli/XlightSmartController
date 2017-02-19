@@ -62,14 +62,17 @@
 #define MAX_DEVICE_PER_CONTROLLER   16
 
 // Maximum number of nodes under one controller
-#define MAX_NODE_PER_CONTROLLER   64
+#define MAX_NODE_PER_CONTROLLER     64
 
 // Default value for maxBaseNetworkDuration (in seconds)
 #define MAX_BASE_NETWORK_DUR    180
 
 // Maximum JSON data length
 #define COMMAND_JSON_SIZE				64
-#define SENSORDATA_JSON_SIZE			196
+#define SENSORDATA_JSON_SIZE		196
+
+// Maximum RF messages buffered
+#define MQ_MAX_RF_MSG           5
 
 // NodeID Convention
 #define NODEID_GATEWAY          0
@@ -78,6 +81,7 @@
 #define NODEID_MAX_DEVCIE       63
 #define NODEID_MIN_REMOTE       64
 #define NODEID_MAX_REMOTE       127
+#define NODEID_PROJECTOR        128
 #define NODEID_DUMMY            255
 
 #define BR_MIN_VALUE            1

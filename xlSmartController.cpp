@@ -564,7 +564,10 @@ BOOL SmartControllerClass::IsWANGood()
 // Process all kinds of commands
 void SmartControllerClass::ProcessCommands()
 {
-	// Check and process RF2.4 messages
+	// Check RF Message
+	theRadio.PeekMessage();
+
+	// Process RF2.4 messages
 	theRadio.ProcessReceive();
 
 	// Process Console Command
