@@ -640,12 +640,12 @@ void SmartControllerClass::CollectData(UC tick)
 
 	// Read from ALS
 	/*if (blnReadALS) {
-		UpdateBrightness(senLight.getLevel());
+		UpdateBrightness(NODEID_GATEWAY, senLight.getLevel());
 	}*/
 
 	// Motion detection
 	/*if (blnReadPIR) {
-		UpdateMotion(senMotion.getMotion());
+		UpdateMotion(NODEID_GATEWAY, senMotion.getMotion());
 	}*/
 
 	// Update json data and publish on to the cloud

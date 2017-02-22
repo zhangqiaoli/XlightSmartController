@@ -405,7 +405,7 @@ bool RF24ServerClass::ProcessReceive()
 	  SERIAL_LN("  Serial: %s, len: %d", msg.getSerialString(strDisplay), strlen(strDisplay));
 		*/
 		LOGD(LOGTAG_MSG, "Will process cmd:%d from:%d type:%d sensor:%d",
-					msg.getCommand(), msg.getSender(), msgType, _sensor);
+					msg.getCommand(), replyTo, msgType, _sensor);
 
 	  switch( msg.getCommand() )
 	  {
@@ -452,11 +452,11 @@ bool RF24ServerClass::ProcessReceive()
 					}
 				} else if( _sensor == S_IR ) {
 					if( msgType == V_STATUS) { // PIR
-						theSys.UpdateMotion(msg.getByte()!=DEVICE_SW_OFF);
+						theSys.UpdateMotion(replyTo, msg.getByte()!=DEVICE_SW_OFF);
 					}
 				} else if( _sensor == S_LIGHT_LEVEL ) {
 					if( msgType == V_LIGHT_LEVEL) { // ALS
-						theSys.UpdateBrightness(msg.getByte());
+						theSys.UpdateBrightness(replyTo, msg.getByte());
 					}
 				}
 				break;

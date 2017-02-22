@@ -104,27 +104,41 @@ BOOL CloudObjClass::UpdateHumidity(float value)
   return false;
 }
 
-BOOL CloudObjClass::UpdateBrightness(uint8_t value)
+BOOL CloudObjClass::UpdateBrightness(uint8_t nid, uint8_t value)
 {
   if( m_brightness != value ) {
     m_brightness = value;
+    /*
     if( m_jpData->success() )
     {
       (*m_jpData)["ALS"] = value;
     }
+    */
+#ifdef USE_PARTICLE_CLOUD
+    // Publis right away
+    String strTemp = String::format("{'nd':%d,'ALS':%d}", nid, value);
+    Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_MotionData, PRIVATE);
+#endif
     return true;
   }
   return false;
 }
 
-BOOL CloudObjClass::UpdateMotion(bool value)
+BOOL CloudObjClass::UpdateMotion(uint8_t nid, bool value)
 {
   if( m_motion != value ) {
     m_motion = value;
+    /*
     if( m_jpData->success() )
     {
       (*m_jpData)["PIR"] = value;
     }
+    */
+#ifdef USE_PARTICLE_CLOUD
+    // Publis right away
+    String strTemp = String::format("{'nd':%d,'PIR':%d}", nid, value);
+    Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_MotionData, PRIVATE);
+#endif
     return true;
   }
   return false;

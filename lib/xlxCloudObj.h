@@ -41,6 +41,7 @@
 /// Sensor data update
 #define CLT_NAME_SensorData     "xlc-data-sensor"
 #define CLT_TTL_SensorData      RTE_DELAY_PUBLISH
+#define CLT_TTL_MotionData      5
 /// LOG Message
 #define CLT_NAME_LOGMSG          "xlc-event-log"
 #define CLT_TTL_LOGMSG           3600              // 1 hour
@@ -83,8 +84,8 @@ public:
 
   BOOL UpdateTemperature(float value);
   BOOL UpdateHumidity(float value);
-  BOOL UpdateBrightness(uint8_t value);
-  BOOL UpdateMotion(bool value);
+  BOOL UpdateBrightness(uint8_t nid, uint8_t value);
+  BOOL UpdateMotion(uint8_t nid, bool value);
   void UpdateJSONData();
   BOOL PublishLog(const char *msg);
   BOOL PublishDeviceStatus(const char *msg);
