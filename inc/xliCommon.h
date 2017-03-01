@@ -71,6 +71,7 @@ enum COMMAND {CMD_SERIAL, CMD_POWER, CMD_COLOR, CMD_BRIGHTNESS, CMD_SCENARIO, CM
 #define DEVICE_SW_OFF               0       // Turn Off
 #define DEVICE_SW_ON                1       // Turn On
 #define DEVICE_SW_TOGGLE            2       // Toggle
+#define DEVICE_SW_DUMMY             3       // Detail followed
 
 // Update operator for set brightness & CCT command
 #define OPERATOR_SET                0
@@ -108,8 +109,30 @@ typedef enum
   sensorGAS,
   sensorDUST,
   sensorLEAK,
-  sensorBEAT
+  sensorBEAT,
+  sensorDHT_h = 16 // won't occupy bit position
 } sensors_t;
+
+// Sensor scope
+#define SR_SCOPE_CONTROLLER         0     // Sensor on controller
+#define SR_SCOPE_NODE               1     // Sensor on specific node
+#define SR_SCOPE_ANY                2     // Sensor on any node under the controller
+#define SR_SCOPE_GROUP              3     // Sensor on within the same node group
+
+// Sensor logic symbols
+#define SR_SYM_EQ                   0     // Equals
+#define SR_SYM_NE                   1     // Not Equal
+#define SR_SYM_GT                   2     // Greater Than
+#define SR_SYM_GE                   3     // Greater than or Equal to
+#define SR_SYM_LT                   4     // Less Than
+#define SR_SYM_LE                   5     // Less than or Equal to
+#define SR_SYM_BW                   6     // Between
+#define SR_SYM_NB                   7     // Not Between
+
+// Condition logic symbols
+#define COND_SYM_NOT                0     // NOT
+#define COND_SYM_AND                1     // AND
+#define COND_SYM_OR                 2     // OR
 
 // Device (lamp) type
 #define MAX_RING_NUM                3

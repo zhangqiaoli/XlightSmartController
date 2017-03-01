@@ -53,7 +53,7 @@
 #define RTE_TM_HELD_TO_BASENW     5           // Held duration threshold to enable Base Network
 
 // Maximum number of rows for any working memory table implimented using ChainClass
-#define MAX_TABLE_SIZE    8
+#define MAX_TABLE_SIZE              8
 
 // Change it only if Config_t structure is updated
 #define VERSION_CONFIG_DATA         1
@@ -63,6 +63,9 @@
 
 // Maximum number of nodes under one controller
 #define MAX_NODE_PER_CONTROLLER     64
+
+// Maximum conditions within a rule
+#define MAX_CONDITION_PER_RULE      2
 
 // Default value for maxBaseNetworkDuration (in seconds)
 #define MAX_BASE_NETWORK_DUR    180

@@ -68,6 +68,9 @@ public:
   float m_humidity;
   uint16_t m_brightness;
   bool m_motion;
+  uint16_t m_gas;
+  uint16_t m_dust;
+  uint16_t m_smoke;
 
 public:
   CloudObjClass();
@@ -86,6 +89,10 @@ public:
   BOOL UpdateHumidity(float value);
   BOOL UpdateBrightness(uint8_t nid, uint8_t value);
   BOOL UpdateMotion(uint8_t nid, bool value);
+  BOOL UpdateGas(uint8_t nid, uint16_t value);
+  BOOL UpdateDust(uint8_t nid, uint16_t value);
+  BOOL UpdateSmoke(uint8_t nid, uint16_t value);
+
   void UpdateJSONData();
   BOOL PublishLog(const char *msg);
   BOOL PublishDeviceStatus(const char *msg);

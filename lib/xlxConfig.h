@@ -165,6 +165,19 @@ inline BOOL isIdentityEqual(UC *pId1, uint64_t *pData)
 //------------------------------------------------------------------
 // Xlight Rule Table Structures
 //------------------------------------------------------------------
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
+{
+	UC enabled               : 1;    // Whether the condition is enabled
+  UC sr_scope              : 3;    // Sensor scope
+  UC symbol                : 4;    // Sensor logic symbols
+  UC connector             : 2;    // Condition logic symbols
+	UC sr_id                 : 4;    // Sensor ID
+  US sr_value1;
+  US sr_value2;
+} Condition_t;
 
 typedef struct
 #ifdef PACK
@@ -179,11 +192,16 @@ typedef struct
 	UC SCT_uid               : 8;
 	UC SNT_uid               : 8;
 	UC notif_uid             : 8;
-  // ToDo: add other trigger conditions, e.g. sensor data
+  // Once Alarm triggered, whether repeatly check by starting a timer
+  US tmr_int;              // Timer interval in seconds, 0 means no timer
+  US tmr_span;             // Timer span in minutes
+  AlarmId tmr_id	         : 8;
+  // Other trigger conditions, e.g. sensor data
+  Condition_t actCond[MAX_CONDITION_PER_RULE];
 } RuleRow_t;
 
 #define RT_ROW_SIZE 	sizeof(RuleRow_t)
-#define MAX_RT_ROWS		128
+#define MAX_RT_ROWS		64
 
 //------------------------------------------------------------------
 // Xlight Scenerio Table Structures
@@ -198,12 +216,13 @@ typedef struct
 	FLASH_FLAG flash_flag		: 1;
 	RUN_FLAG run_flag			  : 1;
 	UC uid			            : 8;
+  UC sw                   : 2; // Main Switch: Switch value for set power command
 	Hue_t ring[MAX_RING_NUM];
 	UC filter		            : 8;
 } ScenarioRow_t;
 
 #define SNT_ROW_SIZE	sizeof(ScenarioRow_t)
-#define MAX_SNT_ROWS	128
+#define MAX_SNT_ROWS	64
 
 // Node List Class
 class NodeListClass : public OrderdList<NodeIdRow_t>

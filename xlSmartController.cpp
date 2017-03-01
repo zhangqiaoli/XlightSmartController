@@ -52,9 +52,9 @@ DHT senDHT(PIN_SEN_DHT, SEN_TYPE_DHT);
 //------------------------------------------------------------------
 void AlarmTimerTriggered(uint32_t tag)
 {
+	if( tag == 255 ) return;
 	uint8_t rule_uid = (uint8_t)tag;
 	SERIAL_LN("Rule %u Alarm Triggered", rule_uid);
-
 
 	//search Rule table for matching UID
 	ListNode<RuleRow_t> *RuleRowptr = theSys.Rule_table.search(rule_uid);
@@ -64,31 +64,11 @@ void AlarmTimerTriggered(uint32_t tag)
 		return;
 	}
 
-	// read UIDs from Rule row
-	uint8_t SNT_uid = RuleRowptr->data.SNT_uid;
-	uint8_t node_id = RuleRowptr->data.node_id;
-
-	//get SNT_uid from rule rows and find
-	ListNode<ScenarioRow_t> *rowptr = theSys.SearchScenario(SNT_uid);
-
-	if (rowptr)
-	{
-		MyMessage tmpMsg;
-		UC payl_buf[MAX_PAYLOAD];
-		UC payl_len;
-
-		for( UC idx = 0; idx < MAX_RING_NUM; idx++ ) {
-			payl_len = theSys.CreateColorPayload(payl_buf, idx + 1, rowptr->data.ring[idx].State,
-				          rowptr->data.ring[idx].BR, rowptr->data.ring[idx].CCT % 256, rowptr->data.ring[idx].R, rowptr->data.ring[idx].G, rowptr->data.ring[idx].B);
-			tmpMsg.build(theRadio.getAddress(), node_id, 1, C_SET, V_RGBW, true);
-			tmpMsg.set((void *)payl_buf, payl_len);
-			theRadio.ProcessSend(&tmpMsg);
+	if( RuleRowptr->data.run_flag == UNEXECUTED ) {
+		// Execute the rule now
+		if( theSys.Execute_Rule(RuleRowptr) ) {
+			RuleRowptr->data.run_flag = EXECUTED;
 		}
-	}
-	else
-	{
-		LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", node_id, SNT_uid);
-		return;
 	}
 }
 
@@ -890,8 +870,8 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		UC payl_buf[MAX_PAYLOAD];
 		UC payl_len;
 
-		payl_len = theSys.CreateColorPayload(payl_buf, ring, State, BR, W, R, G, B);
-		tmpMsg.build(theRadio.getAddress(), node_id, 1, C_SET, V_RGBW, true);
+		payl_len = CreateColorPayload(payl_buf, ring, State, BR, W, R, G, B);
+		tmpMsg.build(theRadio.getAddress(), node_id, NODEID_DUMMY, C_SET, V_RGBW, true);
 		tmpMsg.set((void *)payl_buf, payl_len);
 		theRadio.ProcessSend(&tmpMsg);
 	}
@@ -924,27 +904,7 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
 		const int SNT_uid = (*m_jpCldCmd)["SNT_id"].as<int>();
 
-		//find hue data of the 3 rings
-		ListNode<ScenarioRow_t> *rowptr = SearchScenario(SNT_uid);
-		if (rowptr)
-		{
-			MyMessage tmpMsg;
-			UC payl_buf[MAX_PAYLOAD];
-			UC payl_len;
-
-			for( UC idx = 0; idx < MAX_RING_NUM; idx++ ) {
-				payl_len = theSys.CreateColorPayload(payl_buf, idx + 1, rowptr->data.ring[idx].State,
-					          rowptr->data.ring[idx].BR, rowptr->data.ring[idx].CCT % 256, rowptr->data.ring[idx].R, rowptr->data.ring[idx].G, rowptr->data.ring[idx].B);
-				tmpMsg.build(theRadio.getAddress(), node_id, 1, C_SET, V_RGBW, true);
-				tmpMsg.set((void *)payl_buf, payl_len);
-				theRadio.ProcessSend(&tmpMsg);
-			}
-		}
-		else
-		{
-			LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", node_id, SNT_uid);
-			return 0;
-		}
+		ChangeLampScenario((UC)node_id, (UC)SNT_uid);
 	}
 
 	//COMMAND 6: Query Device Status
@@ -1051,6 +1011,8 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 	const char* uidWhole = data["uid"];
 	char uidKey = tolower(uidWhole[0]);
 	uint8_t uidNum = atoi(&uidWhole[1]);
+	UC _cond;
+	String sTemp;
 
 	switch(uidKey)
 	{
@@ -1062,9 +1024,38 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			row.run_flag = run_flag;
 			row.uid = uidNum;
 			row.node_id = data["node_uid"];
-			row.SCT_uid = data["SCT_uid"];
-			row.SNT_uid = data["SNT_uid"];
-			row.notif_uid = data["notif_uid"];
+			if( data.containsKey("SCT_uid") )
+				row.SCT_uid = data["SCT_uid"];
+			else row.SCT_uid = 255;
+			if( data.containsKey("SNT_uid") )
+				row.SNT_uid = data["SNT_uid"];
+			else row.SNT_uid = 255;
+			if( data.containsKey("notif_uid") )
+				row.notif_uid = data["notif_uid"];
+			else row.notif_uid = 255;
+			if( data.containsKey("tmr_int") )
+				row.tmr_int = data["tmr_int"];
+			else row.tmr_int = 0;
+			if( data.containsKey("tmr_span") )
+				row.tmr_span = data["tmr_span"];
+			else row.tmr_span = 0;
+			row.tmr_id = dtINVALID_ALARM_ID;
+
+			// Get conditions
+			for( _cond = 0; _cond < MAX_CONDITION_PER_RULE; _cond++ ) {
+				sTemp = String::format("cond%d", _cond);
+				if( data.containsKey(sTemp) ) {
+					row.actCond[_cond].enabled = data[sTemp][0];
+					row.actCond[_cond].sr_scope = data[sTemp][1];
+					row.actCond[_cond].symbol = data[sTemp][2];
+					row.actCond[_cond].connector = data[sTemp][3];
+					row.actCond[_cond].sr_id = data[sTemp][4];
+					row.actCond[_cond].sr_value1 = data[sTemp][5];
+					row.actCond[_cond].sr_value2 = data[sTemp][6];
+				} else {
+					row.actCond[_cond].enabled = false;
+				}
+			}
 
 			isSuccess = Change_Rule(row);
 			if (!isSuccess)
@@ -1089,7 +1080,7 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 
 			if (data["isRepeat"] == 1)
 			{
-				if (data["weekdays"] < 0 || data["weekdays"] > 7)		// [0..7]
+				if (data["weekdays"] > 7)		// [0..7]
 				{
 					LOGE(LOGTAG_MSG, "UID:%s Invalid 'weekdays' must between 0 and 7", uidWhole);
 					return 0;
@@ -1148,12 +1139,28 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			row.run_flag = run_flag;
 			row.uid = uidNum;
 
-			// Copy JSON array to Hue
-			Array2Hue(data["ring1"], row.ring[0]);
-			Array2Hue(data["ring2"], row.ring[1]);
-			Array2Hue(data["ring3"], row.ring[2]);
+			// Power Switch
+			if( data.containsKey("sw") ) {
+				row.sw = data["sw"];
+			} else {
+				row.sw = DEVICE_SW_DUMMY;
+				// Copy JSON array to Hue
+				if( data.containsKey("ring0") ) {
+					Array2Hue(data["ring0"], row.ring[0]);
+					Array2Hue(data["ring0"], row.ring[1]);
+					Array2Hue(data["ring0"], row.ring[2]);
+				} else {
+					if( data.containsKey("ring1") )
+						Array2Hue(data["ring0"], row.ring[0]);
+					if( data.containsKey("ring2") )
+						Array2Hue(data["ring2"], row.ring[1]);
+					if( data.containsKey("ring3") )
+						Array2Hue(data["ring3"], row.ring[2]);
+				}
+			}
 
-			row.filter = data["filter"];
+			if( data.containsKey("filter") )
+				row.filter = data["filter"];
 
 			isSuccess = Change_Scenario(row);
 			if (!isSuccess)
@@ -1598,18 +1605,132 @@ bool SmartControllerClass::ExecuteLightCommand(String mySerialStr)
 	return false;
 }
 
-bool SmartControllerClass::Change_Sensor()
+// Match sensor data to condition
+bool SmartControllerClass::Check_SensorData(UC _scope, UC _sr, UC _symbol, US _val1, US _val2)
 {
-  	//Possible subactions: GET
-    //ToDo: define later
+	// Retrieve sensor data
+	US senData = 0;
+	switch( _scope ) {
+		case SR_SCOPE_CONTROLLER:
+		case SR_SCOPE_NODE:
+		// ToDo: should distinguish node and more sensors
+		if( _sr == sensorDHT ) {
+			senData = (US)(m_temperature + 0.5);
+		} else if( _sr == sensorDHT_h ) {
+			senData = (US)(m_humidity + 0.5);
+		} else if( _sr == sensorALS ) {
+			senData = m_brightness;
+		} else if( _sr == sensorPIR ) {
+			senData = m_motion;
+		} else if( _sr == sensorSMOKE ) {
+			senData = m_smoke;
+		} else if( _sr == sensorGAS ) {
+			senData = m_gas;
+		} else if( _sr == sensorDUST ) {
+			senData = m_dust;
+		}
+		break;
 
-	return 1;
+		case SR_SCOPE_ANY:
+		// ToDo:
+		break;
+
+		case SR_SCOPE_GROUP:
+		// ToDo:
+		break;
+
+		default:
+		return false;
+	}
+
+	// Assert value
+	bool rc = false;
+	switch( _symbol ) {
+		case SR_SYM_EQ:
+		rc = (senData == _val1);
+		break;
+
+		case SR_SYM_NE:
+		rc = (senData != _val1);
+		break;
+
+		case SR_SYM_GT:
+		rc = (senData > _val1);
+		break;
+
+		case SR_SYM_GE:
+		rc = (senData >= _val1);
+		break;
+
+		case SR_SYM_LT:
+		rc = (senData < _val1);
+		break;
+
+		case SR_SYM_LE:
+		rc = (senData <= _val1);
+		break;
+
+		case SR_SYM_BW:
+		rc = (senData >= _val1 && senData <= _val2);
+		break;
+
+		case SR_SYM_NB:
+		rc = (senData < _val1 || senData > _val2);
+		break;
+
+		default:
+		return false;
+	}
+	return rc;
+}
+
+// Execute Rule, called by Action_Rule() and AlarmTimerTriggered()
+bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr)
+{
+	if( rulePtr->data.run_flag == EXECUTED ) return true;
+
+	bool bTrigger = true, bTest;
+	UC _connector = COND_SYM_NOT;
+	// Check conditions
+	for(UC _cond = 0; _cond < MAX_CONDITION_PER_RULE; _cond++ ) {
+		if( !rulePtr->data.actCond[_cond].enabled ) break;
+
+		bTest = Check_SensorData(rulePtr->data.actCond[_cond].sr_scope, rulePtr->data.actCond[_cond].sr_id,
+				rulePtr->data.actCond[_cond].symbol, rulePtr->data.actCond[_cond].sr_value1, rulePtr->data.actCond[_cond].sr_value2);
+
+		if( _connector != COND_SYM_NOT ) {
+			if( _connector == COND_SYM_OR ) {
+				bTrigger |= bTest;
+			} else if( _connector == COND_SYM_AND ) {
+				bTrigger &= bTest;
+			}
+		} else {
+			bTrigger = bTest;
+		}
+		_connector = rulePtr->data.actCond[_cond].connector;
+		// Exit earlier
+		if( bTrigger && _connector == COND_SYM_OR ) break;
+		if( !bTrigger && _connector == COND_SYM_AND ) break;
+	}
+
+	// Switch to desired scenario
+	if( bTrigger ) {
+		ChangeLampScenario(rulePtr->data.node_id, rulePtr->data.SNT_uid);
+		rulePtr->data.run_flag = EXECUTED;
+
+		// Send Notification
+		if( rulePtr->data.notif_uid < 255 && Particle.connected() ) {
+			// ToDo:
+		}
+	}
+
+	return bTrigger;
 }
 
 //------------------------------------------------------------------
 // Acting on new rows in working memory Chains
 //------------------------------------------------------------------
-
+// Scan Rule list and create associated objectss, such as Schedule (Alarm), Scenario, etc.
 void SmartControllerClass::ReadNewRules()
 {
 	if (theConfig.IsRTChanged())
@@ -1695,16 +1816,16 @@ bool SmartControllerClass::Action_Rule(ListNode<RuleRow_t> *rulePtr)
 	if (rulePtr->data.run_flag == UNEXECUTED)
 	{
 		// Process Schedule
-		Action_Schedule(rulePtr->data.op_flag, rulePtr->data.SCT_uid, rulePtr->data.uid);
-
-		//Search for SNT data
-		ListNode<ScenarioRow_t> *scenarioPtr = SearchScenario(rulePtr->data.SNT_uid);
-
-		// ToDo: search and set other trigger conditions
-		//...
-
-		rulePtr->data.run_flag = EXECUTED;
-		scenarioPtr->data.run_flag = EXECUTED;
+		if( rulePtr->data.SCT_uid < 255 ) {
+			// Schedule will take over the rule, and exectue the rule later
+			Action_Schedule(rulePtr->data.op_flag, rulePtr->data.SCT_uid, rulePtr->data.uid);
+		} else {
+			// Execute the rule right away, and will keep checking at every turn,
+			/// because Conditions are the only activation consideration
+			if( Execute_Rule(rulePtr) ) {
+				rulePtr->data.run_flag = EXECUTED;
+			}
+		}
 	}
 
 	return true;
@@ -1980,6 +2101,66 @@ BOOL SmartControllerClass::ChangeBR_CCT(UC _nodeID, UC _br, US _cct)
 {
 	String strCmd = String::format("%d:13:%d:%d", _nodeID, _br, _cct);
 	return theRadio.ProcessSend(strCmd);
+}
+
+BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
+{
+	// Find node object
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if (DevStatusRowPtr == NULL)
+	{
+		LOGW(LOGTAG_MSG, "Failed to execte CMD_SCENARIO, wrong node_id %d", _nodeID);
+		return false;
+	}
+
+	// Find hue data of the 3 rings
+	ListNode<ScenarioRow_t> *rowptr = SearchScenario(_scenarioID);
+	if (rowptr)
+	{
+		String strCmd;
+		if( rowptr->data.sw != DEVICE_SW_DUMMY ) {
+			strCmd = String::format("%d:7:%d", _nodeID, rowptr->data.sw);
+			theRadio.ProcessSend(strCmd);
+		} else {
+			if( IS_SUNNY(DevStatusRowPtr->data.type) ) {
+				if( rowptr->data.ring[0].State == DEVICE_SW_OFF ) {
+					strCmd = String::format("%d:7:0", _nodeID);
+				} else {
+					strCmd = String::format("%d:13:%d:%d", _nodeID, rowptr->data.ring[0].BR, rowptr->data.ring[0].CCT);
+				}
+				theRadio.ProcessSend(strCmd);
+			} else { // Rainbow and Migrage
+				MyMessage tmpMsg;
+				UC payl_buf[MAX_PAYLOAD];
+				UC payl_len;
+
+				// All rings same settings
+				bool bAllRings = (rowptr->data.ring[1].CCT == 256);
+
+				for( UC idx = 0; idx < MAX_RING_NUM; idx++ ) {
+					if( !bAllRings || idx == 0 ) {
+						payl_len = CreateColorPayload(payl_buf, bAllRings ? RING_ID_ALL : idx + 1, rowptr->data.ring[idx].State,
+												rowptr->data.ring[idx].BR, rowptr->data.ring[idx].CCT % 256, rowptr->data.ring[idx].R, rowptr->data.ring[idx].G, rowptr->data.ring[idx].B);
+						tmpMsg.build(theRadio.getAddress(), _nodeID, 0, C_SET, V_RGBW, true);
+						tmpMsg.set((void *)payl_buf, payl_len);
+						theRadio.ProcessSend(&tmpMsg);
+					}
+					if( IS_MIRAGE(DevStatusRowPtr->data.type) ) {
+						// ToDo: construct mirage message
+						//tmpMsg.build(theRadio.getAddress(), _nodeID, NODEID_DUMMY, C_SET, V_DISTANCE, true);
+						//tmpMsg.set((void *)payl_buf, payl_len);
+						//theRadio.ProcessSend(&tmpMsg);
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", _nodeID, _scenarioID);
+		return false;
+	}
+	return true;
 }
 
 BOOL SmartControllerClass::RequestDeviceStatus(UC _nodeID)
@@ -2470,6 +2651,9 @@ void SmartControllerClass::print_rule_table(int row)
 	SERIAL_LN("SCT_uid = %d", Rule_table.get(row).SCT_uid);
 	SERIAL_LN("SNT_uid = %d", Rule_table.get(row).SNT_uid);
 	SERIAL_LN("notif_uid = %d", Rule_table.get(row).notif_uid);
+	SERIAL_LN("SNT_uid = %d", Rule_table.get(row).SNT_uid);
+	SERIAL_LN("tmr_int = %d s", Rule_table.get(row).tmr_int);
+	SERIAL_LN("tmr_span = %d m", Rule_table.get(row).tmr_span);
 }
 
 //------------------------------------------------------------------
