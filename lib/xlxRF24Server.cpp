@@ -64,7 +64,7 @@ bool RF24ServerClass::ServerBegin()
 {
   // Initialize RF module
 	if( !init() ) {
-    LOGC(LOGTAG_MSG, F("RF24 module is not valid!"));
+    LOGC(LOGTAG_MSG, "RF24 module is not valid!");
 		return false;
 	}
 
@@ -217,7 +217,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 
 	case 7:   // Set main lamp(ID:1) power(V_STATUS:2) on/off, ack
 		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_STATUS, true);
-		bytValue = (lv_sPayload == "1" ? 1 : 0);
+		bytValue = constrain(lv_sPayload.toInt(), DEVICE_SW_OFF, DEVICE_SW_TOGGLE);
 		msg.set(bytValue);
 		bMsgReady = true;
 		SERIAL("Now sending set V_STATUS %s message...", (bytValue ? "on" : "off"));
@@ -259,53 +259,61 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		break;
 
 	case 13:  // Set main lamp(ID:1) status in one, ack
-			msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_RGBW, true);
-			payload[0] = RING_ID_ALL;
-			payload[1] = 1;
-			payload[2] = 65;
-			nPos = lv_sPayload.indexOf(':');
-			if (nPos > 0) {
-				// Extract brightness, cct or WRGB
-				bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
-				payload[2] = bytValue;
-				iValue = lv_sPayload.substring(nPos + 1).toInt();
-				if( iValue < 256 ) {
-					// WRGB
-					payload[3] = iValue;	// W
-					payload[4] = 0;	// R
-					payload[5] = 0;	// G
-					payload[6] = 0;	// B
-					for( int cindex = 3; cindex < 7; cindex++ ) {
-						lv_sPayload = lv_sPayload.substring(nPos + 1);
-						nPos = lv_sPayload.indexOf(':');
-						if (nPos <= 0) {
-							bytValue = (uint8_t)(lv_sPayload.toInt());
-							payload[cindex] = bytValue;
-							break;
-						}
-						bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
+		msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_RGBW, true);
+		payload[0] = RING_ID_ALL;
+		payload[1] = 1;
+		payload[2] = 65;
+		nPos = lv_sPayload.indexOf(':');
+		if (nPos > 0) {
+			// Extract brightness, cct or WRGB
+			bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
+			payload[2] = bytValue;
+			iValue = lv_sPayload.substring(nPos + 1).toInt();
+			if( iValue < 256 ) {
+				// WRGB
+				payload[3] = iValue;	// W
+				payload[4] = 0;	// R
+				payload[5] = 0;	// G
+				payload[6] = 0;	// B
+				for( int cindex = 3; cindex < 7; cindex++ ) {
+					lv_sPayload = lv_sPayload.substring(nPos + 1);
+					nPos = lv_sPayload.indexOf(':');
+					if (nPos <= 0) {
+						bytValue = (uint8_t)(lv_sPayload.toInt());
 						payload[cindex] = bytValue;
+						break;
 					}
-					msg.set((void*)payload, 7);
-					SERIAL("Now sending set BR=%d WRGB=(%d,%d,%d,%d)...",
-							payload[2], payload[3], payload[4], payload[5], payload[6]);
-				} else {
-					// CCT
-					iValue = constrain(iValue, CT_MIN_VALUE, CT_MAX_VALUE);
-					payload[3] = iValue % 256;
-				  payload[4] = iValue / 256;
-					msg.set((void*)payload, 5);
-					SERIAL("Now sending set BR=%d CCT=%d...", bytValue, iValue);
+					bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
+					payload[cindex] = bytValue;
 				}
+				msg.set((void*)payload, 7);
+				SERIAL("Now sending set BR=%d WRGB=(%d,%d,%d,%d)...",
+						payload[2], payload[3], payload[4], payload[5], payload[6]);
 			} else {
-				iValue = 3000;
+				// CCT
+				iValue = constrain(iValue, CT_MIN_VALUE, CT_MAX_VALUE);
 				payload[3] = iValue % 256;
 			  payload[4] = iValue / 256;
 				msg.set((void*)payload, 5);
 				SERIAL("Now sending set BR=%d CCT=%d...", bytValue, iValue);
 			}
-			bMsgReady = true;
-			break;
+		} else {
+			iValue = 3000;
+			payload[3] = iValue % 256;
+		  payload[4] = iValue / 256;
+			msg.set((void*)payload, 5);
+			SERIAL("Now sending set BR=%d CCT=%d...", bytValue, iValue);
+		}
+		bMsgReady = true;
+		break;
+
+	case 14:	// Reserved for query command
+		break;
+
+	case 15:	// Set Device Scenerio
+		bytValue = (UC)(lv_sPayload.toInt());
+		theSys.ChangeLampScenario(lv_nNodeID, bytValue);
+		break;
 	}
 
 	if (bMsgReady) {

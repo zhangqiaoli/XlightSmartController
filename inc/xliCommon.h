@@ -174,18 +174,13 @@ typedef enum
   remotetypDummy
 } remotetype_t;
 
-// Specify system serial port, could be Serial, Serial1 or Seria2
+// Specify system serial port, could be Serial, USBSerial1, Serial1 or Seria2
 #ifndef TheSerial
 #define TheSerial       Serial
 #endif
 
-#ifndef SERIAL
 #define SERIAL          TheSerial.printf
-#endif
-
-#ifndef SERIAL_LN
 #define SERIAL_LN       TheSerial.printlnf
-#endif
 
 //--------------------------------------------------
 // Tools & Helpers

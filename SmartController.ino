@@ -115,7 +115,7 @@ void setup()
 		if( !WiFi.hasCredentials() || !theConfig.GetWiFiStatus() ) {
 			if( !theSys.connectWiFi() ) {
 				// get credential from BLE or Serial
-				SERIAL_LN(F("will enter listening mode"));
+				SERIAL_LN("will enter listening mode");
 				WiFi.listen();
 				break;
 			}

@@ -195,7 +195,9 @@ typedef struct
   // Once Alarm triggered, whether repeatly check by starting a timer
   US tmr_int;              // Timer interval in seconds, 0 means no timer
   US tmr_span;             // Timer span in minutes
-  AlarmId tmr_id	         : 8;
+  UC tmr_started           : 1; // Whether timer started
+  UL tmr_tic_start;        // Timer started tick
+  UL tmr_tic_tac;          // Timer current tick
   // Other trigger conditions, e.g. sensor data
   Condition_t actCond[MAX_CONDITION_PER_RULE];
 } RuleRow_t;

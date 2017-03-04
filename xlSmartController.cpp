@@ -66,9 +66,7 @@ void AlarmTimerTriggered(uint32_t tag)
 
 	if( RuleRowptr->data.run_flag == UNEXECUTED ) {
 		// Execute the rule now
-		if( theSys.Execute_Rule(RuleRowptr) ) {
-			RuleRowptr->data.run_flag = EXECUTED;
-		}
+		theSys.Execute_Rule(RuleRowptr);
 	}
 }
 
@@ -94,7 +92,7 @@ void SmartControllerClass::Init()
 	while(!TheSerial.available()) {
 		if( Particle.connected() == true ) { Particle.process(); }
 	}
-	SERIAL_LN(F("SmartController is starting..."));
+	SERIAL_LN("SmartController is starting...");
 #endif
 
 	// Get System ID
@@ -123,7 +121,7 @@ void SmartControllerClass::InitRadio()
 	if( CheckRF() ) {
   	if (IsRFGood())
   	{
-  		LOGN(LOGTAG_MSG, F("RF2.4 is working."));
+  		LOGN(LOGTAG_MSG, "RF2.4 is working.");
   		SetStatus(STATUS_BMW);
   	}
   }
@@ -132,7 +130,7 @@ void SmartControllerClass::InitRadio()
 	CheckBLE();
 	if (IsBLEGood())
 	{
-		LOGN(LOGTAG_MSG, F("BLE is working."));
+		LOGN(LOGTAG_MSG, "BLE is working.");
 	}
 }
 
@@ -149,7 +147,7 @@ void SmartControllerClass::InitNetwork()
 	if (IsWANGood())
 	{
 		if( !oldWAN ) {	// Only log when status changed
-			LOGN(LOGTAG_EVENT, F("WAN is working."));
+			LOGN(LOGTAG_EVENT, "WAN is working.");
 			SetStatus(STATUS_NWS);
 		}
 
@@ -161,7 +159,7 @@ void SmartControllerClass::InitNetwork()
 	else if (IsLANGood())
 	{
 		if( !oldLAN ) {	// Only log when status changed
-			LOGN(LOGTAG_EVENT, F("LAN is working."));
+			LOGN(LOGTAG_EVENT, "LAN is working.");
 			SetStatus(STATUS_DIS);
 		}
 	}
@@ -220,13 +218,13 @@ void SmartControllerClass::InitSensors()
 	// DHT
 	if (theConfig.IsSensorEnabled(sensorDHT)) {
 		senDHT.begin();
-		LOGD(LOGTAG_MSG, F("DHT sensor works."));
+		LOGD(LOGTAG_MSG, "DHT sensor works.");
 	}
 
 	// Light
 	/*if (theConfig.IsSensorEnabled(sensorALS)) {
 		senLight.begin(SEN_LIGHT_MAX, SEN_LIGHT_MIN);	// Reversed threshold
-		LOGD(LOGTAG_MSG, F("Light sensor works."));
+		LOGD(LOGTAG_MSG, "Light sensor works.");
 	}*/
 
 	// Brightness indicator
@@ -234,7 +232,7 @@ void SmartControllerClass::InitSensors()
 	// PIR
 	/*if (theConfig.IsSensorEnabled(sensorPIR)) {
 		senMotion.begin();
-		LOGD(LOGTAG_MSG, F("Motion sensor works."));
+		LOGD(LOGTAG_MSG, "Motion sensor works.");
 	}*/
 
 
@@ -249,7 +247,7 @@ void SmartControllerClass::InitCloudObj()
 
 	if( theConfig.GetUseCloud() != CLOUD_DISABLE ) {
 		CloudObjClass::InitCloudObj();
-		LOGN(LOGTAG_MSG, F("Cloud Objects registered."));
+		LOGN(LOGTAG_MSG, "Cloud Objects registered.");
 	}
 }
 
@@ -259,7 +257,7 @@ BOOL SmartControllerClass::Start()
 	// ToDo:bring controller up along with all modules (RF, wifi, BLE)
 	FindCurrentDevice();
 
-	LOGI(LOGTAG_MSG, F("SmartController started."));
+	LOGI(LOGTAG_MSG, "SmartController started.");
 	LOGI(LOGTAG_MSG, "Product Info: %s-%s-%d",
 			theConfig.GetOrganization().c_str(), theConfig.GetProductName().c_str(), theConfig.GetVersion());
 	LOGI(LOGTAG_MSG, "System Info: %s-%s",
@@ -317,7 +315,7 @@ UC SmartControllerClass::GetStatus()
 BOOL SmartControllerClass::SetStatus(UC st)
 {
 	if( st > STATUS_ERR ) return false;
-	LOGN(LOGTAG_STATUS, F("System status changed from %d to %d"), m_SysStatus, st);
+	LOGN(LOGTAG_STATUS, "System status changed from %d to %d", m_SysStatus, st);
 	if ((UC)m_SysStatus != st) {
 		m_SysStatus = st;
 	}
@@ -378,14 +376,14 @@ BOOL SmartControllerClass::CheckWiFi()
 	if( WiFi.RSSI() > 0 ) {
 		m_isWAN = false;
 		m_isLAN = false;
-		LOGE(LOGTAG_MSG, F("Wi-Fi chip error!"));
+		LOGE(LOGTAG_MSG, "Wi-Fi chip error!");
 		return false;
 	}
 
 	if( !WiFi.ready() ) {
 		m_isWAN = false;
 		m_isLAN = false;
-		LOGE(LOGTAG_EVENT, F("Wi-Fi module error!"));
+		LOGE(LOGTAG_EVENT, "Wi-Fi module error!");
 		return false;
 	}
 	return true;
@@ -405,10 +403,10 @@ BOOL SmartControllerClass::CheckNetwork()
 	if( !m_isWAN ) {
 		m_isLAN = (WiFi.ping(WiFi.gatewayIP(), 3) < 3);
 		if( !m_isLAN ) {
-			LOGW(LOGTAG_MSG, F("Cannot reach local gateway!"));
+			LOGW(LOGTAG_MSG, "Cannot reach local gateway!");
 			m_isLAN = (WiFi.ping(WiFi.localIP(), 3) < 3);
 			if( !m_isLAN ) {
-				LOGE(LOGTAG_MSG, F("Cannot reach itself!"));
+				LOGE(LOGTAG_MSG, "Cannot reach itself!");
 			}
 		}
 	} else {
@@ -451,7 +449,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 				theRadio.switch2BaseNetwork();
 				delay(10);
 				theRadio.switch2MyNetwork();
-        LOGN(LOGTAG_MSG, F("RF24 moudle recovered."));
+        LOGN(LOGTAG_MSG, "RF24 moudle recovered.");
       }
     }
 
@@ -481,7 +479,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 						Restart();
 					} else {
 						// Avoid keeping trying
-						LOGE(LOGTAG_MSG, F("Turn off WiFi!"));
+						LOGE(LOGTAG_MSG, "Turn off WiFi!");
 						WiFi.disconnect();
 						WiFi.off();	// In order to resume Wi-Fi, restart the application
 					}
@@ -513,7 +511,7 @@ BOOL SmartControllerClass::CheckRFBaseNetEnableDur()
 	if( theConfig.GetMaxBaseNetworkDur() > 0 ) {
 		if( theRadio.getBaseNetworkDuration() > theConfig.GetMaxBaseNetworkDur() ) {
 			theRadio.enableBaseNetwork(false);
-			LOGI(LOGTAG_MSG, F("RF base network enable timeout, disable it automatically"));
+			LOGI(LOGTAG_MSG, "RF base network enable timeout, disable it automatically");
 			return true;
 		}
 	}
@@ -1039,7 +1037,7 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			if( data.containsKey("tmr_span") )
 				row.tmr_span = data["tmr_span"];
 			else row.tmr_span = 0;
-			row.tmr_id = dtINVALID_ALARM_ID;
+			row.tmr_started = 0;
 
 			// Get conditions
 			for( _cond = 0; _cond < MAX_CONDITION_PER_RULE; _cond++ ) {
@@ -1565,7 +1563,7 @@ bool SmartControllerClass::updateDevStatusRow(MyMessage msg)
 	// This is very bad for the flash memory in the long run, as the memory will wear down each time the
 	// user turns on or off the light
 	DevStatusRowPtr->data.flash_flag = UNSAVED; //required
-	DevStatusRowPtr->data.run_flag == EXECUTED; //redundant, already should be EXECUTED
+	DevStatusRowPtr->data.run_flag = EXECUTED; //redundant, already should be EXECUTED
 	theConfig.SetDSTChanged(true);
 
 	return true;
@@ -1687,7 +1685,7 @@ bool SmartControllerClass::Check_SensorData(UC _scope, UC _sr, UC _symbol, US _v
 // Execute Rule, called by Action_Rule() and AlarmTimerTriggered()
 bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr)
 {
-	if( rulePtr->data.run_flag == EXECUTED ) return true;
+	if( rulePtr->data.run_flag == EXECUTED && !rulePtr->data.tmr_started ) return true;
 
 	bool bTrigger = true, bTest;
 	UC _connector = COND_SYM_NOT;
@@ -1715,13 +1713,24 @@ bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr)
 
 	// Switch to desired scenario
 	if( bTrigger ) {
+		LOGI(LOGTAG_EVENT, "\n\rRule %d triggered\n\r", rulePtr->data.uid);
 		ChangeLampScenario(rulePtr->data.node_id, rulePtr->data.SNT_uid);
 		rulePtr->data.run_flag = EXECUTED;
+		theConfig.SetRTChanged(true);
 
 		// Send Notification
 		if( rulePtr->data.notif_uid < 255 && Particle.connected() ) {
 			// ToDo:
 		}
+	}
+
+	// Check timer
+	if( rulePtr->data.tmr_int > 0 && !rulePtr->data.tmr_started ) {
+		// Start timer for further excution
+		rulePtr->data.tmr_tic_start = millis();
+		rulePtr->data.tmr_tic_tac = rulePtr->data.tmr_tic_start;
+		rulePtr->data.tmr_started = 1;
+		SERIAL_LN("=== Rule %d timer started ===", rulePtr->data.uid);
 	}
 
 	return bTrigger;
@@ -1733,7 +1742,7 @@ bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr)
 // Scan Rule list and create associated objectss, such as Schedule (Alarm), Scenario, etc.
 void SmartControllerClass::ReadNewRules()
 {
-	if (theConfig.IsRTChanged())
+	//if (theConfig.IsRTChanged())
 	{
 		ListNode<RuleRow_t> *ruleRowPtr = Rule_table.getRoot();
 		while (ruleRowPtr != NULL)
@@ -1813,8 +1822,25 @@ bool SmartControllerClass::Action_Rule(ListNode<RuleRow_t> *rulePtr)
 	if(!rulePtr)
 		return false;
 
-	if (rulePtr->data.run_flag == UNEXECUTED)
+	if (rulePtr->data.run_flag == UNEXECUTED || rulePtr->data.tmr_started)
 	{
+		// Check timer
+		if( rulePtr->data.tmr_started ) {
+			if( rulePtr->data.tmr_span > 0 ) {
+				// contintue or stop
+				if( (millis() - rulePtr->data.tmr_tic_start) / 60000 > rulePtr->data.tmr_span ) {
+					// Time out and stop
+					rulePtr->data.tmr_started = 0;
+					return true;
+				}
+			}
+			// if up to tic-tac
+			if( (millis() - rulePtr->data.tmr_tic_tac) / 1000 < rulePtr->data.tmr_int ) {
+				return true;
+			}
+			rulePtr->data.tmr_tic_tac = millis();
+		}
+
 		// Process Schedule
 		if( rulePtr->data.SCT_uid < 255 ) {
 			// Schedule will take over the rule, and exectue the rule later
@@ -1822,9 +1848,7 @@ bool SmartControllerClass::Action_Rule(ListNode<RuleRow_t> *rulePtr)
 		} else {
 			// Execute the rule right away, and will keep checking at every turn,
 			/// because Conditions are the only activation consideration
-			if( Execute_Rule(rulePtr) ) {
-				rulePtr->data.run_flag = EXECUTED;
-			}
+			Execute_Rule(rulePtr);
 		}
 	}
 
@@ -1886,6 +1910,7 @@ bool SmartControllerClass::Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_u
 
 		// Set flag anyway
 		scheduleRow->data.run_flag = EXECUTED;
+		theConfig.SetSCTChanged(true);
 	}
 	else //schedule row not found in chain or Flash
 	{
@@ -2012,7 +2037,7 @@ US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t 
 	lv_Node.nid = _nodeID;
 	if( theConfig.lstNodes.get(&lv_Node) < 0 ) return 0;
 	if( isIdentityEmpty(lv_Node.identity) || !isIdentityEqual(lv_Node.identity, &_identity) ) {
-		LOGN(LOGTAG_MSG, F("Failed to verify identity for device:%d"), _nodeID);
+		LOGN(LOGTAG_MSG, "Failed to verify identity for device:%d", _nodeID);
 		return 0;
 	}
 	// Update timestamp
@@ -2035,7 +2060,7 @@ US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t 
 			}
 		}
 		if(!DevStatusRowPtr) {
-			LOGW(LOGTAG_MSG, F("Failed to get item form DST for device:%d"), _nodeID);
+			LOGW(LOGTAG_MSG, "Failed to get item form DST for device:%d", _nodeID);
 			return 0;
 		}
 
@@ -2044,7 +2069,7 @@ US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t 
 		DevStatusRowPtr->data.type = _devType;
 		DevStatusRowPtr->data.token = token;
 		DevStatusRowPtr->data.flash_flag = UNSAVED; //required
-		DevStatusRowPtr->data.run_flag == EXECUTED; //redundant, already should be EXECUTED
+		DevStatusRowPtr->data.run_flag = EXECUTED; //redundant, already should be EXECUTED
 		theConfig.SetDSTChanged(true);
 	} else {
 		// Remote
@@ -2154,6 +2179,8 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 				}
 			}
 		}
+		rowptr->data.run_flag = EXECUTED;
+		theConfig.SetSNTChanged(true);
 	}
 	else
 	{
@@ -2568,7 +2595,7 @@ String SmartControllerClass::print_devStatus_table(int row)
 void SmartControllerClass::print_schedule_table(int row)
 {
 	SERIAL_LN("====================");
-	SERIAL_LN("==== SCT Row %d ====", row);
+	SERIAL_LN("==== SCT-Row %d ====", row);
 
 	switch (Schedule_table.get(row).op_flag)
 	{
@@ -2597,37 +2624,42 @@ void SmartControllerClass::print_schedule_table(int row)
 
 void SmartControllerClass::print_scenario_table(int row)
 {
+	ScenarioRow_t rowData = Scenario_table.get(row);
 	SERIAL_LN("====================");
-	SERIAL_LN("==== SNT	Row %d ====", row);
+	SERIAL_LN("==== SNT-Row %d ====", row);
 
-	switch (Scenario_table.get(row).op_flag)
+	switch (rowData.op_flag)
 	{
 	case 0: SERIAL_LN("op_flag = GET"); break;
 	case 1: SERIAL_LN("op_flag = POST"); break;
 	case 2: SERIAL_LN("op_flag = PUT"); break;
 	case 3: SERIAL_LN("op_flag = DELETE"); break;
 	}
-	switch (Scenario_table.get(row).flash_flag)
+	switch (rowData.flash_flag)
 	{
 	case 0: SERIAL_LN("flash_flag = UNSAVED"); break;
 	case 1: SERIAL_LN("flash_flag = SAVED"); break;
 	}
-	switch (Scenario_table.get(row).run_flag)
+	switch (rowData.run_flag)
 	{
 	case 0: SERIAL_LN("run_flag = UNEXECUTED"); break;
 	case 1: SERIAL_LN("run_flag = EXECUTED"); break;
 	}
-	SERIAL_LN("uid = %d", Scenario_table.get(row).uid);
-	SERIAL_LN("ring1 = %s", hue_to_string(Scenario_table.get(row).ring[0]).c_str());
-	SERIAL_LN("ring2 = %s", hue_to_string(Scenario_table.get(row).ring[1]).c_str());
-	SERIAL_LN("ring3 = %s", hue_to_string(Scenario_table.get(row).ring[2]).c_str());
-	SERIAL_LN("filter = %d", Scenario_table.get(row).filter);
+	SERIAL_LN("uid = %d", rowData.uid);
+	if( rowData.sw != DEVICE_SW_DUMMY ) {
+		SERIAL_LN("switch = %d", rowData.sw);
+	} else {
+		SERIAL_LN("ring1 = %s", hue_to_string(rowData.ring[0]).c_str());
+		SERIAL_LN("ring2 = %s", hue_to_string(rowData.ring[1]).c_str());
+		SERIAL_LN("ring3 = %s", hue_to_string(rowData.ring[2]).c_str());
+	}
+	SERIAL_LN("filter = %d", rowData.filter);
 }
 
 void SmartControllerClass::print_rule_table(int row)
 {
 	SERIAL_LN("===================");
-	SERIAL_LN("==== RT Row %d ====", row);
+	SERIAL_LN("==== RT-Row %d ====", row);
 
 	switch (Rule_table.get(row).op_flag)
 	{
@@ -2654,6 +2686,7 @@ void SmartControllerClass::print_rule_table(int row)
 	SERIAL_LN("SNT_uid = %d", Rule_table.get(row).SNT_uid);
 	SERIAL_LN("tmr_int = %d s", Rule_table.get(row).tmr_int);
 	SERIAL_LN("tmr_span = %d m", Rule_table.get(row).tmr_span);
+	SERIAL_LN("tmr_started = %d", Rule_table.get(row).tmr_started);
 }
 
 //------------------------------------------------------------------
