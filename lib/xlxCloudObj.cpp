@@ -85,6 +85,7 @@ BOOL CloudObjClass::UpdateTemperature(float value)
 {
   if( m_temperature != value ) {
     m_temperature = value;
+    OnSensorDataChanged(sensorDHT);
     if( m_jpData->success() )
     {
       (*m_jpData)["DHTt"] = value;
@@ -98,6 +99,7 @@ BOOL CloudObjClass::UpdateHumidity(float value)
 {
   if( m_humidity != value ) {
     m_humidity = value;
+    OnSensorDataChanged(sensorDHT_h);
     if( m_jpData->success() )
     {
       (*m_jpData)["DHTh"] = value;
@@ -111,6 +113,7 @@ BOOL CloudObjClass::UpdateBrightness(uint8_t nid, uint8_t value)
 {
   if( m_brightness != value ) {
     m_brightness = value;
+    OnSensorDataChanged(sensorALS);
     /*
     if( m_jpData->success() )
     {
@@ -133,6 +136,7 @@ BOOL CloudObjClass::UpdateMotion(uint8_t nid, bool value)
 {
   if( m_motion != value ) {
     m_motion = value;
+    OnSensorDataChanged(sensorPIR);
     /*
     if( m_jpData->success() )
     {
@@ -155,6 +159,7 @@ BOOL CloudObjClass::UpdateGas(uint8_t nid, uint16_t value)
 {
   if( m_gas != value ) {
     m_gas = value;
+    OnSensorDataChanged(sensorGAS);
     /*
     if( m_jpData->success() )
     {
@@ -177,6 +182,7 @@ BOOL CloudObjClass::UpdateDust(uint8_t nid, uint16_t value)
 {
   if( m_dust != value ) {
     m_dust = value;
+    OnSensorDataChanged(sensorDUST);
     /*
     if( m_jpData->success() )
     {
@@ -199,6 +205,7 @@ BOOL CloudObjClass::UpdateSmoke(uint8_t nid, uint16_t value)
 {
   if( m_smoke != value ) {
     m_smoke = value;
+    OnSensorDataChanged(sensorSMOKE);
     /*
     if( m_jpData->success() )
     {
@@ -259,6 +266,18 @@ BOOL CloudObjClass::PublishDeviceStatus(const char *msg)
 #ifdef USE_PARTICLE_CLOUD
   if( Particle.connected() ) {
     rc = Particle.publish(CLT_NAME_DeviceStatus, msg, CLT_TTL_DeviceStatus, PRIVATE);
+  }
+#endif
+  return rc;
+}
+
+// Publish Alarm
+BOOL CloudObjClass::PublishAlarm(const char *msg)
+{
+  BOOL rc = true;
+#ifdef USE_PARTICLE_CLOUD
+  if( Particle.connected() ) {
+    rc = Particle.publish(CLT_NAME_Alarm, msg, CLT_TTL_Alarm, PRIVATE);
   }
 #endif
   return rc;

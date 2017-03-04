@@ -116,13 +116,13 @@ test(cloudinput)
   // Condition rules
   /// Example 1: if brightness (ALS) < 50, turn on the lights
   theSys.CldJSONConfig("{'x0': '{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"r1\",\"node_uid\": '}");
-  theSys.CldJSONConfig("{'x1': '1,\"SNT_uid\":1,\"tmr_int\":5, '}");
+  theSys.CldJSONConfig("{'x1': '1,\"SNT_uid\":1,\"tmr_int\":1, '}");
   theSys.CldJSONConfig("\"cond0\":[1,1,4,2,1,50,0]}");
   // condition0: [1(enable),1(SR_SCOPE_NODE),4(SR_SYM_LT),2(COND_SYM_OR),1(sensorALS),50(value1),0(value2)]
 
   /// Example 2: if brightness (ALS) >= 80, turn off the lights
   theSys.CldJSONConfig("{'x0': '{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"r2\",\"node_uid\": '}");
-  theSys.CldJSONConfig("{'x1': '1,\"SNT_uid\":2,\"tmr_int\":5, '}");
+  theSys.CldJSONConfig("{'x1': '1,\"SNT_uid\":2,\"tmr_int\":1, '}");
   theSys.CldJSONConfig("\"cond0\":[1,1,3,2,1,80,0]}");
   // condition0: [1(enable),1(SR_SCOPE_NODE),3(SR_SYM_GE),2(COND_SYM_OR),1(sensorALS),80(value1),0(value2)]
 
@@ -137,11 +137,11 @@ test(cloudinput)
 
   /// Example 4: if no motion (PIR == 0), turn off the lights
   theSys.CldJSONConfig("{'x0': '{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"r4\",\"node_uid\": '}");
-  theSys.CldJSONConfig("{'x1': '1,\"SNT_uid\":2,\"tmr_int\":3, '}");
+  theSys.CldJSONConfig("{'x1': '1,\"SNT_uid\":2,\"tmr_int\":1, '}");
   theSys.CldJSONConfig("\"cond0\":[1,1,0,2,4,0,0]}");
   // condition0: [1(enable),1(SR_SCOPE_NODE),0(SR_SYM_EQ),2(COND_SYM_OR),4(sensorPIR),0(value1),0(value2)]
   //{'x0': '{"op":1,"fl":0,"run":0,"uid":"r4","node_uid": '}
-  // {'x1': '1,"SNT_uid":2,"tmr_int":3, '}
+  // {'x1': '1,"SNT_uid":2,"tmr_int":1, '}
   // "cond0":[1,1,0,2,4,0,0]}
 
   /// Example 5: if brightness (ALS) < 70 AND motion (PIR == 1), turn on the lights
@@ -154,7 +154,7 @@ test(cloudinput)
 
   /// Example 6: if brightness (ALS) >= 65 AND no motion (PIR == 0), turn off the lights
   theSys.CldJSONConfig("{'x0': '{\"op\":1,\"fl\":0,\"run\":0,\"uid\":\"r2\",\"node_uid\": '}");
-  theSys.CldJSONConfig("{'x1': '1,\"SNT_uid\":2,\"tmr_int\":5, '}");
+  theSys.CldJSONConfig("{'x1': '1,\"SNT_uid\":2,\"tmr_int\":1, '}");
   theSys.CldJSONConfig("{'x1': '\"cond0\":[1,1,3,1,1,65,0], '}");
   theSys.CldJSONConfig("\"cond1\":[1,1,0,1,4,0,0]}");
   // condition0: [1(enable),1(SR_SCOPE_NODE),3(SR_SYM_GE),1(COND_SYM_AND),1(sensorALS),65(value1),0(value2)]

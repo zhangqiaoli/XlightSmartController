@@ -192,12 +192,11 @@ typedef struct
 	UC SCT_uid               : 8;
 	UC SNT_uid               : 8;
 	UC notif_uid             : 8;
-  // Once Alarm triggered, whether repeatly check by starting a timer
-  US tmr_int;              // Timer interval in seconds, 0 means no timer
-  US tmr_span;             // Timer span in minutes
+  // Once rule triggered, whether repeatly check
+  UC tmr_int               : 1; // Whether enable timer
   UC tmr_started           : 1; // Whether timer started
+  US tmr_span;             // Timer span in minutes
   UL tmr_tic_start;        // Timer started tick
-  UL tmr_tic_tac;          // Timer current tick
   // Other trigger conditions, e.g. sensor data
   Condition_t actCond[MAX_CONDITION_PER_RULE];
 } RuleRow_t;

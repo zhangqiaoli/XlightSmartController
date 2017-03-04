@@ -90,7 +90,7 @@ public:
   bool Action_Schedule(OP_FLAG parentFlag, UC uid, UC rule_uid);
 
   bool Check_SensorData(UC _scope, UC _sr, UC _symbol, US _val1, US _val2);
-  bool Execute_Rule(ListNode<RuleRow_t> *rulePtr);
+  bool Execute_Rule(ListNode<RuleRow_t> *rulePtr, bool _init = false, UC _sr = 255);
 
   //LinkedLists (Working memory tables)
   ChainClass<DevStatusRow_t> DevStatus_table = ChainClass<DevStatusRow_t>(MAX_DEVICE_PER_CONTROLLER);
@@ -105,9 +105,10 @@ public:
   void print_rule_table(int row);
 
   // Action Loop & Helper Methods
-  void ReadNewRules();
+  void ReadNewRules(bool force = false);
   bool CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uint32_t tag = 0);
   bool DestoryAlarm(AlarmId alarmID, UC SCT_uid);
+  void OnSensorDataChanged(UC _sr);
 
   // UID search functions
   ListNode<ScheduleRow_t> *SearchSchedule(UC uid);

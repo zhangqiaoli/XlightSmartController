@@ -1133,6 +1133,7 @@ BOOL ConfigClass::LoadRuleTable()
 					RuleArray[i].op_flag = POST;
 					RuleArray[i].run_flag = UNEXECUTED;
 					RuleArray[i].flash_flag = SAVED;		//Already know it exists in flash
+					RuleArray[i].tmr_started = 0;
 					if (!theSys.Rule_table.add(RuleArray[i])) //add non-empty row to working memory chain
 					{
 						LOGW(LOGTAG_MSG, "Rule row %d failed to load from flash", i);
@@ -1140,8 +1141,6 @@ BOOL ConfigClass::LoadRuleTable()
 				}
 				//else: row is either empty or trash; do nothing
 			}
-			//m_isRTChanged = true; //allow ReadNewRules() to run
-			//theSys.ReadNewRules(); //acts on the Rules rules newly loaded from flash
 			m_isRTChanged = false; //since we are not calling SaveConfig(), change flag to false again
 		}
 		else

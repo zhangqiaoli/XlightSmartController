@@ -83,6 +83,7 @@ public:
   virtual int CldJSONCommand(String jsonCmd) = 0;
   virtual int CldJSONConfig(String jsonData) = 0;
   virtual int CldSetCurrentTime(String tmStr) = 0;
+  virtual void OnSensorDataChanged(UC _sr) = 0;
   int ProcessJSONString(String inStr);
 
   BOOL UpdateTemperature(float value);
@@ -96,6 +97,7 @@ public:
   void UpdateJSONData();
   BOOL PublishLog(const char *msg);
   BOOL PublishDeviceStatus(const char *msg);
+  BOOL PublishAlarm(const char *msg);
 
 protected:
   void InitCloudObj();

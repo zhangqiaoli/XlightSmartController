@@ -64,10 +64,8 @@ void AlarmTimerTriggered(uint32_t tag)
 		return;
 	}
 
-	if( RuleRowptr->data.run_flag == UNEXECUTED ) {
-		// Execute the rule now
-		theSys.Execute_Rule(RuleRowptr);
-	}
+	// Execute the rule with init-flag
+	theSys.Execute_Rule(RuleRowptr, true);
 }
 
 //------------------------------------------------------------------
@@ -295,6 +293,9 @@ BOOL SmartControllerClass::Start()
 
 	// Request the main device to report status
 	RequestDeviceStatus(CURRENT_DEVICE);
+
+	// Acts on the Rules rules newly loaded from flash
+	ReadNewRules(true);
 
 	return true;
 }
@@ -1682,15 +1683,51 @@ bool SmartControllerClass::Check_SensorData(UC _scope, UC _sr, UC _symbol, US _v
 	return rc;
 }
 
-// Execute Rule, called by Action_Rule() and AlarmTimerTriggered()
-bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr)
+// Execute Rule, called by Action_Rule(), AlarmTimerTriggered() and OnSensorDataChanged()
+bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr, bool _init, UC _sr)
 {
-	if( rulePtr->data.run_flag == EXECUTED && !rulePtr->data.tmr_started ) return true;
+	// Whether execute
+	if( _init ) {
+		// Start timer
+		if( rulePtr->data.tmr_int ) {
+			rulePtr->data.tmr_tic_start = millis();
+			rulePtr->data.tmr_started = 1;
+		}
+	} else {
+		// Check timer
+		if( !rulePtr->data.tmr_started ) return false;
+		if( rulePtr->data.tmr_span > 0 ) {
+			// contintue or stop
+			if( (millis() - rulePtr->data.tmr_tic_start) / 60000 > rulePtr->data.tmr_span ) {
+				// Time out and stop
+				rulePtr->data.tmr_started = 0;
+				return false;
+			}
+		}
+	}
 
-	bool bTrigger = true, bTest;
-	UC _connector = COND_SYM_NOT;
+	UC _cond;
+	bool bTrigger = false;
+	// Whether conditions contain this sensor
+	if( _sr < 255 ) {
+		for(_cond = 0; _cond < MAX_CONDITION_PER_RULE; _cond++ ) {
+			if( !rulePtr->data.actCond[_cond].enabled ) return false;
+			if( rulePtr->data.actCond[_cond].sr_id == _sr ) {
+				// Go on check conditions
+				bTrigger = true;
+				break;
+			}
+		}
+		// no this sensor
+		if( !bTrigger ) return false;
+	} else {
+		bTrigger = true;
+	}
+
 	// Check conditions
-	for(UC _cond = 0; _cond < MAX_CONDITION_PER_RULE; _cond++ ) {
+	bool bTest;
+	UC _connector = COND_SYM_NOT;
+	for(_cond = 0; _cond < MAX_CONDITION_PER_RULE; _cond++ ) {
 		if( !rulePtr->data.actCond[_cond].enabled ) break;
 
 		bTest = Check_SensorData(rulePtr->data.actCond[_cond].sr_scope, rulePtr->data.actCond[_cond].sr_id,
@@ -1713,24 +1750,24 @@ bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr)
 
 	// Switch to desired scenario
 	if( bTrigger ) {
-		LOGI(LOGTAG_EVENT, "\n\rRule %d triggered\n\r", rulePtr->data.uid);
+		LOGI(LOGTAG_EVENT, "Rule %d triggered by sensor %d", rulePtr->data.uid, _sr);
 		ChangeLampScenario(rulePtr->data.node_id, rulePtr->data.SNT_uid);
-		rulePtr->data.run_flag = EXECUTED;
-		theConfig.SetRTChanged(true);
 
 		// Send Notification
 		if( rulePtr->data.notif_uid < 255 && Particle.connected() ) {
-			// ToDo:
+			StaticJsonBuffer<256> jBuf;
+			JsonObject *jroot;
+			jroot = &(jBuf.createObject());
+			if( jroot->success() ) {
+				(*jroot)["notif"] = rulePtr->data.notif_uid;
+				(*jroot)["rule"] = rulePtr->data.uid;
+				(*jroot)["nd"] = rulePtr->data.node_id;
+				(*jroot)["snt"] = rulePtr->data.SNT_uid;
+				char buffer[256];
+				jroot->printTo(buffer, 256);
+				PublishAlarm(buffer);
+			}
 		}
-	}
-
-	// Check timer
-	if( rulePtr->data.tmr_int > 0 && !rulePtr->data.tmr_started ) {
-		// Start timer for further excution
-		rulePtr->data.tmr_tic_start = millis();
-		rulePtr->data.tmr_tic_tac = rulePtr->data.tmr_tic_start;
-		rulePtr->data.tmr_started = 1;
-		SERIAL_LN("=== Rule %d timer started ===", rulePtr->data.uid);
 	}
 
 	return bTrigger;
@@ -1740,9 +1777,9 @@ bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr)
 // Acting on new rows in working memory Chains
 //------------------------------------------------------------------
 // Scan Rule list and create associated objectss, such as Schedule (Alarm), Scenario, etc.
-void SmartControllerClass::ReadNewRules()
+void SmartControllerClass::ReadNewRules(bool force)
 {
-	//if (theConfig.IsRTChanged())
+	if (theConfig.IsRTChanged() || force)
 	{
 		ListNode<RuleRow_t> *ruleRowPtr = Rule_table.getRoot();
 		while (ruleRowPtr != NULL)
@@ -1751,6 +1788,18 @@ void SmartControllerClass::ReadNewRules()
 			ruleRowPtr = ruleRowPtr->next;
 		} //end of loop
 	}
+}
+
+// Scan rule list and check conditions in accordance with changed sensor
+void SmartControllerClass::OnSensorDataChanged(UC _sr)
+{
+	ListNode<RuleRow_t> *ruleRowPtr = Rule_table.getRoot();
+	while (ruleRowPtr != NULL)
+	{
+		// Execute the rule with changed sensor
+		Execute_Rule(ruleRowPtr, false, _sr);
+		ruleRowPtr = ruleRowPtr->next;
+	} //end of loop
 }
 
 bool SmartControllerClass::CreateAlarm(ListNode<ScheduleRow_t>* scheduleRow, uint32_t tag)
@@ -1822,34 +1871,23 @@ bool SmartControllerClass::Action_Rule(ListNode<RuleRow_t> *rulePtr)
 	if(!rulePtr)
 		return false;
 
-	if (rulePtr->data.run_flag == UNEXECUTED || rulePtr->data.tmr_started)
+	if (rulePtr->data.run_flag == UNEXECUTED)
 	{
-		// Check timer
-		if( rulePtr->data.tmr_started ) {
-			if( rulePtr->data.tmr_span > 0 ) {
-				// contintue or stop
-				if( (millis() - rulePtr->data.tmr_tic_start) / 60000 > rulePtr->data.tmr_span ) {
-					// Time out and stop
-					rulePtr->data.tmr_started = 0;
-					return true;
-				}
-			}
-			// if up to tic-tac
-			if( (millis() - rulePtr->data.tmr_tic_tac) / 1000 < rulePtr->data.tmr_int ) {
-				return true;
-			}
-			rulePtr->data.tmr_tic_tac = millis();
-		}
-
-		// Process Schedule
+		// Process Schedule: install alarm trigger
 		if( rulePtr->data.SCT_uid < 255 ) {
 			// Schedule will take over the rule, and exectue the rule later
 			Action_Schedule(rulePtr->data.op_flag, rulePtr->data.SCT_uid, rulePtr->data.uid);
 		} else {
-			// Execute the rule right away, and will keep checking at every turn,
-			/// because Conditions are the only activation consideration
-			Execute_Rule(rulePtr);
+			// Execute the rule with init-flag
+			Execute_Rule(rulePtr, true);
 		}
+
+		// Process Conditions: install sensor triggers
+		// ToDo: currently we scan all rules on sensor data changed by calling OnSensorDataChanged(),
+		/// but in the future, we may need to install handlers to skim down processing
+
+		rulePtr->data.run_flag = EXECUTED;
+		theConfig.SetRTChanged(true);
 	}
 
 	return true;
@@ -2683,10 +2721,9 @@ void SmartControllerClass::print_rule_table(int row)
 	SERIAL_LN("SCT_uid = %d", Rule_table.get(row).SCT_uid);
 	SERIAL_LN("SNT_uid = %d", Rule_table.get(row).SNT_uid);
 	SERIAL_LN("notif_uid = %d", Rule_table.get(row).notif_uid);
-	SERIAL_LN("SNT_uid = %d", Rule_table.get(row).SNT_uid);
-	SERIAL_LN("tmr_int = %d s", Rule_table.get(row).tmr_int);
-	SERIAL_LN("tmr_span = %d m", Rule_table.get(row).tmr_span);
+	SERIAL_LN("tmr_int = %d", Rule_table.get(row).tmr_int);
 	SERIAL_LN("tmr_started = %d", Rule_table.get(row).tmr_started);
+	SERIAL_LN("tmr_span = %d m", Rule_table.get(row).tmr_span);
 }
 
 //------------------------------------------------------------------
