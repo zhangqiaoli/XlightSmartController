@@ -30,6 +30,7 @@
 #include "xlxRF24Server.h"
 #include "xlxSerialConsole.h"
 #include "xlxASRInterface.h"
+#include "xlxBLEInterface.h"
 
 #include "Adafruit_DHT.h"
 #include "ArduinoJson.h"
@@ -74,7 +75,6 @@ void AlarmTimerTriggered(uint32_t tag)
 SmartControllerClass::SmartControllerClass()
 {
 	m_isRF = false;
-	m_isBLE = false;
 	m_isLAN = false;
 	m_isWAN = false;
 }
@@ -124,12 +124,8 @@ void SmartControllerClass::InitRadio()
   	}
   }
 
-	// Check BLE
-	CheckBLE();
-	if (IsBLEGood())
-	{
-		LOGN(LOGTAG_MSG, "BLE is working.");
-	}
+	// Open BLE Interface
+  theBLE.Init(PIN_BLE_STATE, PIN_BLE_EN);
 }
 
 // Third level initialization after loading configuration
@@ -417,13 +413,6 @@ BOOL SmartControllerClass::CheckNetwork()
 	return true;
 }
 
-BOOL SmartControllerClass::CheckBLE()
-{
-	// ToDo: change value of m_isBLE
-
-	return true;
-}
-
 BOOL SmartControllerClass::SelfCheck(US ms)
 {
 	static US tickSaveConfig = 0;				// must be static
@@ -527,7 +516,7 @@ BOOL SmartControllerClass::IsRFGood()
 
 BOOL SmartControllerClass::IsBLEGood()
 {
-	return m_isBLE;
+	return theBLE.isGood();
 }
 
 BOOL SmartControllerClass::IsLANGood()
@@ -555,7 +544,10 @@ void SmartControllerClass::ProcessCommands()
 	// Process ASR Command
 	theASR.processCommand();
 
-	// ToDo: process commands from other sources (Wifi, BLE)
+	// Process BLE commands
+  theBLE.processCommand();
+
+	// ToDo: process commands from other sources (Wifi)
 	// ToDo: Potentially move ReadNewRules here
 }
 
@@ -844,10 +836,12 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
 		const int state = (*m_jpCldCmd)["state"].as<int>();
 
-		char buf[64];
-		sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_DIMMER, C_SET, 1, V_STATUS, state);
-		String strCmd(buf);
-		ExecuteLightCommand(strCmd);
+		//char buf[64];
+		//sprintf(buf, "%d;%d;%d;%d;%d;%d", node_id, S_DIMMER, C_SET, 1, V_STATUS, state);
+		//String strCmd(buf);
+		//ExecuteLightCommand(strCmd);
+		String strCmd = String::format("%d:7:%d", node_id, state);
+		theRadio.ProcessSend(strCmd);
 	}
 
 	//COMMAND 2: Change light color
@@ -1572,6 +1566,7 @@ bool SmartControllerClass::updateDevStatusRow(MyMessage msg)
 
 //This function takes in a MyMessage serial input, and sends it to the specified light.
 //Upon success, also updates the devstatus table and brightness indicator
+/*
 bool SmartControllerClass::ExecuteLightCommand(String mySerialStr)
 {
 	//TESTING SAMPLES
@@ -1589,20 +1584,24 @@ bool SmartControllerClass::ExecuteLightCommand(String mySerialStr)
 
 	//mysensors serial message
 	MyMessage msg;
-	if (theRadio.ProcessSend(mySerialStr, msg)) //send message
-	{
-		SERIAL_LN("Sent message: from:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
-			msg.getSender(), msg.getDestination(), msg.getCommand(),
-			msg.getType(), msg.getSensor(), msg.getLength());
-
-		if (updateDevStatusRow(msg)) //update devstatus;
+	MyParserSerial lv_SP;
+	if( lv_SP.parse(msg, mySerialStr.c_str()) ) {
+		if (theRadio.ProcessSend(msg)) //send message
 		{
-			//ToDo: update brightness indicator
-			return true;
+			SERIAL_LN("Sent message: from:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
+				msg.getSender(), msg.getDestination(), msg.getCommand(),
+				msg.getType(), msg.getSensor(), msg.getLength());
+
+			if (updateDevStatusRow(msg)) //update devstatus;
+			{
+				//ToDo: update brightness indicator
+				return true;
+			}
 		}
 	}
 	return false;
 }
+*/
 
 // Match sensor data to condition
 bool SmartControllerClass::Check_SensorData(UC _scope, UC _sr, UC _symbol, US _val1, US _val2)

@@ -40,6 +40,7 @@
 #include "xlxPanel.h"
 #include "xlxRF24Server.h"
 #include "xlSmartController.h"
+#include "xlxBLEInterface.h"
 
 using namespace Flashee;
 
@@ -284,6 +285,8 @@ void ConfigClass::InitConfig()
   strcpy(m_config.Organization, XLA_ORGANIZATION);
   strcpy(m_config.ProductName, XLA_PRODUCT_NAME);
   strcpy(m_config.Token, XLA_TOKEN);
+	strcpy(m_config.bleName, XLIGHT_BLE_SSID);
+	strcpy(m_config.blePin, XLIGHT_BLE_PIN);
   m_config.indBrightness = 0;
 	m_config.mainDevID = NODEID_MAINDEVICE;
   m_config.typeMainDevice = (UC)devtypWRing3;
@@ -621,6 +624,34 @@ void ConfigClass::SetToken(const char *strName)
 {
   strncpy(m_config.Token, strName, sizeof(m_config.Token) - 1);
   m_isChanged = true;
+}
+
+String ConfigClass::GetBLEName()
+{
+	String strName = m_config.bleName;
+  return strName;
+}
+
+void ConfigClass::SetBLEName(const char *strName)
+{
+	if( theBLE.setName(strName) ) {
+		strncpy(m_config.bleName, strName, sizeof(m_config.bleName) - 1);
+	  m_isChanged = true;
+	}
+}
+
+String ConfigClass::GetBLEPin()
+{
+	String strName = m_config.blePin;
+  return strName;
+}
+
+void ConfigClass::SetBLEPin(const char *strPin)
+{
+	if( theBLE.setPin(strPin) ) {
+		strncpy(m_config.blePin, strPin, sizeof(m_config.blePin) - 1);
+	  m_isChanged = true;
+	}
 }
 
 BOOL ConfigClass::ConfigClass::IsCloudSerialEnabled()

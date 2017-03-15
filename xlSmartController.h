@@ -23,7 +23,6 @@ class SmartControllerClass : public CloudObjClass
 {
 private:
   BOOL m_isRF;
-  BOOL m_isBLE;
   BOOL m_isLAN;
   BOOL m_isWAN;
 
@@ -48,7 +47,6 @@ public:
   BOOL CheckRF();
   BOOL CheckWiFi();
   BOOL CheckNetwork();
-  BOOL CheckBLE();
   BOOL SelfCheck(US ms);
   BOOL CheckRFBaseNetEnableDur();
   BOOL IsRFGood();
@@ -62,7 +60,7 @@ public:
   // Process all kinds of commands
   void ProcessCommands();
   void CollectData(UC tick);
-  bool ExecuteLightCommand(String mySerialStr);
+  //bool ExecuteLightCommand(String mySerialStr);
   bool ProcessPanel();
 
   // Device Control Functions

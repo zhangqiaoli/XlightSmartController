@@ -70,6 +70,8 @@ typedef struct
   US maxBaseNetworkDuration;
   UC useCloud;                              // How to depend on the Cloud
   UC mainDevID;                             // NodeID for main device
+  char bleName[24];
+  char blePin[6];
 } Config_t;
 
 //------------------------------------------------------------------
@@ -339,6 +341,12 @@ public:
 
   String GetToken();
   void SetToken(const char *strName);
+
+  String GetBLEName();
+  void SetBLEName(const char *strName);
+
+  String GetBLEPin();
+  void SetBLEPin(const char *strPin);
 
   BOOL IsCloudSerialEnabled();
   void SetCloudSerialEnabled(BOOL sw = true);

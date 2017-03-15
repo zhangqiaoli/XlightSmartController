@@ -97,6 +97,11 @@ enum COMMAND {CMD_SERIAL, CMD_POWER, CMD_COLOR, CMD_BRIGHTNESS, CMD_SCENARIO, CM
 #define NODE_TYP_SYSTEM           's'
 #define NODE_TYP_THIRDPARTY       't'
 
+// BLE Configuration Settings
+#define XLIGHT_BLE_SSID           "Xlight"        // BT module name
+#define XLIGHT_BLE_CLASS          0x9A050C        // Class of Device (CoD)
+#define XLIGHT_BLE_PIN            "1234"          // Pairing password for the BT module
+
 // Sensor list: maximun 16 sensors
 typedef enum
 {
@@ -181,6 +186,10 @@ typedef enum
 
 #define SERIAL          TheSerial.printf
 #define SERIAL_LN       TheSerial.printlnf
+
+#ifndef BLEPort
+#define BLEPort         Serial1             // Could be serial1 or serial2
+#endif
 
 //--------------------------------------------------
 // Tools & Helpers
