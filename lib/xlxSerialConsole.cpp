@@ -314,6 +314,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN("     , to change BLE SSID");
       SERIAL_LN("e.g. set blepin <BLEPin>");
       SERIAL_LN("     , to change BLE Pin");
+      SERIAL_LN("e.g. set pptpin <PPTPin>");
+      SERIAL_LN("     , to change PPT access code");
       SERIAL_LN("e.g. set debug [log:level]");
       SERIAL_LN("     , where log is [serial|flash|syslog|cloud|all");
       SERIAL_LN("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r");
@@ -491,7 +493,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("mConfig.typeMainDevice = \t\t%d", theConfig.GetMainDeviceType());
       SERIAL_LN("mConfig.numDevices = \t\t\t%d", theConfig.GetNumDevices());
       SERIAL_LN("mConfig.numNodes = \t\t\t%d", theConfig.GetNumNodes());
-      SERIAL_LN("mConfig.maxBaseNetworkDuration = \t%d\n\r", theConfig.GetMaxBaseNetworkDur());
+      SERIAL_LN("mConfig.maxBaseNetworkDuration = \t%d", theConfig.GetMaxBaseNetworkDur());
+      SERIAL_LN("PPT Pin = %s\n\r", theConfig.GetPPTAccessCode().c_str());
     } else if (strnicmp(sTopic, "flag", 4) == 0) {
   		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
   		SERIAL_LN("theSys.m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
@@ -850,6 +853,13 @@ bool SerialConsoleClass::doSet(const char *cmd)
         SERIAL_LN("Require 4 digits BLE pin\n\r");
         retVal = true;
       }
+    } else if (strnicmp(sTopic, "pptpin", 6) == 0) {
+      // PPT Access Code
+      sParam1 = next();
+      theConfig.SetPPTAccessCode(sParam1);
+      SERIAL_LN("Set PPT PIN to %s\n\r", sParam1);
+      CloudOutput("Set PPT PIN to %s", sParam1);
+      retVal = true;
     } else if (strnicmp(sTopic, "debug", 5) == 0) {
       sParam1 = next();
       if( sParam1) {

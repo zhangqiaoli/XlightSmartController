@@ -287,6 +287,7 @@ void ConfigClass::InitConfig()
   strcpy(m_config.Token, XLA_TOKEN);
 	strcpy(m_config.bleName, XLIGHT_BLE_SSID);
 	strcpy(m_config.blePin, XLIGHT_BLE_PIN);
+	strcpy(m_config.pptAccessCode, XLIGHT_BLE_PIN);
   m_config.indBrightness = 0;
 	m_config.mainDevID = NODEID_MAINDEVICE;
   m_config.typeMainDevice = (UC)devtypWRing3;
@@ -652,6 +653,23 @@ void ConfigClass::SetBLEPin(const char *strPin)
 		strncpy(m_config.blePin, strPin, sizeof(m_config.blePin) - 1);
 	  m_isChanged = true;
 	}
+}
+
+String ConfigClass::GetPPTAccessCode()
+{
+	String strName = m_config.pptAccessCode;
+  return strName;
+}
+
+void ConfigClass::SetPPTAccessCode(const char *strPin)
+{
+	strncpy(m_config.pptAccessCode, strPin, sizeof(m_config.pptAccessCode) - 1);
+  m_isChanged = true;
+}
+
+BOOL ConfigClass::CheckPPTAccessCode(const char *strPin)
+{
+		return(strcmp(m_config.pptAccessCode, strPin)==0);
 }
 
 BOOL ConfigClass::ConfigClass::IsCloudSerialEnabled()

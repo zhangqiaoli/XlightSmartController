@@ -41,6 +41,7 @@
 #include "xlSmartController.h"
 #include "xlxLogger.h"
 #include "xlxPanel.h"
+#include "xlxBLEInterface.h"
 
 #include "MyParserSerial.h"
 
@@ -48,7 +49,6 @@
 // the one and only instance of RF24ServerClass
 RF24ServerClass theRadio(PIN_RF24_CE, PIN_RF24_CS);
 MyMessage msg;
-MyParserSerial msgParser;
 UC *msgData = (UC *)&(msg.msg);
 
 RF24ServerClass::RF24ServerClass(uint8_t ce, uint8_t cs, uint8_t paLevel)
@@ -150,7 +150,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		strncpy(strBuffer, strMsg.c_str(), iValue);
 		strBuffer[iValue] = 0;
 		// Serail format to MySensors message structure
-		bMsgReady = msgParser.parse(msg, strBuffer);
+		bMsgReady = serialMsgParser.parse(msg, strBuffer);
 		if (bMsgReady) {
 			SERIAL("Now sending message...");
 		}
@@ -526,12 +526,25 @@ bool RF24ServerClass::ProcessReceive()
 			case C_SET:
 				// ToDo: verify token
 				// ToDo: if lamp is not present, return error
-				transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
-				if( transTo > 0 ) {
-					// Transfer message
-					msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
-					// Keep payload unchanged
-					msgReady = true;
+				if( _sensor == NODEID_PROJECTOR ) {
+					// PPT control
+					if( msgType == V_STATUS ) {
+						// Keep payload unchanged
+						msg.build(NODEID_PROJECTOR, getAddress(), replyTo, C_SET, msgType, _needAck, _bIsAck, true);
+						// Convert to serial format
+						memset(strDisplay, 0x00, sizeof(strDisplay));
+						msg.getSerialString(strDisplay);
+						theBLE.sendCommand(strDisplay);
+					}
+				} else {
+					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
+					if( transTo > 0 ) {
+
+						// Transfer message
+						msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
+						// Keep payload unchanged
+						msgReady = true;
+					}
 				}
 				break;
 

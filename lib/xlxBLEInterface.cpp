@@ -30,6 +30,8 @@
 #include "xlxBLEInterface.h"
 #include "xlSmartController.h"
 #include "xlxConfig.h"
+#include "xlxLogger.h"
+#include "MyParserSerial.h"
 
 #define BLE_CHIP_HC05             5
 #define BLE_CHIP_HC06             6
@@ -81,11 +83,15 @@
 // the one and only instance of BLEInterfaceClass
 BLEInterfaceClass theBLE;
 
+char bleBuf[MAX_MESSAGE_LENGTH];
+UC bleBufPos = 0;
+
 //------------------------------------------------------------------
 // Xlight SerialConsole Class
 //------------------------------------------------------------------
 BLEInterfaceClass::BLEInterfaceClass()
 {
+  m_token = random(65535); // Random number
   m_bGood = false;
 #if BLE_CHIP_TYPE == BLE_CHIP_HC05
   m_speed = SERIALPORT_SPEED_HC05; // 38400
@@ -175,7 +181,7 @@ void BLEInterfaceClass::config()
   BLEPort.print("AT+PIN"); BLEPort.print(m_pin); MyDelay1S();
 
   // Role adjust
-  //BLEPort.print("AT+ROLE"); BLEPort.print(XLIGHT_BLE_ROLE); MyDelay1S();
+  BLEPort.print("AT+ROLE"); BLEPort.print(XLIGHT_BLE_ROLE); MyDelay1S();
 #endif
 }
 
@@ -267,15 +273,32 @@ void BLEInterfaceClass::setATMode(BOOL on)
 
 void BLEInterfaceClass::processCommand()
 {
-  char myChar, preChar = 0;
+  static char preChar = 0;
+  char myChar;
 
   while( BLEPort.available() > 0 ) {
     myChar = BLEPort.read();
 #ifdef SERIAL_DEBUG
     TheSerial.print(myChar);
-#endif    
+#endif
     if( preChar == 'O' && myChar == 'K') {
       m_bGood = TRUE;
+    } else if( preChar == '0' && myChar == ';' ) {
+      m_bGood = TRUE;
+      // Start of new message
+      bleBufPos = 0;
+      bleBuf[bleBufPos++] = '0';
+      bleBuf[bleBufPos++] = ';';
+    } else if( bleBufPos > 0) {
+      if( myChar == '\n' || myChar == '\r' ) {
+        // Received an entire message
+        bleBuf[bleBufPos] = 0;
+        exectueCommand(bleBuf);
+        bleBufPos = 0;
+      } else {
+        bleBuf[bleBufPos++] = myChar;
+        if( bleBufPos >= MAX_MESSAGE_LENGTH ) bleBufPos = 0;
+      }
     }
     preChar = myChar;
   }
@@ -287,4 +310,57 @@ BOOL BLEInterfaceClass::sendCommand(String _cmd)
   if( BLEPort.write((UC *)_cmd.c_str(), len) < len ) return false;
   m_lastCmd = _cmd;
   return true;
+}
+
+// Parse and execute command
+BOOL BLEInterfaceClass::exectueCommand(char *inputString)
+{
+  MyMessage lv_msg;
+  if( serialMsgParser.parse(lv_msg, inputString) ) {
+    UC _sensor, _msgType;
+  	bool _bIsAck, _needAck;
+  	char *payload;
+
+    _sensor = lv_msg.getSensor();
+		_msgType = lv_msg.getType();
+		_bIsAck = lv_msg.isAck();
+		_needAck = lv_msg.isReqAck();
+		payload = (char *)lv_msg.getCustom();
+    char strDisplay[SENSORDATA_JSON_SIZE];
+    switch( lv_msg.getCommand() ) {
+      case C_INTERNAL:
+      if( _msgType == I_ID_REQUEST && _needAck ) {
+          // Login
+          if( _sensor == NODEID_PROJECTOR ) {
+            // Check Access code
+            lv_msg.build(NODEID_PROJECTOR, NODEID_GATEWAY, _sensor, C_INTERNAL, I_ID_RESPONSE, false, true);
+            if( theConfig.CheckPPTAccessCode(payload) ) {
+              m_token = random(65535); // Random number
+              lv_msg.set((unsigned int)m_token);
+              LOGD(LOGTAG_MSG, "PPTCtrl login OK");
+            } else {
+              lv_msg.set((unsigned int)0);
+              LOGI(LOGTAG_MSG, "PPTCtrl login failed");
+            }
+						// Convert to serial format
+						memset(strDisplay, 0x00, sizeof(strDisplay));
+						lv_msg.getSerialString(strDisplay);
+						sendCommand(strDisplay);
+          }
+      }
+      break;
+
+      case C_SET:
+      if( _bIsAck ) {
+        // Reply from PPTCtrl or Smartphone
+        LOGD(LOGTAG_MSG, "Got C_SET:%d ack from %d:%s", _msgType, _sensor, payload);
+      } else if( _sensor == NODEID_SMARTPHONE && _needAck ) {
+        // Request from Smartphone
+        // ToDo:...
+      }
+      break;
+    }
+    return true;
+  }
+  return false;
 }

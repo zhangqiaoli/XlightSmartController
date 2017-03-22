@@ -72,6 +72,7 @@ typedef struct
   UC mainDevID;                             // NodeID for main device
   char bleName[24];
   char blePin[6];
+  char pptAccessCode[8];
 } Config_t;
 
 //------------------------------------------------------------------
@@ -347,6 +348,10 @@ public:
 
   String GetBLEPin();
   void SetBLEPin(const char *strPin);
+
+  String GetPPTAccessCode();
+  void SetPPTAccessCode(const char *strPin);
+  BOOL CheckPPTAccessCode(const char *strPin);
 
   BOOL IsCloudSerialEnabled();
   void SetCloudSerialEnabled(BOOL sw = true);

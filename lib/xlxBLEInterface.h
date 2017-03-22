@@ -24,12 +24,14 @@ public:
   BOOL isATMode();
   void setATMode(BOOL on);
   void processCommand();
+  BOOL exectueCommand(char *inputString);
   BOOL sendCommand(String _cmd);
 
 private:
   UC m_pin_state;
   UC m_pin_en;
   UL m_speed;
+  US m_token;
   BOOL m_bGood;
   BOOL m_bATMode;
   String m_name;
