@@ -249,8 +249,9 @@ public:
   int getFlashSize();
   bool loadList();
   bool saveList();
-  void showList();
-  UC requestNodeID(char type, uint64_t identity);
+  void showList(BOOL toCloud = false, UC nid = 0);
+  void publishNode(NodeIdRow_t _node);
+  UC requestNodeID(UC preferID, char type, uint64_t identity);
   BOOL clearNodeId(UC nodeID);
 
 protected:

@@ -43,11 +43,14 @@
 #define CLT_TTL_SensorData      RTE_DELAY_PUBLISH
 #define CLT_TTL_MotionData      5
 /// LOG Message
-#define CLT_NAME_LOGMSG          "xlc-event-log"
-#define CLT_TTL_LOGMSG           3600              // 1 hour
+#define CLT_NAME_LOGMSG         "xlc-event-log"
+#define CLT_TTL_LOGMSG          3600              // 1 hour
 /// Device status event
-#define CLT_NAME_DeviceStatus    "xlc-status-device"
-#define CLT_TTL_DeviceStatus     10
+#define CLT_NAME_DeviceStatus   "xlc-status-device"
+#define CLT_TTL_DeviceStatus    10
+/// Device profile event
+#define CLT_NAME_DeviceConfig   "xlc-config-device"
+#define CLT_TTL_DeviceConfig    30
 
 //------------------------------------------------------------------
 // Xlight CloudObj Class
@@ -97,6 +100,7 @@ public:
   void UpdateJSONData();
   BOOL PublishLog(const char *msg);
   BOOL PublishDeviceStatus(const char *msg);
+  BOOL PublishDeviceConfig(const char *msg);
   BOOL PublishAlarm(const char *msg);
 
 protected:

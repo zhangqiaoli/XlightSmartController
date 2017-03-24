@@ -236,10 +236,12 @@ void CloudObjClass::UpdateJSONData()
       char buf[512];
       m_jpData->printTo(buf, 512);
       String strTemp = buf;
-      if( m_jsonData != strTemp || (millis() - lastTick) / 1000 >= RTE_DELAY_PUBLISH ) {
-        m_jsonData = strTemp;
-        lastTick = millis();
-        Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_SensorData, PRIVATE);
+      if( strTemp.length() > 0 ) {
+        if( m_jsonData != strTemp || (millis() - lastTick) / 1000 >= RTE_DELAY_PUBLISH ) {
+          m_jsonData = strTemp;
+          lastTick = millis();
+          Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_SensorData, PRIVATE);
+        }
       }
     }
   }
@@ -266,6 +268,18 @@ BOOL CloudObjClass::PublishDeviceStatus(const char *msg)
 #ifdef USE_PARTICLE_CLOUD
   if( Particle.connected() ) {
     rc = Particle.publish(CLT_NAME_DeviceStatus, msg, CLT_TTL_DeviceStatus, PRIVATE);
+  }
+#endif
+  return rc;
+}
+
+// Publish Device Config
+BOOL CloudObjClass::PublishDeviceConfig(const char *msg)
+{
+  BOOL rc = true;
+#ifdef USE_PARTICLE_CLOUD
+  if( Particle.connected() ) {
+    rc = Particle.publish(CLT_NAME_DeviceConfig, msg, CLT_TTL_DeviceConfig, PRIVATE);
   }
 #endif
   return rc;

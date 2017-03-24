@@ -37,6 +37,11 @@
 #define ASR_RXCMD_PREFIX          0xaa
 #define ASR_CMD_LEN               3
 
+#define BTN_STEP_SHORT_BR         10
+#define BTN_STEP_SHORT_CCT        300
+#define BTN_STEP_LONG_BR          25
+#define BTN_STEP_LONG_CCT         800
+
 //------------------------------------------------------------------
 // the one and only instance of ASRInterfaceClass
 ASRInterfaceClass theASR;
@@ -140,19 +145,27 @@ void ASRInterfaceClass::executeCmd(UC _cmd)
   US _cct;
 
   switch( _cmd ) {
-  /*
-  case 0x01:    // Brightness++
-    _br = theConfig.GetDevBrightness();
+  case 0x01:    // lights on
+    theSys.DevSoftSwitch(true, CURRENT_DEVICE);
+    break;
+
+  case 0x02:    // lights off
+    theSys.DevSoftSwitch(false, CURRENT_DEVICE);
+    break;
+
+  case 0x03:    // Brightness++
+    _br = theSys.GetDevBrightness(CURRENT_DEVICE);
     _br += BTN_STEP_SHORT_BR;
     theSys.ChangeLampBrightness(CURRENT_DEVICE, _br);
     break;
 
-  case 0x02:    // Brightness--
-    _br = theConfig.GetDevBrightness();
+  case 0x04:    // Brightness--
+    _br = theSys.GetDevBrightness(CURRENT_DEVICE);
     _br -= BTN_STEP_SHORT_BR;
     theSys.ChangeLampBrightness(CURRENT_DEVICE, _br);
     break;
 
+/*
   case 0x03:    // CCT++
     _cct = theConfig.GetDevCCT();
     _cct += BTN_STEP_SHORT_CCT;
@@ -164,26 +177,28 @@ void ASRInterfaceClass::executeCmd(UC _cmd)
     _cct -= BTN_STEP_SHORT_CCT;
     theSys.ChangeLampCCT(CURRENT_DEVICE, _br);
     break;
+*/
 
-  case 0x05:    // Scenario
-    _br = 25;
-    _cct = 3000;
-    theSys.ChangeBR_CCT(CURRENT_DEVICE, _br, _cct);
+  case 0x05:    // Scenario - 1
+    //_br = 25;
+    //_cct = 3000;
+    //theSys.ChangeBR_CCT(CURRENT_DEVICE, _br, _cct);
+    theSys.ChangeLampScenario(CURRENT_DEVICE, 1);
     break;
 
-  case 0x06:    // Scenario
-    _br = 85;
-    _cct = 5000;
-    theSys.ChangeBR_CCT(_br, _cct, CURRENT_DEVICE);
-    break;
-    */
-
-  case 0x07:    // lights on
-    theSys.DevSoftSwitch(true, CURRENT_DEVICE);
+  case 0x06:    // Scenario - 2
+    //_br = 85;
+    //_cct = 5000;
+    //theSys.ChangeBR_CCT(_br, _cct, CURRENT_DEVICE);
+    theSys.ChangeLampScenario(CURRENT_DEVICE, 2);
     break;
 
-  case 0x08:    // lights off
-    theSys.DevSoftSwitch(false, CURRENT_DEVICE);
+  case 0x07:    // Scenario - 3
+  theSys.ChangeLampScenario(CURRENT_DEVICE, 3);
+    break;
+
+  case 0x08:    // Scenario - 4
+  theSys.ChangeLampScenario(CURRENT_DEVICE, 4);
     break;
   }
 }

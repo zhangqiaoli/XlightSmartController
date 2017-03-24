@@ -113,35 +113,120 @@ bool NodeListClass::saveList()
 	return true;
 }
 
-void NodeListClass::showList()
+void NodeListClass::publishNode(NodeIdRow_t _node)
 {
-	char strDisplay[64];
+	char strDisplay[256];
+	StaticJsonBuffer<256> jBuf;
+	JsonObject *jroot;
+
+	jroot = &(jBuf.createObject());
+	if( jroot->success() ) {
+		UL lv_now = Time.now();
+		(*jroot)["node_id"] = _node.nid;
+		(*jroot)["mac"] = _node.identity;
+		(*jroot)["recent"] = (_node.recentActive > 0 ? lv_now - _node.recentActive : -1);
+
+		jroot->printTo(strDisplay, 256);
+		theSys.PublishDeviceConfig(strDisplay);
+	}
+}
+
+void NodeListClass::showList(BOOL toCloud, UC nid)
+{
+	char strDisplay[256];
+	StaticJsonBuffer<256> jBuf;
+	JsonObject *jroot;
+
 	UL lv_now = Time.now();
-	for(int i=0; i < _count; i++) {
-		SERIAL_LN("%cNo.%d - NodeID: %d (%s) actived %ds ago",
-				_pItems[i].nid == CURRENT_DEVICE ? '*' : ' ', i,
-		    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identity),
-				(_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1));
+	if( toCloud ) {
+		jroot = &(jBuf.createObject());
+		if( jroot->success() ) {
+			if( nid == 0 ) {
+				// Node list
+				(*jroot)["nlist"] = _count;
+			} else {
+				// Specific node info
+				NodeIdRow_t lv_Node;
+				lv_Node.nid = nid;
+				(*jroot)["node_id"] = nid;
+				if( get(&lv_Node) < 0 ) {
+					(*jroot)["mac"] = 0;
+				} else {
+					(*jroot)["mac"] = lv_Node.identity;
+					(*jroot)["recent"] = (lv_Node.recentActive > 0 ? lv_now - lv_Node.recentActive : -1);
+				}
+			}
+		}
+	}
+
+	if( nid == 0 ) {
+		// Node list
+		for(int i=0; i < _count; i++) {
+			if( toCloud ) {
+				if( jroot->success() ) {
+					(*jroot)["nids"][i] = _pItems[i].nid;
+				}
+			} else {
+				SERIAL_LN("%cNo.%d - NodeID: %d (%s) actived %ds ago",
+						_pItems[i].nid == CURRENT_DEVICE ? '*' : ' ', i,
+				    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identity),
+						(_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1));
+			}
+		}
+	}
+
+	if( toCloud ) {
+		if( jroot->success() ) {
+			jroot->printTo(strDisplay, 256);
+			theSys.PublishDeviceConfig(strDisplay);
+		}
 	}
 }
 
 // Get a new NodeID
-UC NodeListClass::requestNodeID(char type, uint64_t identity)
+UC NodeListClass::requestNodeID(UC preferID, char type, uint64_t identity)
 {
 	// Must provide identity
 	if( identity == 0 ) return 0;
 
+	NodeIdRow_t lv_Node;
 	UC nodeID = 0;		// error
 	switch( type ) {
 	case NODE_TYP_LAMP:
 		// 1, 8 - 63
 		/// Check Main DeviceID
-		nodeID = getAvailableNodeId(NODEID_MAINDEVICE, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identity);
+		if( IS_GROUP_NODEID(preferID) ) {
+			nodeID = preferID;
+		} else {
+			if( IS_NOT_DEVICE_NODEID(preferID) ) {
+				nodeID = getAvailableNodeId(NODEID_MAINDEVICE, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identity);
+			} else {
+				lv_Node.nid = preferID;
+				if( get(&lv_Node) < 0 ) {
+					nodeID = preferID;
+				} else {
+					nodeID = getAvailableNodeId(preferID, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identity);
+				}
+			}
+		}
 		break;
 
 	case NODE_TYP_REMOTE:
 		// 64 - 127
-		nodeID = getAvailableNodeId(NODEID_MIN_REMOTE, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identity);
+		if( IS_GROUP_NODEID(preferID) ) {
+			nodeID = preferID;
+		} else {
+			if( IS_NOT_REMOTE_NODEID(preferID) ) {
+				nodeID = getAvailableNodeId(NODEID_MIN_REMOTE, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identity);
+			} else {
+				lv_Node.nid = preferID;
+				if( get(&lv_Node) < 0 ) {
+					nodeID = preferID;
+				} else {
+					nodeID = getAvailableNodeId(preferID, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identity);
+				}
+			}
+		}
 		break;
 
 	case NODE_TYP_THIRDPARTY:
@@ -154,7 +239,6 @@ UC NodeListClass::requestNodeID(char type, uint64_t identity)
 
 	// Add or Update
 	if( nodeID > 0 ) {
-		NodeIdRow_t lv_Node;
 		lv_Node.nid = nodeID;
 		copyIdentity(lv_Node.identity, &identity);
 		lv_Node.recentActive = Time.now();
@@ -174,6 +258,8 @@ UC NodeListClass::requestNodeID(char type, uint64_t identity)
 				SERIAL_LN("Test DevStatus_table added item: %d, size: %d", nodeID, theSys.DevStatus_table.size());
 			}
 		}
+
+		publishNode(lv_Node);
 	}
 	return nodeID;
 }

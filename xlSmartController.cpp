@@ -1168,12 +1168,13 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 			}
 			break;
 		}
-		case CLS_LIGHT_STATUS:		// Device or Lamp Status
+		case CLS_LIGHT_STATUS:		// Node information
 		{
 			// Query Device Status and feedback through event
 			if( op_flag == GET ) {
 				// Note: here we use uid as node_id
-				QueryDeviceStatus(uidNum);
+				/// if node_id is 0, return node list
+				theConfig.lstNodes.showList(true, uidNum);
 			}
 			break;
 		}
@@ -1183,6 +1184,14 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 				if( data.containsKey("csc") ) {
 					// Change CSC
 					theConfig.SetCloudSerialEnabled(data["csc"] > 0);
+				} else if( data.containsKey("node_id") ) {
+					if( data.containsKey("old_id") && data.containsKey("new_id") ) {
+						UC old_id = (UC)data["old_id"];
+						UC new_id = (UC)data["new_id"];
+						String strCmd = String::format("%d:1:%d", old_id, new_id);
+						theRadio.ProcessSend(strCmd);
+						LOGN(LOGTAG_MSG, "Change nodeid:%d to %d", old_id, new_id);
+					}
 				}
 			}
 			// ToDo: more config
@@ -2065,6 +2074,27 @@ BOOL SmartControllerClass::FindCurrentDevice()
 		m_pMainDev = SearchDevStatus(CURRENT_DEVICE);
 	}
 	return(m_pMainDev != NULL);
+}
+
+ListNode<DevStatusRow_t> *SmartControllerClass::FindDevice(UC _nodeID)
+{
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = NULL;
+	if( IS_CURRENT_DEVICE(_nodeID) ) {
+		DevStatusRowPtr = m_pMainDev;
+	} else {
+		DevStatusRowPtr = SearchDevStatus(_nodeID);
+	}
+	return DevStatusRowPtr;
+}
+
+UC SmartControllerClass::GetDevBrightness(UC _nodeID)
+{
+	UC _br = (UC)thePanel.GetDimmerValue();
+//	ListNode<DevStatusRow_t> *DevStatusRowPtr = FindDevice(_nodeID);
+//	if (DevStatusRowPtr) {
+//		_br = DevStatusRowPtr->data.ring[0].BR;
+//	}
+	return _br;
 }
 
 US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t _identity)
