@@ -38,6 +38,7 @@
 
 #include "xlxRF24Server.h"
 #include "xliPinMap.h"
+#include "xliNodeConfig.h"
 #include "xlSmartController.h"
 #include "xlxLogger.h"
 #include "xlxPanel.h"
@@ -171,7 +172,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 					lv_msg.build(getAddress(), lv_nNodeID, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
 					lv_msg.set(getMyNetworkID());
 					bMsgReady = true;
-					theConfig.lstNodes.clearNodeId(lv_nNodeID);
+					//theConfig.lstNodes.clearNodeId(lv_nNodeID);
 					SERIAL("Now sending new id:%d to node:%d...", newID, lv_nNodeID);
 				}
 			}
@@ -186,13 +187,18 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		}
 		break;
 
-	case 2:   // Lamp present, req ack
+	case 2:   // Node Config
 		{
-			UC lampType = (UC)devtypWRing3;
-			lv_msg.build(getAddress(), lv_nNodeID, lampType, C_PRESENTATION, S_LIGHT, true);
-			lv_msg.set(GetNetworkID(true));
-			bMsgReady = true;
-			SERIAL("Now sending lamp present message...");
+			nPos = lv_sPayload.indexOf(':');
+			if (nPos > 0) {
+				// Extract brightness, cct or WRGB
+				bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
+				iValue = lv_sPayload.substring(nPos + 1).toInt();
+				lv_msg.build(getAddress(), lv_nNodeID, bytValue, C_INTERNAL, I_CONFIG, true);
+				lv_msg.set((unsigned int)iValue);
+				bMsgReady = true;
+				SERIAL("Now sending node:%d config:%d value:%d...", lv_nNodeID, bytValue, iValue);
+			}
 		}
 		break;
 
@@ -364,6 +370,15 @@ bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
 	return false;
 }
 
+bool RF24ServerClass::SendNodeConfig(UC _node, UC _ncf, unsigned int _value)
+{
+	// Notify Remote Node
+	MyMessage lv_msg;
+	lv_msg.build(NODEID_GATEWAY, _node, _ncf, C_INTERNAL, I_CONFIG, true);
+	lv_msg.set(_value);
+	return ProcessSend(&lv_msg);
+}
+
 bool RF24ServerClass::PeekMessage()
 {
 	if( !isValid() ) return false;
@@ -461,16 +476,17 @@ bool RF24ServerClass::ProcessReceive()
 						// Presentation message: appear of Smart Lamp
 						// Verify credential, return token if true, and change device status
 						UC lv_nNodeID = msg.getSender();
+						UC lv_assoDev;
 						uint64_t nIdentity = msg.getUInt64();
 						if( IS_GROUP_NODEID(lv_nNodeID) ) {
 							token = 6666;
 						} else {
-							token = theSys.VerifyDevicePresence(lv_nNodeID, msgType, nIdentity);
+							token = theSys.VerifyDevicePresence(&lv_assoDev, lv_nNodeID, msgType, nIdentity);
 						}
 						if( token ) {
 							// return token
-							// Notes: lampType & S_LIGHT are not necessary
-			        msg.build(getAddress(), replyTo, _sensor, C_PRESENTATION, msgType, false, true);
+							// Notes: lampType & S_LIGHT (msgType) are not necessary, use for associated device
+			        msg.build(getAddress(), replyTo, _sensor, C_PRESENTATION, lv_assoDev, false, true);
 							msg.set((unsigned int)token);
 							msgReady = true;
 							// ToDo: send status req to this lamp

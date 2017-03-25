@@ -24,6 +24,7 @@
 **/
 #include "xlSmartController.h"
 #include "xliPinMap.h"
+#include "xliNodeConfig.h"
 #include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xlxPanel.h"
@@ -1185,12 +1186,21 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 					// Change CSC
 					theConfig.SetCloudSerialEnabled(data["csc"] > 0);
 				} else if( data.containsKey("node_id") ) {
-					if( data.containsKey("old_id") && data.containsKey("new_id") ) {
-						UC old_id = (UC)data["old_id"];
+					UC node_id = (UC)data["node_id"];
+					if( data.containsKey("new_id") ) {
 						UC new_id = (UC)data["new_id"];
-						String strCmd = String::format("%d:1:%d", old_id, new_id);
+						String strCmd = String::format("%d:1:%d", node_id, new_id);
 						theRadio.ProcessSend(strCmd);
-						LOGN(LOGTAG_MSG, "Change nodeid:%d to %d", old_id, new_id);
+						LOGN(LOGTAG_MSG, "Change nodeid:%d to %d", node_id, new_id);
+					} else if( data.containsKey("ncf") && data.containsKey("value") ) {
+						UC _config = (UC)data["ncf"];
+						US _value = (US)data["value"];
+						if( _config == NCF_DEV_ASSOCIATE ) {
+							theConfig.SetRemoteNodeDevice(node_id, _value);
+						} else {
+							theRadio.SendNodeConfig(node_id, _config, _value);
+						}
+						LOGN(LOGTAG_MSG, "Set nodeid:%d config %d to %d", node_id, _config, _value);
 					}
 				}
 			}
@@ -2097,7 +2107,7 @@ UC SmartControllerClass::GetDevBrightness(UC _nodeID)
 	return _br;
 }
 
-US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t _identity)
+US SmartControllerClass::VerifyDevicePresence(UC *_assoDev, UC _nodeID, UC _devType, uint64_t _identity)
 {
 	NodeIdRow_t lv_Node;
 	// Veirfy identity
@@ -2111,6 +2121,7 @@ US SmartControllerClass::VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t 
 	lv_Node.recentActive = Time.now();
 	theConfig.lstNodes.update(&lv_Node);
 	theConfig.SetNIDChanged(true);
+	*_assoDev = lv_Node.device;
 
 	US token = random(65535); // Random number
 	if( _nodeID < NODEID_MIN_REMOTE ) {

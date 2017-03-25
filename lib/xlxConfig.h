@@ -139,7 +139,7 @@ typedef struct    // Exact 12 bytes
 	__attribute__((packed))
 {
 	UC nid;
-	UC reserved;
+	UC device;       // Associated device (node id)
   UC identity[LEN_NODE_IDENTITY];
   UL recentActive;
 } NodeIdRow_t;
@@ -377,6 +377,9 @@ public:
 
   UC GetMainDeviceType();
   BOOL SetMainDeviceType(UC type);
+
+  UC GetRemoteNodeDevice(UC remoteID);
+  BOOL SetRemoteNodeDevice(UC remoteID, US devID);
 
   UC GetNumDevices();
   BOOL SetNumDevices(UC num);

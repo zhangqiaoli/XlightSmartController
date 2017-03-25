@@ -118,7 +118,7 @@ public:
   BOOL FindCurrentDevice();
   ListNode<DevStatusRow_t> *FindDevice(UC _nodeID);
   UC GetDevBrightness(UC _nodeID);
-  US VerifyDevicePresence(UC _nodeID, UC _devType, uint64_t _identity);
+  US VerifyDevicePresence(UC *_assoDev, UC _nodeID, UC _devType, uint64_t _identity);
   BOOL ToggleLampOnOff(UC _nodeID = NODEID_MAINDEVICE);
   BOOL ChangeLampBrightness(UC _nodeID = NODEID_MAINDEVICE, UC _percentage = 50);
   BOOL ChangeLampCCT(UC _nodeID = NODEID_MAINDEVICE, US _cct = 3000);

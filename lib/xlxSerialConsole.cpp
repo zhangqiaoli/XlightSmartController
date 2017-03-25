@@ -310,6 +310,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN("     , cloud option disable|enable|must");
       SERIAL_LN("e.g. set maindev <nodeid>");
       SERIAL_LN("     , to change the main device");
+      SERIAL_LN("e.g. set remote <nodeid:device>");
+      SERIAL_LN("     , to assign device to remote");
       SERIAL_LN("e.g. set blename <BLEName>");
       SERIAL_LN("     , to change BLE SSID");
       SERIAL_LN("e.g. set blepin <BLEPin>");
@@ -472,48 +474,47 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("Now is %s, %s\n\r", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), theSys.m_tzString.c_str());
       CloudOutput("Local time %s, %s", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), theSys.m_tzString.c_str());
   	} else if (strnicmp(sTopic, "var", 3) == 0) {
-  		SERIAL_LN("theSys.mSysID = \t\t\t%s", theSys.m_SysID.c_str());
-  		SERIAL_LN("theSys.m_SysVersion = \t\t\t%s", theSys.m_SysVersion.c_str());
-  		SERIAL_LN("theSys.m_SysStatus = \t\t\t%d", theSys.m_SysStatus);
-      SERIAL_LN("theConfig.useCloud = \t\t\t%d", theConfig.GetUseCloud());
-  		SERIAL_LN("theSys.m_tzString = \t\t\t%s", theSys.m_tzString.c_str());
-  		SERIAL_LN("theSys.m_jsonData = \t\t\t%s", theSys.m_jsonData.c_str());
-      SERIAL_LN("theSys.m_strCldCmd = \t\t%s\n\r", theSys.m_strCldCmd.c_str());
-  		SERIAL_LN("theSys.m_lastMsg = \t\t\t%s", theSys.m_lastMsg.c_str());
+  		SERIAL_LN("mSysID = \t\t\t%s", theSys.m_SysID.c_str());
+  		SERIAL_LN("m_SysStatus = \t\t\t%d", theSys.m_SysStatus);
+      SERIAL_LN("useCloud = \t\t\t%d", theConfig.GetUseCloud());
+  		SERIAL_LN("m_tzString = \t\t\t%s", theSys.m_tzString.c_str());
+  		SERIAL_LN("m_jsonData = \t\t\t%s", theSys.m_jsonData.c_str());
+      SERIAL_LN("m_strCldCmd = \t\t%s\n\r", theSys.m_strCldCmd.c_str());
+  		SERIAL_LN("m_lastMsg = \t\t\t%s", theSys.m_lastMsg.c_str());
       SERIAL_LN("");
-      SERIAL_LN("mConfig.sensorBitmap = \t\t\t0x%04X", theConfig.GetSensorBitmap());
-      SERIAL_LN("mConfig.indBrightness = \t\t%d", theConfig.GetBrightIndicator());
-  		SERIAL_LN("mConfig.rfPowerLevel = \t\t\t%d", theConfig.GetRFPowerLevel());
-      SERIAL_LN("theSys.m_temperature = \t\t\t%.2f", theSys.m_temperature);
-  		SERIAL_LN("theSys.m_humidity = \t\t\t%.2f", theSys.m_humidity);
-  		SERIAL_LN("theSys.m_brightness = \t\t\t%u", theSys.m_brightness);
-  		SERIAL_LN("theSys.m_motion = \t\t\t%s", (theSys.m_motion ? "true" : "false"));
+      SERIAL_LN("sensorBitmap = \t\t\t0x%04X", theConfig.GetSensorBitmap());
+      SERIAL_LN("indBrightness = \t\t%d", theConfig.GetBrightIndicator());
+  		SERIAL_LN("rfPowerLevel = \t\t\t%d", theConfig.GetRFPowerLevel());
+      SERIAL_LN("m_temperature = \t\t\t%.2f", theSys.m_temperature);
+  		SERIAL_LN("m_humidity = \t\t\t%.2f", theSys.m_humidity);
+  		SERIAL_LN("m_brightness = \t\t\t%u", theSys.m_brightness);
+  		SERIAL_LN("m_motion = \t\t\t%s", (theSys.m_motion ? "true" : "false"));
       SERIAL_LN("");
       SERIAL_LN("Main DeviceID = \t\t\t%d", CURRENT_DEVICE);
-      SERIAL_LN("mConfig.typeMainDevice = \t\t%d", theConfig.GetMainDeviceType());
-      SERIAL_LN("mConfig.numDevices = \t\t\t%d", theConfig.GetNumDevices());
-      SERIAL_LN("mConfig.numNodes = \t\t\t%d", theConfig.GetNumNodes());
-      SERIAL_LN("mConfig.maxBaseNetworkDuration = \t%d", theConfig.GetMaxBaseNetworkDur());
+      SERIAL_LN("typeMainDevice = \t\t%d", theConfig.GetMainDeviceType());
+      SERIAL_LN("numDevices = \t\t\t%d", theConfig.GetNumDevices());
+      SERIAL_LN("numNodes = \t\t\t%d", theConfig.GetNumNodes());
+      SERIAL_LN("maxBaseNetworkDuration = \t%d", theConfig.GetMaxBaseNetworkDur());
       SERIAL_LN("PPT Pin = %s\n\r", theConfig.GetPPTAccessCode().c_str());
     } else if (strnicmp(sTopic, "flag", 4) == 0) {
-  		SERIAL_LN("theSys.m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
-  		SERIAL_LN("theSys.m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
-  		SERIAL_LN("theSys.m_isLAN = \t\t\t%s", (theSys.IsLANGood() ? "true" : "false"));
-  		SERIAL_LN("theSys.m_isWAN = \t\t\t%s", (theSys.IsWANGood() ? "true" : "false"));
+  		SERIAL_LN("m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
+  		SERIAL_LN("m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
+  		SERIAL_LN("m_isLAN = \t\t\t%s", (theSys.IsLANGood() ? "true" : "false"));
+  		SERIAL_LN("m_isWAN = \t\t\t%s", (theSys.IsWANGood() ? "true" : "false"));
       SERIAL_LN("");
-      SERIAL_LN("mConfig.enableCloudSerialCmd = \t\t%s", (theConfig.IsCloudSerialEnabled() ? "true" : "false"));
-      SERIAL_LN("mConfig.enableDailyTimeSync = \t\t%s", (theConfig.IsDailyTimeSyncEnabled() ? "true" : "false"));
-      SERIAL_LN("mConfig.enableSpeaker = \t\t%s", (theConfig.IsSpeakerEnabled() ? "true" : "false"));
-      SERIAL_LN("theRadio._bBaseNetworkEnabled = \t%s", (theRadio.isBaseNetworkEnabled() ? "true" : "false"));
-      SERIAL_LN("theConfig.stWiFi = \t\t\t%s", (theConfig.GetWiFiStatus() ? "On" : "Off"));
+      SERIAL_LN("enableCloudSerialCmd = \t\t%s", (theConfig.IsCloudSerialEnabled() ? "true" : "false"));
+      SERIAL_LN("enableDailyTimeSync = \t\t%s", (theConfig.IsDailyTimeSyncEnabled() ? "true" : "false"));
+      SERIAL_LN("enableSpeaker = \t\t%s", (theConfig.IsSpeakerEnabled() ? "true" : "false"));
+      SERIAL_LN("bBaseNetworkEnabled = \t%s", (theRadio.isBaseNetworkEnabled() ? "true" : "false"));
+      SERIAL_LN("stWiFi = \t\t\t%s", (theConfig.GetWiFiStatus() ? "On" : "Off"));
       SERIAL_LN("");
-  		SERIAL_LN("theConfig.m_isLoaded = \t\t\t%s", (theConfig.IsConfigLoaded() ? "true" : "false"));
-  		SERIAL_LN("theConfig.m_isChanged = \t\t%s", (theConfig.IsConfigChanged() ? "true" : "false"));
-  		SERIAL_LN("theConfig.m_isDSTChanged = \t\t%s", (theConfig.IsDSTChanged() ? "true" : "false"));
-  		SERIAL_LN("theConfig.m_isSCTChanged = \t\t%s", (theConfig.IsSCTChanged() ? "true" : "false"));
-  		SERIAL_LN("theConfig.m_isRTChanged = \t\t%s", (theConfig.IsRTChanged() ? "true" : "false"));
-  		SERIAL_LN("theConfig.m_isSNTChanged = \t\t%s", (theConfig.IsSNTChanged() ? "true" : "false"));
-      SERIAL_LN("theConfig.IsNIDChanged = \t\t%s\n\r", (theConfig.IsNIDChanged() ? "true" : "false"));
+  		SERIAL_LN("m_isLoaded = \t\t\t%s", (theConfig.IsConfigLoaded() ? "true" : "false"));
+  		SERIAL_LN("m_isChanged = \t\t%s", (theConfig.IsConfigChanged() ? "true" : "false"));
+  		SERIAL_LN("m_isDSTChanged = \t\t%s", (theConfig.IsDSTChanged() ? "true" : "false"));
+  		SERIAL_LN("m_isSCTChanged = \t\t%s", (theConfig.IsSCTChanged() ? "true" : "false"));
+  		SERIAL_LN("m_isRTChanged = \t\t%s", (theConfig.IsRTChanged() ? "true" : "false"));
+  		SERIAL_LN("m_isSNTChanged = \t\t%s", (theConfig.IsSNTChanged() ? "true" : "false"));
+      SERIAL_LN("IsNIDChanged = \t\t%s\n\r", (theConfig.IsNIDChanged() ? "true" : "false"));
   	} else if (strnicmp(sTopic, "table", 5) == 0) {
   		SERIAL_LN("DST_ROW_SIZE: \t\t\t\t%u", DST_ROW_SIZE);
   		SERIAL_LN("RT_ROW_SIZE: \t\t\t\t%u", RT_ROW_SIZE);
@@ -551,8 +552,9 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN(" %s token: %d", (theConfig.m_stMainRemote.present ? "present" : "not present"), theConfig.m_stMainRemote.token);
       SERIAL_LN("");
     } else if (strnicmp(sTopic, "version", 7) == 0) {
-      SERIAL_LN("System version: %s\n\r", System.version().c_str());
-      CloudOutput("System version: %s", System.version().c_str());
+      SERIAL_LN("System  Version: %s", System.version().c_str());
+      SERIAL_LN("Product Version: %d\n\r", theConfig.GetVersion());
+      CloudOutput("Version Sys: %s Prod: %d", System.version().c_str(), theConfig.GetVersion());
   	} else if (strnicmp(sTopic, "debug", 5) == 0) {
       CloudOutput(theLog.PrintDestInfo());
   	} else {
@@ -634,6 +636,7 @@ bool SerialConsoleClass::doTest(const char *cmd)
     } else if (strnicmp(sTopic, "asr", 3) == 0) {
       char *sParam = next();
       if( strlen(sParam) > 0 ) {
+        SERIAL("\n\r");
         theASR.sendCommand(atoi(sParam));
         retVal = true;
       }
@@ -818,7 +821,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
         retVal = true;
       }
     } else if (strnicmp(sTopic, "maindev", 7) == 0) {
-      // Cloud Option
+      // Main device id
       sParam1 = next();
       if( sParam1) {
         theConfig.SetMainDeviceID(atoi(sParam1));
@@ -827,6 +830,24 @@ bool SerialConsoleClass::doSet(const char *cmd)
         retVal = true;
       } else {
         SERIAL_LN("Require a valid nodeID\n\r");
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "remote", 6) == 0) {
+      // Remote contrlled device
+      sParam1 = next();     // Get remote node_id
+      if( sParam1) {
+        sParam2 = next();   // Get device node_id
+        if( sParam2 ) {
+          theConfig.SetRemoteNodeDevice(atoi(sParam1), atoi(sParam2));
+          SERIAL_LN("Remote %s controls device %s\n\r", sParam1, sParam2);
+          CloudOutput("Remote %s controls device %s", sParam1, sParam2);
+          retVal = true;
+        } else {
+          SERIAL_LN("Require a valid device nodeID\n\r");
+          retVal = true;
+        }
+      } else {
+        SERIAL_LN("Require a valid remote nodeID\n\r");
         retVal = true;
       }
     } else if (strnicmp(sTopic, "blename", 7) == 0) {

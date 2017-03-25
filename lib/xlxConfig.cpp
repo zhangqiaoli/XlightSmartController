@@ -37,6 +37,7 @@
 #include "xliPinMap.h"
 #include "xlxLogger.h"
 #include "xliMemoryMap.h"
+#include "xliNodeConfig.h"
 #include "xlxPanel.h"
 #include "xlxRF24Server.h"
 #include "xlSmartController.h"
@@ -74,6 +75,7 @@ bool NodeListClass::loadList()
 			if( lv_Node.nid != NODEID_MAINDEVICE ) {
 				lv_Node.nid = NODEID_MAINDEVICE;
 				resetIdentity(lv_Node.identity);
+				lv_Node.device = 0;
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
@@ -81,6 +83,7 @@ bool NodeListClass::loadList()
 			if( lv_Node.nid != NODEID_MIN_REMOTE ) {
 				lv_Node.nid = NODEID_MIN_REMOTE;
 				resetIdentity(lv_Node.identity);
+				lv_Node.device = NODEID_MAINDEVICE;
 				lv_Node.recentActive = 0;
 				m_isChanged = true;
 			}
@@ -124,6 +127,8 @@ void NodeListClass::publishNode(NodeIdRow_t _node)
 		UL lv_now = Time.now();
 		(*jroot)["node_id"] = _node.nid;
 		(*jroot)["mac"] = _node.identity;
+		if( _node.device > 0 )
+			(*jroot)["device"] = _node.device;
 		(*jroot)["recent"] = (_node.recentActive > 0 ? lv_now - _node.recentActive : -1);
 
 		jroot->printTo(strDisplay, 256);
@@ -152,6 +157,8 @@ void NodeListClass::showList(BOOL toCloud, UC nid)
 				if( get(&lv_Node) < 0 ) {
 					(*jroot)["mac"] = 0;
 				} else {
+					if( lv_Node.device > 0 )
+						(*jroot)["device"] = lv_Node.device;
 					(*jroot)["mac"] = lv_Node.identity;
 					(*jroot)["recent"] = (lv_Node.recentActive > 0 ? lv_now - lv_Node.recentActive : -1);
 				}
@@ -167,10 +174,11 @@ void NodeListClass::showList(BOOL toCloud, UC nid)
 					(*jroot)["nids"][i] = _pItems[i].nid;
 				}
 			} else {
-				SERIAL_LN("%cNo.%d - NodeID: %d (%s) actived %ds ago",
+				SERIAL_LN("%cNo.%d - NodeID: %d (%s) actived %ds ago associated device: %d",
 						_pItems[i].nid == CURRENT_DEVICE ? '*' : ' ', i,
 				    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identity),
-						(_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1));
+						(_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1),
+					  _pItems[i].device);
 			}
 		}
 	}
@@ -242,6 +250,7 @@ UC NodeListClass::requestNodeID(UC preferID, char type, uint64_t identity)
 		lv_Node.nid = nodeID;
 		copyIdentity(lv_Node.identity, &identity);
 		lv_Node.recentActive = Time.now();
+		lv_Node.device = 0;
 		UC oldCnt = count();
 		add(&lv_Node);
 		if( count() > oldCnt && nodeID <= NODEID_MAX_DEVCIE ) {
@@ -320,6 +329,7 @@ BOOL NodeListClass::clearNodeId(UC nodeID)
 		// Update with black item
 		lv_Node.nid = nodeID;
 		resetIdentity(lv_Node.identity);
+		lv_Node.device = 0;
 		lv_Node.recentActive = 0;
 		update(&lv_Node);
 	} else if ( nodeID < NODEID_MIN_DEVCIE ) {
@@ -464,6 +474,7 @@ BOOL ConfigClass::LoadConfig()
     }
     else
     {
+			m_config.version = VERSION_CONFIG_DATA;
       LOGI(LOGTAG_MSG, "Sysconfig loaded.");
     }
     m_isLoaded = true;
@@ -904,6 +915,38 @@ BOOL ConfigClass::SetMainDeviceType(UC type)
   return false;
 }
 
+UC ConfigClass::GetRemoteNodeDevice(UC remoteID)
+{
+	NodeIdRow_t lv_Node;
+	if( remoteID > 0 ) {
+		lv_Node.nid = remoteID;
+		if( lstNodes.get(&lv_Node) >= 0 ) {
+			return lv_Node.device;
+		}
+	}
+
+	return 0;
+}
+
+// Change controlled device of specific remote
+BOOL ConfigClass::SetRemoteNodeDevice(UC remoteID, US devID)
+{
+	NodeIdRow_t lv_Node;
+	if( remoteID > 0 ) {
+		lv_Node.nid = remoteID;
+		if( lstNodes.get(&lv_Node) >= 0 ) {
+			if( lv_Node.device != devID ) {
+				lv_Node.device = devID;
+				lstNodes.m_isChanged = true;
+
+				// Notify Remote Node
+				return theRadio.SendNodeConfig(remoteID, NCF_DEV_ASSOCIATE, devID);
+			}
+		}
+	}
+
+	return false;
+}
 
 UC ConfigClass::GetNumDevices()
 {

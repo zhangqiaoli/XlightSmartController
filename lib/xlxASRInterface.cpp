@@ -82,10 +82,17 @@ bool ASRInterfaceClass::processCommand()
   bool rc = false;
   int incomingByte;
 
+  // Send command
+  if( m_sndCmd > 0 ) {
+    sendCommand(m_sndCmd, true);
+    SERIAL("asr cmd %d rc=", m_sndCmd);
+    m_sndCmd = 0;
+  }
+
   while( ASRPort.available() > 0 ) {
     incomingByte = ASRPort.read();
     if( incomingByte < 0 ) break;
-    SERIAL("0x%x", incomingByte);
+    SERIAL("0x%02x ", incomingByte);
     if( (UC)incomingByte == ASR_RXCMD_PREFIX ) {
       bWaitCmd = true;
       rc = false;   // start to receive new command
@@ -108,23 +115,29 @@ bool ASRInterfaceClass::processCommand()
   // Delay Execution
   if( m_delayCmdTimer > 0 ) {
     if( --m_delayCmdTimer == 0 ) {
-      ASRPort.end();
+      //ASRPort.end();
       executeCmd(m_revCmd);
-      ASRPort.begin(m_speed);
+      //ASRPort.begin(m_speed, PROTOCOL);
     }
   }
 
   return rc;
 }
 
-bool ASRInterfaceClass::sendCommand(UC _cmd)
+bool ASRInterfaceClass::sendCommand(UC _cmd, bool now)
 {
-  UC buf[ASR_CMD_LEN];
-  buf[0] = ASR_TXCMD_PREFIX;
-  buf[1] = _cmd;
-  buf[2] = ~_cmd;
-  if( ASRPort.write(buf, ASR_CMD_LEN) < ASR_CMD_LEN ) return false;
-  m_sndCmd = _cmd;
+  if( now ) {
+    UC buf[ASR_CMD_LEN];
+    buf[0] = ASR_TXCMD_PREFIX;
+    buf[1] = _cmd;
+    buf[2] = ~_cmd;
+    //UC _len = ASRPort.write(buf, ASR_CMD_LEN);
+    //if( _len < ASR_CMD_LEN ) return false;
+    //SERIAL_LN("len: %d - 0x%02x 0x%02x 0x%02x", _len, buf[0], buf[1], buf[2]);
+    if( ASRPort.write(buf, ASR_CMD_LEN) < ASR_CMD_LEN ) return false;
+  } else {
+    m_sndCmd = _cmd;
+  }
   return true;
 }
 
