@@ -118,60 +118,41 @@ bool NodeListClass::saveList()
 
 void NodeListClass::publishNode(NodeIdRow_t _node)
 {
-	char strDisplay[256];
-	StaticJsonBuffer<256> jBuf;
-	JsonObject *jroot;
+	String strTemp;
+	char strDisplay[64];
 
-	jroot = &(jBuf.createObject());
-	if( jroot->success() ) {
-		UL lv_now = Time.now();
-		(*jroot)["node_id"] = _node.nid;
-		(*jroot)["mac"] = _node.identity;
-		if( _node.device > 0 )
-			(*jroot)["device"] = _node.device;
-		(*jroot)["recent"] = (_node.recentActive > 0 ? lv_now - _node.recentActive : -1);
-
-		jroot->printTo(strDisplay, 256);
-		theSys.PublishDeviceConfig(strDisplay);
-	}
+	UL lv_now = Time.now();
+	strTemp = String::format("{'node_id':%d,'mac':'%s','device':%d,'recent':%d}", _node.nid,
+			PrintMacAddress(strDisplay, _node.identity), _node.device,
+			(_node.recentActive > 0 ? lv_now - _node.recentActive : -1));
+	theSys.PublishDeviceConfig(strTemp.c_str());
 }
 
 void NodeListClass::showList(BOOL toCloud, UC nid)
 {
-	char strDisplay[256];
-	StaticJsonBuffer<256> jBuf;
-	JsonObject *jroot;
+	String strTemp;
+	char strDisplay[64];
 
-	UL lv_now = Time.now();
-	if( toCloud ) {
-		jroot = &(jBuf.createObject());
-		if( jroot->success() ) {
-			if( nid == 0 ) {
-				// Node list
-				(*jroot)["nlist"] = _count;
-			} else {
-				// Specific node info
-				NodeIdRow_t lv_Node;
-				lv_Node.nid = nid;
-				(*jroot)["node_id"] = nid;
-				if( get(&lv_Node) < 0 ) {
-					(*jroot)["mac"] = 0;
-				} else {
-					if( lv_Node.device > 0 )
-						(*jroot)["device"] = lv_Node.device;
-					(*jroot)["mac"] = lv_Node.identity;
-					(*jroot)["recent"] = (lv_Node.recentActive > 0 ? lv_now - lv_Node.recentActive : -1);
-				}
+	if( nid > 0 ) {
+		if( toCloud ) {
+			// Specific node info
+			NodeIdRow_t lv_Node;
+			lv_Node.nid = nid;
+			if( get(&lv_Node) >= 0 ) {
+				publishNode(lv_Node);
 			}
 		}
-	}
-
-	if( nid == 0 ) {
+	} else {
+		UL lv_now = Time.now();
 		// Node list
+		if( toCloud ) {
+			strTemp = String::format("{'nlist':%d,'nids':[%d", _count, _pItems[0].nid);
+		}
 		for(int i=0; i < _count; i++) {
 			if( toCloud ) {
-				if( jroot->success() ) {
-					(*jroot)["nids"][i] = _pItems[i].nid;
+				if( i > 0 ) {
+					sprintf(strDisplay, ",%d", _pItems[i].nid);
+					strTemp = strTemp + strDisplay;
 				}
 			} else {
 				SERIAL_LN("%cNo.%d - NodeID: %d (%s) actived %ds ago associated device: %d",
@@ -184,10 +165,8 @@ void NodeListClass::showList(BOOL toCloud, UC nid)
 	}
 
 	if( toCloud ) {
-		if( jroot->success() ) {
-			jroot->printTo(strDisplay, 256);
-			theSys.PublishDeviceConfig(strDisplay);
-		}
+		strTemp = strTemp + "]}";
+		theSys.PublishDeviceConfig(strTemp.c_str());
 	}
 }
 
