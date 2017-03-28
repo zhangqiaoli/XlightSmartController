@@ -404,7 +404,7 @@ bool SerialConsoleClass::doCheck(const char *cmd)
     } else if (strnicmp(sTopic, "ble", 3) == 0) {
       // Send test command and check received message
       theBLE.config();
-      SERIAL_LN("** BLE Module is %s **", theBLE.isGood() ? "good" : "error");
+      //SERIAL_LN("** BLE Module is %s **", theBLE.isGood() ? "good" : "error");
     } else {
       retVal = false;
     }
@@ -485,12 +485,12 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("sensorBitmap = \t\t\t0x%04X", theConfig.GetSensorBitmap());
       SERIAL_LN("indBrightness = \t\t%d", theConfig.GetBrightIndicator());
   		SERIAL_LN("rfPowerLevel = \t\t\t%d", theConfig.GetRFPowerLevel());
-      SERIAL_LN("m_temperature = \t\t\t%.2f", theSys.m_temperature);
+      SERIAL_LN("m_temperature = \t\t%.2f", theSys.m_temperature);
   		SERIAL_LN("m_humidity = \t\t\t%.2f", theSys.m_humidity);
   		SERIAL_LN("m_brightness = \t\t\t%u", theSys.m_brightness);
   		SERIAL_LN("m_motion = \t\t\t%s", (theSys.m_motion ? "true" : "false"));
       SERIAL_LN("");
-      SERIAL_LN("Main DeviceID = \t\t\t%d", CURRENT_DEVICE);
+      SERIAL_LN("Main DeviceID = \t\t%d", CURRENT_DEVICE);
       SERIAL_LN("typeMainDevice = \t\t%d", theConfig.GetMainDeviceType());
       SERIAL_LN("numDevices = \t\t\t%d", theConfig.GetNumDevices());
       SERIAL_LN("numNodes = \t\t\t%d", theConfig.GetNumNodes());

@@ -158,7 +158,7 @@ void BLEInterfaceClass::config()
   BLEPort.printlnf("AT+PSWD=%s", m_pin.c_str()); MyDelay1S();
 
   // CoD adjust
-  BLEPort.printlnf("AT+CLASS=%x", XLIGHT_BLE_CLASS); MyDelay1S();
+  BLEPort.printlnf("AT+CLASS=%x", XLIGHT_BLE_CLASS); // MyDelay1S();
 
   // Role adjust
   //BLEPort.printlnf("AT+ROLE=%c", XLIGHT_BLE_ROLE); MyDelay1S();
@@ -181,7 +181,7 @@ void BLEInterfaceClass::config()
   BLEPort.print("AT+PIN"); BLEPort.print(m_pin); MyDelay1S();
 
   // Role adjust
-  BLEPort.print("AT+ROLE"); BLEPort.print(XLIGHT_BLE_ROLE); MyDelay1S();
+  BLEPort.print("AT+ROLE"); BLEPort.print(XLIGHT_BLE_ROLE); //MyDelay1S();
 #endif
 }
 
