@@ -101,6 +101,7 @@ public:
   BOOL PublishLog(const char *msg);
   BOOL PublishDeviceStatus(const char *msg);
   BOOL PublishDeviceConfig(const char *msg);
+  void GotNodeConfigAck(const UC _nodeID, const UC *data);
   BOOL PublishAlarm(const char *msg);
 
 protected:

@@ -191,7 +191,6 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		{
 			nPos = lv_sPayload.indexOf(':');
 			if (nPos > 0) {
-				// Extract brightness, cct or WRGB
 				bytValue = (uint8_t)(lv_sPayload.substring(0, nPos).toInt());
 				iValue = lv_sPayload.substring(nPos + 1).toInt();
 				lv_msg.build(getAddress(), lv_nNodeID, bytValue, C_INTERNAL, I_CONFIG, true);
@@ -466,7 +465,13 @@ bool RF24ServerClass::ProcessReceive()
 						LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentity));
 					}
 					msgReady = true;
-	      }
+	      } else if( msgType == I_CONFIG ) {
+					if( _bIsAck ) {
+						if( _sensor == NCF_QUERY ) {
+							theSys.GotNodeConfigAck(replyTo, payload);
+						}
+					}
+				}
 	      break;
 
 			case C_PRESENTATION:

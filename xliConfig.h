@@ -25,6 +25,9 @@
   #define IF_MAINLOOP_TIMER(x, name) ({x;})
 #endif
 
+// Change it only if Config_t structure is updated
+#define VERSION_CONFIG_DATA       3
+
 // Xlight Application Identification
 #define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM
 #define XLA_PRODUCT_NAME          "XController"             // Default value. Read from EEPROM
@@ -54,9 +57,6 @@
 
 // Maximum number of rows for any working memory table implimented using ChainClass
 #define MAX_TABLE_SIZE              8
-
-// Change it only if Config_t structure is updated
-#define VERSION_CONFIG_DATA         2
 
 // Maximum number of device associated to one controller
 #define MAX_DEVICE_PER_CONTROLLER   16
