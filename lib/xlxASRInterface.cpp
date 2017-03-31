@@ -31,6 +31,7 @@
 #include "xlxASRInterface.h"
 #include "xlSmartController.h"
 #include "xlxConfig.h"
+#include "xlxLogger.h"
 #include "ParticleSoftSerial.h"
 
 #define ASR_TXCMD_PREFIX          0xbb
@@ -153,65 +154,46 @@ UC ASRInterfaceClass::getLastSentCmd()
 
 void ASRInterfaceClass::executeCmd(UC _cmd)
 {
-  SERIAL_LN("\n\rexecute ASR cmd: 0x%x", _cmd);
-  UC _br;
+  LOGD(LOGTAG_MSG, "execute ASR cmd: 0x%x", _cmd);
+  UC _snt, _br;
   US _cct;
 
-  switch( _cmd ) {
-  case 0x01:    // lights on
-    theSys.DevSoftSwitch(true, CURRENT_DEVICE);
-    break;
+  _snt = theConfig.GetASR_SNT(_cmd);
+  if( _snt > 0 && _snt < 255 ) {
+    theSys.ChangeLampScenario(CURRENT_DEVICE, _snt);
+  } else {
+    switch( _cmd ) {
+    case 0x01:    // lights on
+      theSys.DevSoftSwitch(true, CURRENT_DEVICE);
+      break;
 
-  case 0x02:    // lights off
-    theSys.DevSoftSwitch(false, CURRENT_DEVICE);
-    break;
+    case 0x02:    // lights off
+      theSys.DevSoftSwitch(false, CURRENT_DEVICE);
+      break;
 
-  case 0x03:    // Brightness++
-    _br = theSys.GetDevBrightness(CURRENT_DEVICE);
-    _br += BTN_STEP_SHORT_BR;
-    theSys.ChangeLampBrightness(CURRENT_DEVICE, _br);
-    break;
+    case 0x03:    // Brightness++
+      _br = theSys.GetDevBrightness(CURRENT_DEVICE);
+      _br += BTN_STEP_SHORT_BR;
+      theSys.ChangeLampBrightness(CURRENT_DEVICE, _br);
+      break;
 
-  case 0x04:    // Brightness--
-    _br = theSys.GetDevBrightness(CURRENT_DEVICE);
-    _br -= BTN_STEP_SHORT_BR;
-    theSys.ChangeLampBrightness(CURRENT_DEVICE, _br);
-    break;
+    case 0x04:    // Brightness--
+      _br = theSys.GetDevBrightness(CURRENT_DEVICE);
+      _br -= BTN_STEP_SHORT_BR;
+      theSys.ChangeLampBrightness(CURRENT_DEVICE, _br);
+      break;
 
-/*
-  case 0x03:    // CCT++
-    _cct = theConfig.GetDevCCT();
-    _cct += BTN_STEP_SHORT_CCT;
-    theSys.ChangeLampCCT(CURRENT_DEVICE, _br);
-    break;
+    case 0x05:    // CCT++
+      _cct = theSys.GetDevCCT(CURRENT_DEVICE);
+      _cct += BTN_STEP_SHORT_CCT;
+      theSys.ChangeLampCCT(CURRENT_DEVICE, _br);
+      break;
 
-  case 0x04:    // CCT--
-    _cct = theConfig.GetDevCCT();
-    _cct -= BTN_STEP_SHORT_CCT;
-    theSys.ChangeLampCCT(CURRENT_DEVICE, _br);
-    break;
-*/
-
-  case 0x05:    // Scenario - 1
-    //_br = 25;
-    //_cct = 3000;
-    //theSys.ChangeBR_CCT(CURRENT_DEVICE, _br, _cct);
-    theSys.ChangeLampScenario(CURRENT_DEVICE, 1);
-    break;
-
-  case 0x06:    // Scenario - 2
-    //_br = 85;
-    //_cct = 5000;
-    //theSys.ChangeBR_CCT(_br, _cct, CURRENT_DEVICE);
-    theSys.ChangeLampScenario(CURRENT_DEVICE, 2);
-    break;
-
-  case 0x07:    // Scenario - 3
-  theSys.ChangeLampScenario(CURRENT_DEVICE, 3);
-    break;
-
-  case 0x08:    // Scenario - 4
-  theSys.ChangeLampScenario(CURRENT_DEVICE, 4);
-    break;
+    case 0x06:    // CCT--
+      _cct = theSys.GetDevCCT(CURRENT_DEVICE);
+      _cct -= BTN_STEP_SHORT_CCT;
+      theSys.ChangeLampCCT(CURRENT_DEVICE, _br);
+      break;
+    }
   }
 }

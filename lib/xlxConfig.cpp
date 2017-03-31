@@ -375,6 +375,7 @@ void ConfigClass::InitConfig()
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
 	m_config.useCloud = CLOUD_ENABLE;
 	m_config.stWiFi = 1;
+	memset(m_config.asrSNT, 0x00, MAX_ASR_SNT_ITEMS);
 }
 
 BOOL ConfigClass::InitDevStatus(UC nodeID)
@@ -1026,6 +1027,36 @@ BOOL ConfigClass::SetRFPowerLevel(UC level)
 		return true;
 	}
 	return false;
+}
+
+UC ConfigClass::GetASR_SNT(const UC _code)
+{
+	if( _code > 0 && _code <= MAX_ASR_SNT_ITEMS ) {
+		return m_config.asrSNT[_code - 1];
+	}
+	return 0;
+}
+
+BOOL ConfigClass::SetASR_SNT(const UC _code, const UC _snt)
+{
+	if( _code > 0 && _code <= MAX_ASR_SNT_ITEMS ) {
+		if( m_config.asrSNT[_code - 1] !=  _snt ) {
+			m_config.asrSNT[_code - 1] =  _snt;
+			m_isChanged = true;
+			return true;
+		}
+	}
+	return false;
+}
+
+void ConfigClass::showASRSNT()
+{
+	SERIAL_LN("\n\r**ASR SNT**");
+	for( UC _code = 0; _code < MAX_ASR_SNT_ITEMS; _code++ ) {
+		if( m_config.asrSNT[_code] > 0 && m_config.asrSNT[_code] < 255 ) {
+			SERIAL_LN("Cmd: 0x%2x - Scenario: %d", _code+1, m_config.asrSNT[_code]);
+		}
+	}
 }
 
 // Load Device Status

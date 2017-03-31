@@ -889,7 +889,7 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 		theRadio.ProcessSend(strCmd);
 	}
 
-	//COMMAND 4: Change color with scenerio input
+	//COMMAND 4: Change color with scenario input
 	if (_cmd == CMD_SCENARIO) {
 		if (!(*m_jpCldCmd).containsKey("node_id") || !(*m_jpCldCmd).containsKey("SNT_id")) {
 			LOGE(LOGTAG_MSG, "Error json cmd format: %s", jsonCmd.c_str());
@@ -1202,6 +1202,8 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 						}
 						LOGN(LOGTAG_MSG, "Set nodeid:%d config %d to %d", node_id, _config, _value);
 					}
+				} else if( data.containsKey("asrcmd") && data.containsKey("SNT_id") ) {
+					theConfig.SetASR_SNT((UC)data["asrcmd"], (UC)data["SNT_id"]);
 				}
 			}
 			// ToDo: more config
@@ -2107,6 +2109,11 @@ UC SmartControllerClass::GetDevBrightness(UC _nodeID)
 	return _br;
 }
 
+US SmartControllerClass::GetDevCCT(UC _nodeID)
+{
+	return (US)thePanel.GetCCTValue();
+}
+
 US SmartControllerClass::VerifyDevicePresence(UC *_assoDev, UC _nodeID, UC _devType, uint64_t _identity)
 {
 	NodeIdRow_t lv_Node;
@@ -2265,7 +2272,7 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 	else
 	{
 		_findIt = false;
-		LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", _nodeID, _scenarioID);
+		LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenario %d not found", _nodeID, _scenarioID);
 	}
 
 	// Publish Device-Scenario-Change message

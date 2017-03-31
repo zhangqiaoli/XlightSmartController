@@ -22,6 +22,9 @@
 #define CURRENT_DEVICE              (theConfig.GetMainDeviceID())
 #define IS_CURRENT_DEVICE(nid)      ((nid) == CURRENT_DEVICE || (CURRENT_DEVICE == NODEID_DUMMY && (nid) == NODEID_MAINDEVICE) )
 
+// Maximum items in AST scenario table
+#define MAX_ASR_SNT_ITEMS           16
+
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------
@@ -73,6 +76,7 @@ typedef struct
   char bleName[24];
   char blePin[6];
   char pptAccessCode[8];
+  UC asrSNT[MAX_ASR_SNT_ITEMS];
 } Config_t;
 
 //------------------------------------------------------------------
@@ -398,6 +402,10 @@ public:
 
   UC GetRFPowerLevel();
   BOOL SetRFPowerLevel(UC level);
+
+  UC GetASR_SNT(const UC _code);
+  BOOL SetASR_SNT(const UC _code, const UC _snt = 0);
+  void showASRSNT();
 
   NodeListClass lstNodes;
   RemoteStatus_t m_stMainRemote;

@@ -26,7 +26,7 @@
 #endif
 
 // Change it only if Config_t structure is updated
-#define VERSION_CONFIG_DATA       3
+#define VERSION_CONFIG_DATA       4
 
 // Xlight Application Identification
 #define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM

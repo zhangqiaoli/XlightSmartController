@@ -221,6 +221,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN("   table:   show working memory tables");
     SERIAL_LN("   device:  show functional devices");
     SERIAL_LN("   remote:  show remotes");
+    SERIAL_LN("   asrsnt:  show ASR command scenario table");
     SERIAL_LN("   version: show firmware version");
     SERIAL_LN("e.g. show rf\n\r");
     //CloudOutput("show ble|debug|dev|flag|net|node|rf|time|var|table|version");
@@ -310,7 +311,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN("     , cloud option disable|enable|must");
       SERIAL_LN("e.g. set maindev <nodeid>");
       SERIAL_LN("     , to change the main device");
-      SERIAL_LN("e.g. set remote <nodeid:device>");
+      SERIAL_LN("e.g. set remote <nodeid device>");
       SERIAL_LN("     , to assign device to remote");
       SERIAL_LN("e.g. set blename <BLEName>");
       SERIAL_LN("     , to change BLE SSID");
@@ -318,6 +319,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN("     , to change BLE Pin");
       SERIAL_LN("e.g. set pptpin <PPTPin>");
       SERIAL_LN("     , to change PPT access code");
+      SERIAL_LN("e.g. set asrsnt <code scenario_id>");
+      SERIAL_LN("     , to set scenario for ASR command");
       SERIAL_LN("e.g. set debug [log:level]");
       SERIAL_LN("     , where log is [serial|flash|syslog|cloud|all");
       SERIAL_LN("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r");
@@ -461,6 +464,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("**Node List count:%d, size:%d", theConfig.lstNodes.count(), theConfig.lstNodes.size());
       theConfig.lstNodes.showList();
       CloudOutput("Nodelist count:%d, size:%d", theConfig.lstNodes.count(), theConfig.lstNodes.size());
+    } else if (strnicmp(sTopic, "asrsnt", 6) == 0) {
+      theConfig.showASRSNT();
   	} else if (strnicmp(sTopic, "rf", 2) == 0) {
       theRadio.PrintRFDetails();
       SERIAL_LN("");
@@ -833,7 +838,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
         retVal = true;
       }
     } else if (strnicmp(sTopic, "remote", 6) == 0) {
-      // Remote contrlled device
+      // Remote controlled device
       sParam1 = next();     // Get remote node_id
       if( sParam1) {
         sParam2 = next();   // Get device node_id
@@ -881,6 +886,24 @@ bool SerialConsoleClass::doSet(const char *cmd)
       SERIAL_LN("Set PPT PIN to %s\n\r", sParam1);
       CloudOutput("Set PPT PIN to %s", sParam1);
       retVal = true;
+    } else if (strnicmp(sTopic, "asrsnt", 6) == 0) {
+      // ASR command scenario
+      sParam1 = next();     // Get code
+      if( sParam1) {
+        sParam2 = next();   // Get scenario id
+        if( sParam2 ) {
+          theConfig.SetASR_SNT((UC)atoi(sParam1), (UC)atoi(sParam2));
+          SERIAL_LN("ASR cmd %s will trigger SNT_id %s\n\r", sParam1, sParam2);
+          CloudOutput("asrcmd:%s SNT_id:%s", sParam1, sParam2);
+          retVal = true;
+        } else {
+          SERIAL_LN("Require a valid ASR code (1 to 16)\n\r");
+          retVal = true;
+        }
+      } else {
+        SERIAL_LN("Require a valid scenario ID\n\r");
+        retVal = true;
+      }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {
       sParam1 = next();
       if( sParam1) {
