@@ -2217,9 +2217,11 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 	}
 
 	// Find hue data of the 3 rings
+	BOOL _findIt;
 	ListNode<ScenarioRow_t> *rowptr = SearchScenario(_scenarioID);
 	if (rowptr)
 	{
+		_findIt = true;
 		String strCmd;
 		if( rowptr->data.sw != DEVICE_SW_DUMMY ) {
 			strCmd = String::format("%d:7:%d", _nodeID, rowptr->data.sw);
@@ -2262,10 +2264,16 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 	}
 	else
 	{
+		_findIt = false;
 		LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenerio %d not found", _nodeID, _scenarioID);
-		return false;
 	}
-	return true;
+
+	// Publish Device-Scenario-Change message
+	String strTemp = String::format("{'node_id':%d,'SNT_uid':%d,'found':%d}",
+			 _nodeID, _scenarioID, _findIt);
+	PublishDeviceStatus(strTemp.c_str());
+
+	return _findIt;
 }
 
 BOOL SmartControllerClass::RequestDeviceStatus(UC _nodeID)

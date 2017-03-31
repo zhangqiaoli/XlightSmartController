@@ -577,10 +577,12 @@ bool RF24ServerClass::ProcessReceive()
 						msg.getSerialString(strDisplay);
 						theBLE.sendCommand(strDisplay);
 					}
+				} else if( msgType == V_SCENE_ON ) {
+					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
+					theSys.ChangeLampScenario(transTo, payload[0]);
 				} else {
 					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 					if( transTo > 0 ) {
-
 						// Transfer message
 						msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
 						// Keep payload unchanged
