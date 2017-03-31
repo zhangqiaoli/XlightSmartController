@@ -20,7 +20,7 @@
 #define PACK //MSVS intellisense doesn't work when structs are packed
 
 #define CURRENT_DEVICE              (theConfig.GetMainDeviceID())
-#define IS_CURRENT_DEVICE(nid)      ((nid) == CURRENT_DEVICE || (CURRENT_DEVICE == NODEID_DUMMY && (nid) == NODEID_MAINDEVICE) )
+#define IS_CURRENT_DEVICE(nid)      ((nid) == CURRENT_DEVICE || CURRENT_DEVICE == NODEID_DUMMY)
 
 // Maximum items in AST scenario table
 #define MAX_ASR_SNT_ITEMS           16

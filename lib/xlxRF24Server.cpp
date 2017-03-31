@@ -46,11 +46,19 @@
 
 #include "MyParserSerial.h"
 
+#define BROADCAST_REPEAT
+
 //------------------------------------------------------------------
 // the one and only instance of RF24ServerClass
 RF24ServerClass theRadio(PIN_RF24_CE, PIN_RF24_CS);
 MyMessage msg;
 UC *msgData = (UC *)&(msg.msg);
+
+#ifdef BROADCAST_REPEAT
+MyMessage msg_rpt;
+UL tickMsgRpt = 0;
+UC timesMsgRpt = 0;
+#endif
 
 RF24ServerClass::RF24ServerClass(uint8_t ce, uint8_t cs, uint8_t paLevel)
 	:	MyTransportNRF24(ce, cs, paLevel)
@@ -358,6 +366,14 @@ bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
 {
 	if( !pMsg ) { pMsg = &msg; }
 
+#ifdef BROADCAST_REPEAT
+	if( pMsg->getDestination() == BROADCAST_ADDRESS ) {
+		msg_rpt = *pMsg;
+		tickMsgRpt = millis();
+		timesMsgRpt = 0;
+	}
+#endif
+
 	// Determine the receiver addresse
 	_times++;
 	if( send(pMsg->getDestination(), *pMsg) )
@@ -380,6 +396,22 @@ bool RF24ServerClass::SendNodeConfig(UC _node, UC _ncf, unsigned int _value)
 
 bool RF24ServerClass::PeekMessage()
 {
+#ifdef BROADCAST_REPEAT
+	// Repeatly send
+	if( tickMsgRpt > 0 ) {
+			if( millis() - tickMsgRpt > 150 ) {
+				if( ++timesMsgRpt > 2 ) {
+						tickMsgRpt = 0;
+				} else {
+					send(msg_rpt.getDestination(), msg_rpt);
+					tickMsgRpt = millis();
+					// ToDo: Test
+					SERIAL_LN("Test Repeat BCast Message: %d, times:%d", msg_rpt.getCommand(), timesMsgRpt);
+				}
+			}
+	}
+#endif
+
 	if( !isValid() ) return false;
 
 	UC to = 0;
