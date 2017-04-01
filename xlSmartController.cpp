@@ -2116,6 +2116,12 @@ ListNode<DevStatusRow_t> *SmartControllerClass::FindDevice(UC _nodeID)
 	return DevStatusRowPtr;
 }
 
+UC SmartControllerClass::GetDevOnOff(UC _nodeID)
+{
+	//(m_pMainDev->data.ring[0].BR < BR_MIN_VALUE ? true : !m_pMainDev->data.ring[0].State);
+	return( thePanel.GetRingOnOff() ? DEVICE_SW_ON : DEVICE_SW_OFF);
+}
+
 UC SmartControllerClass::GetDevBrightness(UC _nodeID)
 {
 	UC _br = (UC)thePanel.GetDimmerValue();

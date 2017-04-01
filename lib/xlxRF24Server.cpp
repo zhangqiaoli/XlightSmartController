@@ -368,9 +368,7 @@ bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
 
 #ifdef BROADCAST_REPEAT
 	if( pMsg->getDestination() == BROADCAST_ADDRESS ) {
-		msg_rpt = *pMsg;
-		tickMsgRpt = millis();
-		timesMsgRpt = 0;
+		SetRepeatBCastMsg(pMsg);
 	}
 #endif
 
@@ -383,6 +381,56 @@ bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
 	}
 
 	return false;
+}
+
+void RF24ServerClass::SetRepeatBCastMsg(MyMessage *pMsg)
+{
+#ifdef BROADCAST_REPEAT
+	msg_rpt = *pMsg;
+	// Note: change relative value to absolute value
+	if( msg_rpt.getCommand() == C_SET ) {
+		uint8_t *payload = (uint8_t *)msg_rpt.getCustom();
+		uint8_t bytValue = payload[0];
+		if( msg_rpt.getType() == V_STATUS && bytValue == DEVICE_SW_TOGGLE ) {
+			bytValue = 1 - theSys.GetDevOnOff(CURRENT_DEVICE);
+			msg_rpt.set(bytValue);
+		} else if( msg_rpt.getType() == V_PERCENTAGE && msg_rpt.getLength() == 2 ) {
+			if( bytValue != OPERATOR_SET ) {
+				payload[0] = OPERATOR_SET;
+				if( bytValue == OPERATOR_ADD ) {
+					payload[1] += theSys.GetDevBrightness(CURRENT_DEVICE);
+					if( payload[1] > 100 ) payload[1] = 100;
+				} else if( bytValue == OPERATOR_SUB ) {
+					if( theSys.GetDevBrightness(CURRENT_DEVICE) > payload[1] + BR_MIN_VALUE ) {
+						payload[1] = theSys.GetDevBrightness(CURRENT_DEVICE) - payload[1];
+					} else {
+						payload[1] = BR_MIN_VALUE;
+					}
+				}
+			}
+		} else if( msg_rpt.getType() == V_LEVEL && msg_rpt.getLength() == 3 ) {
+			if( bytValue != OPERATOR_SET ) {
+				uint16_t _CCTValue = theSys.GetDevCCT(CURRENT_DEVICE);
+				uint16_t _deltaValue = payload[2] * 256 + payload[1];
+				payload[0] = OPERATOR_SET;
+				if( bytValue == OPERATOR_ADD ) {
+					_CCTValue += _deltaValue;
+					if( _CCTValue > CT_MAX_VALUE ) _CCTValue = CT_MAX_VALUE;
+				} else if( bytValue == OPERATOR_SUB ) {
+					if( _CCTValue > _deltaValue + CT_MIN_VALUE ) {
+						_CCTValue -= _deltaValue;
+					} else {
+						_CCTValue = CT_MIN_VALUE;
+					}
+				}
+				payload[1] = _CCTValue % 256;
+				payload[2] = _CCTValue / 256;
+			}
+		}
+	}
+	tickMsgRpt = millis();
+	timesMsgRpt = 0;
+#endif
 }
 
 bool RF24ServerClass::SendNodeConfig(UC _node, UC _ncf, unsigned int _value)
@@ -400,7 +448,7 @@ bool RF24ServerClass::PeekMessage()
 	// Repeatly send
 	if( tickMsgRpt > 0 ) {
 			if( millis() - tickMsgRpt > 150 ) {
-				if( ++timesMsgRpt > 2 ) {
+				if( ++timesMsgRpt > 3 ) {
 						tickMsgRpt = 0;
 				} else {
 					send(msg_rpt.getDestination(), msg_rpt);
@@ -609,16 +657,26 @@ bool RF24ServerClass::ProcessReceive()
 						msg.getSerialString(strDisplay);
 						theBLE.sendCommand(strDisplay);
 					}
-				} else if( msgType == V_SCENE_ON ) {
-					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
-					theSys.ChangeLampScenario(transTo, payload[0]);
 				} else {
 					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 					if( transTo > 0 ) {
-						// Transfer message
-						msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
-						// Keep payload unchanged
-						msgReady = true;
+						if( msgType == V_SCENE_ON ) {
+							theSys.ChangeLampScenario(transTo, payload[0]);
+						}	else {
+							// Transfer message
+							msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
+							// Keep payload unchanged
+							msgReady = true;
+
+#ifdef BROADCAST_REPEAT
+							// Process broadcast message
+							if( transTo == BROADCAST_ADDRESS ) {
+								SetRepeatBCastMsg(&msg);
+								msgReady = false;	// Don't send, but leave it to repeat routine
+							}
+#endif
+
+						}
 					}
 				}
 				break;
