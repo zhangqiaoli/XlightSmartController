@@ -59,6 +59,7 @@ public:
 
   // Process all kinds of commands
   void ProcessCommands();
+  void ProcessCloudCommands();
   void CollectData(UC tick);
   //bool ExecuteLightCommand(String mySerialStr);
   bool ProcessPanel();
@@ -72,9 +73,9 @@ public:
   // Cloud interface implementation
   int CldSetTimeZone(String tzStr);
   int CldPowerSwitch(String swStr);
-  int CldJSONCommand(String jsonCmd);
-  int CldJSONConfig(String jsonData);
   int CldSetCurrentTime(String tmStr = "");
+  int ExeJSONCommand(String jsonCmd);
+  int ExeJSONConfig(String jsonData);
 
   // Parsing Functions
   bool ParseCmdRow(JsonObject& data);

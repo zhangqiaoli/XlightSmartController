@@ -77,6 +77,9 @@
 // Maximum RF messages buffered
 #define MQ_MAX_RF_MSG           5
 
+// Maximum Cloud Command messages buffered
+#define MQ_MAX_CLOUD_MSG        6
+
 // NodeID Convention
 #define NODEID_GATEWAY          0
 #define NODEID_MAINDEVICE       1

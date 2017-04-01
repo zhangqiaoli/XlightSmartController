@@ -24,6 +24,7 @@
 **/
 
 #include "xlxCloudObj.h"
+#include "xlxLogger.h"
 
 //------------------------------------------------------------------
 // Xlight Cloud Object Class
@@ -77,6 +78,28 @@ String CloudObjClass::GetSysID()
 String CloudObjClass::GetSysVersion()
 {
 	return m_SysVersion;
+}
+
+int CloudObjClass::CldJSONCommand(String jsonCmd)
+{
+  if( m_cmdList.size() > MQ_MAX_CLOUD_MSG ) {
+    LOGW(LOGTAG_MSG, "JSON commands exceeded queue size");
+    return 0;
+  }
+
+  m_cmdList.add(jsonCmd);
+  return 1;
+}
+
+int CloudObjClass::CldJSONConfig(String jsonData)
+{
+  if( m_configList.size() > MQ_MAX_CLOUD_MSG ) {
+    LOGW(LOGTAG_MSG, "JSON config exceeded queue size");
+    return 0;
+  }
+
+  m_configList.add(jsonData);
+  return 1;
 }
 
 // Here we can either send/publish data on individual data entry basis,

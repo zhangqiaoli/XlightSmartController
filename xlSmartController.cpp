@@ -548,8 +548,25 @@ void SmartControllerClass::ProcessCommands()
 	// Process BLE commands
   theBLE.processCommand();
 
+	// Process Cloud Commands
+	ProcessCloudCommands();
+
 	// ToDo: process commands from other sources (Wifi)
 	// ToDo: Potentially move ReadNewRules here
+}
+
+// Process Cloud Commands
+void SmartControllerClass::ProcessCloudCommands()
+{
+	String _cmd;
+	while( m_cmdList.size() ) {
+		_cmd = m_cmdList.shift();
+		ExeJSONCommand(_cmd);
+	}
+	while( m_configList.size() ) {
+		_cmd = m_configList.shift();
+		ExeJSONCommand(_cmd);
+	}
 }
 
 // Collect data from all enabled sensors
@@ -790,9 +807,9 @@ int SmartControllerClass::CldPowerSwitch(String swStr)
 
 // Execute Operations, including SerialConsole commands
 /// Format: {cmd: '', data: ''}
-int SmartControllerClass::CldJSONCommand(String jsonCmd)
+int SmartControllerClass::ExeJSONCommand(String jsonCmd)
 {
-	SERIAL_LN("Received JSON cmd: %s", jsonCmd.c_str());
+	SERIAL_LN("Execute JSON cmd: %s", jsonCmd.c_str());
 
 	int rc = ProcessJSONString(jsonCmd);
 	if (rc < 0) {
@@ -919,13 +936,13 @@ int SmartControllerClass::CldJSONCommand(String jsonCmd)
 	return 1;
 }
 
-int SmartControllerClass::CldJSONConfig(String jsonData) //future actions
+int SmartControllerClass::ExeJSONConfig(String jsonData) //future actions
 {
   //based on the input (ie whether it is a rule, scenario, or schedule), send the json string(s) to appropriate function.
   //These functions are responsible for adding the item to the respective, appropriate Chain. If multiple json strings coming through,
   //handle each for each respective Chain until end of incoming string
 
-	SERIAL_LN("Received JSON config message: %s", jsonData.c_str());
+	SERIAL_LN("Execute JSON config message: %s", jsonData.c_str());
 
   int numRows = 0;
   bool bRowsKey = true;

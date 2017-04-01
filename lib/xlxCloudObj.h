@@ -5,6 +5,7 @@
 
 #include "xliCommon.h"
 #include "ArduinoJson.h"
+#include "LinkedList.h"
 
 // Comment it off if we don't use Particle public cloud
 /// Notes:
@@ -81,10 +82,10 @@ public:
   String GetSysID();
   String GetSysVersion();
 
+  int CldJSONCommand(String jsonCmd);
+  int CldJSONConfig(String jsonData);
   virtual int CldSetTimeZone(String tzStr) = 0;
   virtual int CldPowerSwitch(String swStr) = 0;
-  virtual int CldJSONCommand(String jsonCmd) = 0;
-  virtual int CldJSONConfig(String jsonData) = 0;
   virtual int CldSetCurrentTime(String tmStr) = 0;
   virtual void OnSensorDataChanged(UC _sr) = 0;
   int ProcessJSONString(String inStr);
@@ -111,6 +112,9 @@ protected:
   JsonObject *m_jpRoot;
   JsonObject *m_jpData;
   JsonObject *m_jpCldCmd;
+
+  LinkedList<String> m_cmdList;
+  LinkedList<String> m_configList;
 };
 
 #endif /* xliCloudObj_h */
