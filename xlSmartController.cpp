@@ -565,7 +565,7 @@ void SmartControllerClass::ProcessCloudCommands()
 	}
 	while( m_configList.size() ) {
 		_cmd = m_configList.shift();
-		ExeJSONCommand(_cmd);
+		ExeJSONConfig(_cmd);
 	}
 }
 
