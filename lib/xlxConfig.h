@@ -65,7 +65,8 @@ typedef struct
   BOOL enableCloudSerialCmd   :1;           // Whether enable cloud serial command
   BOOL enableDailyTimeSync    :1;           // Whether enable daily time synchronization
   BOOL enableSpeaker          :1;           // Whether enable speaker
-  BOOL Reserved_bool          :5;           // Reserved for boolean flags
+  BOOL fixedNID               :1;           // Whether fixed Node ID
+  BOOL Reserved_bool          :4;           // Reserved for boolean flags
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
   UC rfPowerLevel             :2;           // RF Power Level 0..3
   BOOL stWiFi                 :1;           // Wi-Fi status: On / Off
@@ -259,7 +260,7 @@ public:
   BOOL clearNodeId(UC nodeID);
 
 protected:
-  UC getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identity);
+  UC getAvailableNodeId(UC preferID, UC defaultID, UC minID, UC maxID, uint64_t identity);
 };
 
 //------------------------------------------------------------------
@@ -363,6 +364,9 @@ public:
 
   BOOL IsSpeakerEnabled();
   void SetSpeakerEnabled(BOOL sw = true);
+
+  BOOL IsFixedNID();
+  void SetFixedNID(BOOL sw = true);
 
   BOOL IsDailyTimeSyncEnabled();
   void SetDailyTimeSyncEnabled(BOOL sw = true);

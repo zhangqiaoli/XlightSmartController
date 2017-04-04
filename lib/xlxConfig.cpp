@@ -176,52 +176,31 @@ UC NodeListClass::requestNodeID(UC preferID, char type, uint64_t identity)
 	// Must provide identity
 	if( identity == 0 ) return 0;
 
-	NodeIdRow_t lv_Node;
 	UC nodeID = 0;		// error
-	switch( type ) {
-	case NODE_TYP_LAMP:
-		// 1, 8 - 63
-		/// Check Main DeviceID
-		if( IS_GROUP_NODEID(preferID) ) {
-			nodeID = preferID;
-		} else {
-			if( IS_NOT_DEVICE_NODEID(preferID) ) {
-				nodeID = getAvailableNodeId(NODEID_MAINDEVICE, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identity);
-			} else {
-				lv_Node.nid = preferID;
-				if( get(&lv_Node) < 0 ) {
-					nodeID = preferID;
-				} else {
-					nodeID = getAvailableNodeId(preferID, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identity);
-				}
-			}
+	if( IS_GROUP_NODEID(preferID) ) {
+		nodeID = preferID;
+	} else {
+		switch( type ) {
+		case NODE_TYP_LAMP:
+			// 1, 8 - 63
+			/// Check Main DeviceID
+			nodeID = getAvailableNodeId(IS_NOT_DEVICE_NODEID(preferID) ? NODEID_DUMMY : preferID,
+			 					NODEID_MAINDEVICE, NODEID_MIN_DEVCIE, NODEID_MAX_DEVCIE, identity);
+			break;
+
+		case NODE_TYP_REMOTE:
+			// 64 - 127
+			nodeID = getAvailableNodeId(IS_NOT_REMOTE_NODEID(preferID) ? NODEID_DUMMY : preferID,
+								NODEID_MIN_REMOTE, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identity);
+			break;
+
+		case NODE_TYP_THIRDPARTY:
+			// ToDo: support thirdparty device in the future
+			break;
+
+		default:
+			break;
 		}
-		break;
-
-	case NODE_TYP_REMOTE:
-		// 64 - 127
-		if( IS_GROUP_NODEID(preferID) ) {
-			nodeID = preferID;
-		} else {
-			if( IS_NOT_REMOTE_NODEID(preferID) ) {
-				nodeID = getAvailableNodeId(NODEID_MIN_REMOTE, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identity);
-			} else {
-				lv_Node.nid = preferID;
-				if( get(&lv_Node) < 0 ) {
-					nodeID = preferID;
-				} else {
-					nodeID = getAvailableNodeId(preferID, NODEID_MIN_REMOTE+1, NODEID_MAX_REMOTE, identity);
-				}
-			}
-		}
-		break;
-
-	case NODE_TYP_THIRDPARTY:
-		// ToDo: support thirdparty device in the future
-		break;
-
-	default:
-		break;
 	}
 
 	// Add or Update
@@ -252,28 +231,46 @@ UC NodeListClass::requestNodeID(UC preferID, char type, uint64_t identity)
 	return nodeID;
 }
 
-UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t identity)
+UC NodeListClass::getAvailableNodeId(UC preferID, UC defaultID, UC minID, UC maxID, uint64_t identity)
 {
-	UC oldestNode;
-	UL oldestTime;
+	UC oldestNode = 0;
+	UL oldestTime = Time.now();
+	BOOL bFound = false;
 	NodeIdRow_t lv_Node;
-	if( defaultID > 0 ) {
-		lv_Node.nid = defaultID;
-		if( get(&lv_Node) < 0 ) {
-			return 0;
-		} else if( lv_Node.recentActive == 0 || isIdentityEmpty(lv_Node.identity) || isIdentityEqual(lv_Node.identity, &identity) ) {
-			// DefaultID is available
-			return defaultID;
+
+	// Stage 1: Check preferID
+	if( preferID > 0 && preferID < NODEID_DUMMY ) {
+		lv_Node.nid = preferID;
+		if( get(&lv_Node) >= 0 ) {
+			bFound = true;
+			// preferID is found and matched, reuse it
+			if( lv_Node.recentActive == 0 || isIdentityEmpty(lv_Node.identity) || isIdentityEqual(lv_Node.identity, &identity) ) {
+				return preferID;
+			} else {
+				// Otherwise, avoid use it
+				if( theConfig.IsFixedNID() ) return 0;
+			}
 		} else {
-			oldestNode = defaultID;
-			oldestTime = lv_Node.recentActive;
+			// Not found, means ID available
+			return(theConfig.IsFixedNID() ? 0 : preferID);
 		}
-	} else {
-		oldestNode = 0;
-		oldestTime = Time.now();
 	}
 
-	// Stage 1: Check Identity and reuse if possible
+	// Stage 2: Check DefaultID
+	if( defaultID > 0 ) {
+		lv_Node.nid = defaultID;
+		if( get(&lv_Node) >= 0 ) {
+			if( lv_Node.recentActive == 0 || isIdentityEmpty(lv_Node.identity) || isIdentityEqual(lv_Node.identity, &identity) ) {
+				// DefaultID is available
+				return defaultID;
+			} else {
+				oldestNode = defaultID;
+				oldestTime = lv_Node.recentActive;
+			}
+		}
+	}
+
+	// Stage 3: Check Identity and reuse if possible
 	for(int i = 0; i < count(); i++) {
 		if( _pItems[i].nid > maxID ) break;
 		if( _pItems[i].nid < minID ) continue;
@@ -288,14 +285,14 @@ UC NodeListClass::getAvailableNodeId(UC defaultID, UC minID, UC maxID, uint64_t 
 		}
 	}
 
-	// Stage 2: Otherwise, get a unused NodeID from corresponding segment
+	// Stage 4: Otherwise, get a unused NodeID from corresponding segment
 	for( UC nodeID = minID; nodeID <= maxID; nodeID++ ) {
 		lv_Node.nid = nodeID;
 		// Seek unused NodeID
 		if( get(&lv_Node) < 0 ) return nodeID;
 	}
 
-	// Stage 3: Otherwise, overwrite the longest inactive entry within the segment
+	// Stage 5: Otherwise, overwrite the longest inactive entry within the segment
 	return oldestNode;
 }
 
@@ -370,6 +367,7 @@ void ConfigClass::InitConfig()
   m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
   m_config.enableCloudSerialCmd = false;
 	m_config.enableSpeaker = false;
+	m_config.fixedNID = true;
 	m_config.enableDailyTimeSync = true;
 	m_config.rfPowerLevel = RF24_PA_LEVEL_GW;
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
@@ -749,7 +747,7 @@ BOOL ConfigClass::CheckPPTAccessCode(const char *strPin)
 		return(strcmp(m_config.pptAccessCode, strPin)==0);
 }
 
-BOOL ConfigClass::ConfigClass::IsCloudSerialEnabled()
+BOOL ConfigClass::IsCloudSerialEnabled()
 {
 	return m_config.enableCloudSerialCmd;
 }
@@ -762,7 +760,7 @@ void ConfigClass::SetCloudSerialEnabled(BOOL sw)
 	}
 }
 
-BOOL ConfigClass::ConfigClass::IsSpeakerEnabled()
+BOOL ConfigClass::IsSpeakerEnabled()
 {
 	return m_config.enableSpeaker;
 }
@@ -775,7 +773,20 @@ void ConfigClass::SetSpeakerEnabled(BOOL sw)
 	}
 }
 
-BOOL ConfigClass::ConfigClass::IsDailyTimeSyncEnabled()
+BOOL ConfigClass::IsFixedNID()
+{
+	return m_config.fixedNID;
+}
+
+void ConfigClass::SetFixedNID(BOOL sw)
+{
+	if( sw != m_config.fixedNID ) {
+		m_config.fixedNID = sw;
+		m_isChanged = true;
+	}
+}
+
+BOOL ConfigClass::IsDailyTimeSyncEnabled()
 {
 	return m_config.enableDailyTimeSync;
 }

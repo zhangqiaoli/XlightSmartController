@@ -587,6 +587,24 @@ bool RF24ServerClass::ProcessReceive()
 					if( msgType == V_LIGHT_LEVEL) { // ALS
 						theSys.UpdateBrightness(replyTo, msg.getByte());
 					}
+				} else if( _sensor == S_SOUND ) {
+					if( msgType == V_STATUS ) { // MIC
+						theSys.UpdateSound(replyTo, payload[0]);
+					} else if( msgType == V_LEVEL ) {
+						_iValue = payload[1] * 256 + payload[0];
+						theSys.UpdateNoise(replyTo, _iValue);
+					}
+				} else if( _sensor == S_DUST || _sensor == S_AIR_QUALITY || _sensor == S_SMOKE ) {
+					if( msgType == V_LIGHT_LEVEL) { // Dust, Gas or Smoke
+						_iValue = payload[1] * 256 + payload[0];
+						if( _sensor == S_DUST ) {
+							theSys.UpdateDust(replyTo, _iValue);
+						} else if( _sensor == S_AIR_QUALITY ) {
+							theSys.UpdateGas(replyTo, _iValue);
+						} else if( _sensor == S_SMOKE ) {
+							theSys.UpdateSmoke(replyTo, _iValue);
+						}
+					}
 				}
 				break;
 

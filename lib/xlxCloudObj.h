@@ -75,6 +75,8 @@ public:
   uint16_t m_gas;
   uint16_t m_dust;
   uint16_t m_smoke;
+  bool m_sound;
+  uint16_t m_noise;
 
 public:
   CloudObjClass();
@@ -97,6 +99,8 @@ public:
   BOOL UpdateGas(uint8_t nid, uint16_t value);
   BOOL UpdateDust(uint8_t nid, uint16_t value);
   BOOL UpdateSmoke(uint8_t nid, uint16_t value);
+  BOOL UpdateSound(uint8_t nid, bool value);
+  BOOL UpdateNoise(uint8_t nid, uint16_t value);
 
   void UpdateJSONData();
   BOOL PublishLog(const char *msg);

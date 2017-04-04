@@ -261,11 +261,13 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     if( sObj ) {
       if (strnicmp(sObj, "flag", 4) == 0) {
         SERIAL_LN("--- Command: set flag <flag name> [0|1] ---");
-        SERIAL_LN("<flag name>: csc, cdts");
+        SERIAL_LN("<flag name>: csc, cdts, fnid");
         SERIAL_LN("e.g. set flag csc [0|1]");
         SERIAL_LN("     , enable or disable Cloud Serial Command");
         SERIAL_LN("e.g. set flag cdts [0|1]");
         SERIAL_LN("     , enable or disable Cloud Daily Time Sync");
+        SERIAL_LN("e.g. set flag fnid [0|1]");
+        SERIAL_LN("     , enable or disable Fixed NodeID");
         //CloudOutput("set flag csc|cdts");
       } else if (strnicmp(sObj, "var", 3) == 0) {
         SERIAL_LN("--- Command: set var <var name> <value> ---");
@@ -507,19 +509,20 @@ bool SerialConsoleClass::doShow(const char *cmd)
   		SERIAL_LN("m_isLAN = \t\t\t%s", (theSys.IsLANGood() ? "true" : "false"));
   		SERIAL_LN("m_isWAN = \t\t\t%s", (theSys.IsWANGood() ? "true" : "false"));
       SERIAL_LN("");
+      SERIAL_LN("fixedNodeID = \t\t\t%s", (theConfig.IsFixedNID() ? "true" : "false"));
       SERIAL_LN("enableCloudSerialCmd = \t\t%s", (theConfig.IsCloudSerialEnabled() ? "true" : "false"));
       SERIAL_LN("enableDailyTimeSync = \t\t%s", (theConfig.IsDailyTimeSyncEnabled() ? "true" : "false"));
       SERIAL_LN("enableSpeaker = \t\t%s", (theConfig.IsSpeakerEnabled() ? "true" : "false"));
-      SERIAL_LN("bBaseNetworkEnabled = \t%s", (theRadio.isBaseNetworkEnabled() ? "true" : "false"));
+      SERIAL_LN("bBaseNetworkEnabled = \t\t%s", (theRadio.isBaseNetworkEnabled() ? "true" : "false"));
       SERIAL_LN("stWiFi = \t\t\t%s", (theConfig.GetWiFiStatus() ? "On" : "Off"));
       SERIAL_LN("");
   		SERIAL_LN("m_isLoaded = \t\t\t%s", (theConfig.IsConfigLoaded() ? "true" : "false"));
-  		SERIAL_LN("m_isChanged = \t\t%s", (theConfig.IsConfigChanged() ? "true" : "false"));
+  		SERIAL_LN("m_isChanged = \t\t\t%s", (theConfig.IsConfigChanged() ? "true" : "false"));
   		SERIAL_LN("m_isDSTChanged = \t\t%s", (theConfig.IsDSTChanged() ? "true" : "false"));
   		SERIAL_LN("m_isSCTChanged = \t\t%s", (theConfig.IsSCTChanged() ? "true" : "false"));
   		SERIAL_LN("m_isRTChanged = \t\t%s", (theConfig.IsRTChanged() ? "true" : "false"));
   		SERIAL_LN("m_isSNTChanged = \t\t%s", (theConfig.IsSNTChanged() ? "true" : "false"));
-      SERIAL_LN("IsNIDChanged = \t\t%s\n\r", (theConfig.IsNIDChanged() ? "true" : "false"));
+      SERIAL_LN("IsNIDChanged = \t\t\t%s\n\r", (theConfig.IsNIDChanged() ? "true" : "false"));
   	} else if (strnicmp(sTopic, "table", 5) == 0) {
   		SERIAL_LN("DST_ROW_SIZE: \t\t\t\t%u", DST_ROW_SIZE);
   		SERIAL_LN("RT_ROW_SIZE: \t\t\t\t%u", RT_ROW_SIZE);
@@ -760,6 +763,11 @@ bool SerialConsoleClass::doSet(const char *cmd)
             theConfig.SetDailyTimeSyncEnabled(atoi(sParam2) > 0);
             SERIAL_LN("Cloud Daily TimeSync is %s\n\r", (theConfig.IsDailyTimeSyncEnabled() ? "enabled" : "disabled"));
             CloudOutput("Cloud Daily TimeSync is %s", (theConfig.IsDailyTimeSyncEnabled() ? "enabled" : "disabled"));
+            retVal = true;
+          } else if (strnicmp(sParam1, "fnid", 4) == 0) {
+            theConfig.SetFixedNID(atoi(sParam2) > 0);
+            SERIAL_LN("Fixed NodeID is %s\n\r", (theConfig.IsFixedNID() ? "enabled" : "disabled"));
+            CloudOutput("Fixed NodeID:%d", theConfig.IsFixedNID());
             retVal = true;
           }
         } else {

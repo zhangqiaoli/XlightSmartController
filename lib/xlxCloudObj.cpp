@@ -38,9 +38,11 @@ CloudObjClass::CloudObjClass()
   m_humidity = 0.0;
   m_brightness = 0;
   m_motion = false;
+  m_sound = false;
   m_gas = 0;
   m_dust = 0;
   m_smoke = 0;
+  m_noise = 0;
   m_jpRoot = &(m_jBuf.createObject());
   m_strCldCmd = "";
 }
@@ -239,6 +241,52 @@ BOOL CloudObjClass::UpdateSmoke(uint8_t nid, uint16_t value)
     // Publis right away
     if( Particle.connected() ) {
       String strTemp = String::format("{'nd':%d,'SMOKE':%d}", nid, value);
+      Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_MotionData, PRIVATE);
+    }
+#endif
+    return true;
+  }
+  return false;
+}
+
+BOOL CloudObjClass::UpdateSound(uint8_t nid, bool value)
+{
+  if( m_sound != value ) {
+    m_sound = value;
+    OnSensorDataChanged(sensorMIC_b);
+    /*
+    if( m_jpData->success() )
+    {
+      (*m_jpData)["PIR"] = value;
+    }
+    */
+#ifdef USE_PARTICLE_CLOUD
+    // Publis right away
+    if( Particle.connected() ) {
+      String strTemp = String::format("{'nd':%d,'MIC':%d}", nid, value);
+      Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_MotionData, PRIVATE);
+    }
+#endif
+    return true;
+  }
+  return false;
+}
+
+BOOL CloudObjClass::UpdateNoise(uint8_t nid, uint16_t value)
+{
+  if( m_noise != value ) {
+    m_noise = value;
+    OnSensorDataChanged(sensorMIC);
+    /*
+    if( m_jpData->success() )
+    {
+      (*m_jpData)["MIC"] = value;
+    }
+    */
+#ifdef USE_PARTICLE_CLOUD
+    // Publis right away
+    if( Particle.connected() ) {
+      String strTemp = String::format("{'nd':%d,'NOISE':%d}", nid, value);
       Particle.publish(CLT_NAME_SensorData, strTemp, CLT_TTL_MotionData, PRIVATE);
     }
 #endif

@@ -2243,7 +2243,6 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 	if (DevStatusRowPtr == NULL)
 	{
 		LOGW(LOGTAG_MSG, "Failed to execte CMD_SCENARIO, wrong node_id %d", _nodeID);
-		return false;
 	}
 
 	// Find hue data of the 3 rings
@@ -2257,7 +2256,9 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 			strCmd = String::format("%d:7:%d", _nodeID, rowptr->data.sw);
 			theRadio.ProcessSend(strCmd);
 		} else {
-			if( IS_SUNNY(DevStatusRowPtr->data.type) ) {
+			UC lv_type = devtypCRing3;
+			if( DevStatusRowPtr ) lv_type = DevStatusRowPtr->data.type;
+			if(IS_SUNNY(lv_type)) {
 				if( rowptr->data.ring[0].State == DEVICE_SW_OFF ) {
 					strCmd = String::format("%d:7:0", _nodeID);
 				} else {
@@ -2280,7 +2281,7 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 						tmpMsg.set((void *)payl_buf, payl_len);
 						theRadio.ProcessSend(&tmpMsg);
 					}
-					if( IS_MIRAGE(DevStatusRowPtr->data.type) ) {
+					if( IS_MIRAGE(lv_type) ) {
 						// ToDo: construct mirage message
 						//tmpMsg.build(theRadio.getAddress(), _nodeID, NODEID_DUMMY, C_SET, V_DISTANCE, true);
 						//tmpMsg.set((void *)payl_buf, payl_len);

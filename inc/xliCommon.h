@@ -115,7 +115,8 @@ typedef enum
   sensorDUST,
   sensorLEAK,
   sensorBEAT,
-  sensorDHT_h = 16 // won't occupy bit position
+  sensorDHT_h = 16, // won't occupy bit position
+  sensorMIC_b
 } sensors_t;
 
 // Sensor scope
