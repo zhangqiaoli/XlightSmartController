@@ -2335,17 +2335,8 @@ BOOL SmartControllerClass::ConfirmLampOnOff(UC _nodeID, UC _st)
 		}
 
 		// Publish device status event
-		StaticJsonBuffer<256> jBuf;
-		JsonObject *jroot;
-		jroot = &(jBuf.createObject());
-		if( jroot->success() ) {
-			(*jroot)["nd"] = _nodeID;
-			(*jroot)["State"] = _st;
-			char buffer[256];
-			jroot->printTo(buffer, 256);
-			PublishDeviceStatus(buffer);
-		}
-
+		String strTemp = String::format("{'nd':%d,'State':%d}", _nodeID, _st);
+		PublishDeviceStatus(strTemp.c_str());
 		rc = true;
 	}
 	return rc;
@@ -2382,22 +2373,16 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 			}
 
 			// Publish device status event
-			StaticJsonBuffer<256> jBuf;
-			JsonObject *jroot;
-			jroot = &(jBuf.createObject());
-			if( jroot->success() ) {
-				(*jroot)["nd"] = _nodeID;
-				if( _ringID != RING_ID_ALL ) {
-					(*jroot)["Ring"] = _ringID;
-				}
-				(*jroot)["State"] = _st;
-				(*jroot)["BR"] = _percentage;
-				char buffer[256];
-				jroot->printTo(buffer, 256);
-				PublishDeviceStatus(buffer);
+			String strTemp;
+			if( _ringID != RING_ID_ALL ) {
+				strTemp = String::format("{'nd':%d,'Ring':%d,'State':%d,'BR':%d}",
+					_nodeID, _ringID, _st, _percentage);
+			} else {
+			 	strTemp = String::format("{'nd':%d,'State':%d,'BR':%d}",
+					_nodeID, _st, _percentage);
 			}
+			PublishDeviceStatus(strTemp.c_str());
 		}
-
 		rc = true;
 	}
 	return rc;
@@ -2430,22 +2415,15 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID)
 			}
 
 			// Publish device status event
-			StaticJsonBuffer<256> jBuf;
-			JsonObject *jroot;
-			jroot = &(jBuf.createObject());
-			if( jroot->success() ) {
-				(*jroot)["nd"] = _nodeID;
-				if( _ringID != RING_ID_ALL ) {
-					(*jroot)["Ring"] = _ringID;
-				}
-				(*jroot)["CCT"] = _cct;
-				char buffer[256];
-				jroot->printTo(buffer, 256);
-				PublishDeviceStatus(buffer);
+			String strTemp;
+			if( _ringID != RING_ID_ALL ) {
+				strTemp = String::format("{'nd':%d,'Ring':%d,'CCT':%d}", _nodeID, _ringID, _cct);
+			} else {
+			 	strTemp = String::format("{'nd':%d,'CCT':%d}", _nodeID, _cct);
 			}
+			PublishDeviceStatus(strTemp.c_str());
+			rc = true;
 		}
-
-		rc = true;
 	}
 	return rc;
 }
@@ -2481,31 +2459,24 @@ BOOL SmartControllerClass::ConfirmLampHue(UC _nodeID, UC _white, UC _red, UC _gr
 			theConfig.SetDSTChanged(true);
 
 			// Publish device status event
-			StaticJsonBuffer<256> jBuf;
-			JsonObject *jroot;
-			jroot = &(jBuf.createObject());
-			if( jroot->success() ) {
-				(*jroot)["nd"] = _nodeID;
-				if( _ringID != RING_ID_ALL ) {
-					(*jroot)["Ring"] = _ringID;
-				}
-				(*jroot)["W"] = _white;
-				(*jroot)["R"] = _red;
-				(*jroot)["G"] = _green;
-				(*jroot)["B"] = _blue;
-				char buffer[256];
-				jroot->printTo(buffer, 256);
-				PublishDeviceStatus(buffer);
+			String strTemp;
+			if( _ringID != RING_ID_ALL ) {
+				strTemp = String::format("{'nd':%d,'Ring':%d,'W':%d,'R':%d,'G':%d,'B':%d}",
+				  _nodeID, _ringID, _white, _red, _green, _blue);
+			} else {
+			 	strTemp = String::format("{'nd':%d,'W':%d,'R':%d,'G':%d,'B':%d}",
+				  _nodeID, _white, _red, _green, _blue);
 			}
+			PublishDeviceStatus(strTemp.c_str());
+			rc = true;
 		}
-		rc = true;
 	}
 	return rc;
 }
 
 BOOL SmartControllerClass::ConfirmLampTop(UC _nodeID, UC *_payl, UC _len)
 {
-	BOOL rc = false, bChanged = false;
+	BOOL bChanged = false;
 	UC _ringID, _L1, _L2, _L3;
 	UC r_index, _pos = 3;
 
@@ -2572,7 +2543,27 @@ BOOL SmartControllerClass::ConfirmLampTop(UC _nodeID, UC *_payl, UC _len)
 		}
 	}
 
-	return rc;
+	return bChanged;
+}
+
+BOOL SmartControllerClass::ConfirmLampFilter(UC _nodeID, UC _filter)
+{
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if (DevStatusRowPtr) {
+		if( DevStatusRowPtr->data.filter != _filter ) {
+			DevStatusRowPtr->data.filter = _filter;
+			DevStatusRowPtr->data.run_flag = EXECUTED;
+			DevStatusRowPtr->data.flash_flag = UNSAVED;
+			DevStatusRowPtr->data.op_flag = POST;
+			theConfig.SetDSTChanged(true);
+
+			// Publish device status event
+			String strTemp = String::format("{'nd':%d,'filter':%d}", _nodeID, _filter);
+			PublishDeviceStatus(strTemp.c_str());
+			return true;
+		}
+	}
+	return false;
 }
 
 BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID, UC _ringID)
@@ -2584,8 +2575,9 @@ BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID, UC _ringID)
 		char buffer[256];
 		jroot = &(jBuf.createObject());
 		if( jroot->success() ) {
+			(*jroot)["nd"] = DevStatusRowPtr->data.node_id;
+			if(DevStatusRowPtr->data.filter > 0)(*jroot)["filter"] = DevStatusRowPtr->data.filter;
 			if( IS_SUNNY(DevStatusRowPtr->data.type) ) {
-				(*jroot)["nd"] = DevStatusRowPtr->data.node_id;
 				(*jroot)["State"] = DevStatusRowPtr->data.ring[0].State;
 				(*jroot)["BR"] = DevStatusRowPtr->data.ring[0].BR;
 				(*jroot)["CCT"] = DevStatusRowPtr->data.ring[0].CCT;
@@ -2599,7 +2591,6 @@ BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID, UC _ringID)
 						_bMore = false;
 						break;
 					}
-					(*jroot)["nd"] = DevStatusRowPtr->data.node_id;
 					if( _ringID == RING_ID_ALL ) {
 						r_index = 0;
 						if( IsAllRingHueSame(DevStatusRowPtr) ) {
@@ -2657,7 +2648,8 @@ String SmartControllerClass::print_devStatus_table(int row)
 
 	SERIAL_LN("==== DevStatus Row %d ====", row);
 	SERIAL_LN("%cuid = %d, type = %d", DevStatus_table.get(row).node_id == CURRENT_DEVICE ? '*' : ' ', DevStatus_table.get(row).uid, DevStatus_table.get(row).type);
-	SERIAL_LN("node_id = %d, present = %s", DevStatus_table.get(row).node_id, (DevStatus_table.get(row).present ? "true" : "false"));
+	SERIAL_LN("node_id = %d, present:%s, filter:%d", DevStatus_table.get(row).node_id,
+	    (DevStatus_table.get(row).present ? "true" : "false"), DevStatus_table.get(row).filter);
 
 	if( IS_SUNNY(DevStatus_table.get(row).type) ) {
 		SERIAL_LN("Status: %s, BR: %d, CCT: %d\n\r", DevStatus_table.get(row).ring[0].State ? "On" : "Off",

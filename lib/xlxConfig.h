@@ -94,7 +94,8 @@ typedef struct
   UC uid;						   // required
   UC node_id;          // RF nodeID
   UC present              :1;  // 0 - not present; 1 - present
-  UC reserved             :7;
+  UC reserved             :3;
+  UC filter               :4;
   UC type;                         // Type of lamp
   US token;
   Hue_t ring[MAX_RING_NUM];
@@ -227,7 +228,8 @@ typedef struct
 	UC uid			            : 8;
   UC sw                   : 2; // Main Switch: Switch value for set power command
 	Hue_t ring[MAX_RING_NUM];
-	UC filter		            : 8;
+	UC filter		            : 4;
+  UC reserverd            : 4;
 } ScenarioRow_t;
 
 #define SNT_ROW_SIZE	sizeof(ScenarioRow_t)

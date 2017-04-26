@@ -337,11 +337,20 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
 		break;
 
 	case 14:	// Reserved for query command
+	case 16:	// Reserved for query command
 		break;
 
 	case 15:	// Set Device Scenerio
 		bytValue = (UC)(lv_sPayload.toInt());
 		theSys.ChangeLampScenario(lv_nNodeID, bytValue);
+		break;
+
+	case 17:	// Set special effect
+		lv_msg.build(getAddress(), lv_nNodeID, 1, C_SET, V_VAR1, true);
+		bytValue = (UC)(lv_sPayload.toInt());
+		lv_msg.set(bytValue);
+		bMsgReady = true;
+		SERIAL("Now setting special effect %d...", bytValue);
 		break;
 	}
 
@@ -609,7 +618,6 @@ bool RF24ServerClass::ProcessReceive()
 				break;
 
 			case C_REQ:
-				// ToDo: verify token
 				if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL
 					  || msgType == V_RGBW || msgType == V_DISTANCE ) {
 					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
@@ -640,6 +648,8 @@ bool RF24ServerClass::ProcessReceive()
 									bFirstRGBW = false;
 								}
 							}
+						} else if( msgType == V_VAR1 ) { // Change special effect ack
+							bDataChanged |= theSys.ConfirmLampFilter(replyTo, payload[0]);
 						} else if( msgType == V_DISTANCE && payload[0] ) {
 							UC _devType = payload[1];	// payload[2] is present status
 							if( IS_MIRAGE(_devType) ) {
@@ -651,7 +661,10 @@ bool RF24ServerClass::ProcessReceive()
 						if( bDataChanged ) {
 							transTo = BROADCAST_ADDRESS;
 						}
-					}
+					} /* else { // Request
+						// ToDo: verify token
+					} */
+
 					// ToDo: if lamp is not present, return error
 					if( transTo > 0 ) {
 						// Transfer message

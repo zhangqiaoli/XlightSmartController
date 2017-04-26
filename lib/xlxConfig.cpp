@@ -205,6 +205,7 @@ UC NodeListClass::requestNodeID(UC preferID, char type, uint64_t identity)
 
 	// Add or Update
 	if( nodeID > 0 ) {
+		NodeIdRow_t lv_Node;
 		lv_Node.nid = nodeID;
 		copyIdentity(lv_Node.identity, &identity);
 		lv_Node.recentActive = Time.now();
@@ -397,6 +398,7 @@ BOOL ConfigClass::InitDevStatus(UC nodeID)
 	first_row.uid = theSys.DevStatus_table.size();
 	first_row.node_id = nodeID;
 	first_row.present = 0;
+	first_row.filter = 0;
 	first_row.token = 0;
 	first_row.type = devtypWRing3;  // White 3 rings
 	first_row.ring[0] = whiteHue;

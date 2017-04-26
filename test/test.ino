@@ -89,9 +89,9 @@ test(cloudinput)
   theSys.CldJSONConfig("{'op':1, 'fl':0, 'run':0, 'uid':'s3','ring0':[1,80,3500,0,0,0]}");
   // Execute scenerio to make sure it is saved immediatly
   /// Option 1: could command
-  theSys.CldJSONCommand("{'cmd':4, 'node_id':1, 'SNT_id':1}");
+  theSys.CldJSONCommand("{'cmd':4, 'node_id':1, 'SNT_id':3}");
   /// Option 2: serial command
-  // send 1:15:1
+  // send 1:15:3
 
   // Example 3: Turn off the lights
   theSys.CldJSONConfig("{'op':1, 'fl':0, 'run':0, 'uid':'s2','sw':0}");

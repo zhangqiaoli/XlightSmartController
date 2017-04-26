@@ -80,6 +80,13 @@ enum COMMAND {CMD_SERIAL, CMD_POWER, CMD_COLOR, CMD_BRIGHTNESS, CMD_SCENARIO, CM
 #define OPERATOR_MUL                3
 #define OPERATOR_DIV                4
 
+// Filter (special effect)
+#define FILTER_SP_EF_NONE           0
+#define FILTER_SP_EF_BREATH         1       // Normal breathing light
+#define FILTER_SP_EF_FAST_BREATH    2       // Fast breathing light
+#define FILTER_SP_EF_FLORID         3       // Randomly altering color
+#define FILTER_SP_EF_FAST_FLORID    4       // Fast randomly altering color
+
 // Macros for UID identifiers
 #define CLS_RULE                  'r'
 #define CLS_SCHEDULE              'a'
