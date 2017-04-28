@@ -39,8 +39,8 @@
 
     // P1 specific GPIO pins, can also be used as digital GPIOs
     #define PIN_MOSI_LED          P1S0        // Panel HC595 data line
-    #define PIN_LATCH_LED         P1S1        // Panel HC595 chip enable
-    #define PIN_SCK_LED           P1S2        // Panel HC595 clock
+    #define PIN_LATCH_LED         P1S2        // Panel HC595 chip enable, P1S2 for old controller at AC
+    #define PIN_SCK_LED           P1S1        // Panel HC595 clock
 
     #define PIN_BLE_EN            P1S4        // BLE Enable
     #define PIN_BLE_STATE         P1S5        // BLE State
