@@ -38,6 +38,30 @@ test(serialconsole)
   theSys.CldJSONCommand("{'cmd':0, 'data':'show time'}");}
   theSys.CldJSONCommand("{'cmd':6, 'node_id':1}");}
 
+test(cloudcmd)
+{
+  // CMD_POWER ON
+  theSys.CldJSONCommand("{'cmd':1, 'node_id':1, 'state':1}");
+
+  // CMD_POWER OFF
+  theSys.CldJSONCommand("{'cmd':1, 'node_id':1, 'state':0}");
+
+  // CMD_BRIGHTNESS
+  theSys.CldJSONCommand("{'cmd':3, 'node_id':1, 'value':60}");
+
+  // CMD_CCT
+  theSys.CldJSONCommand("{'cmd':5, 'node_id':1, 'value':3500}");
+
+  // CMD_SCENARIO
+  theSys.CldJSONCommand("{'cmd':4, 'node_id':1, 'SNT_id':1}");
+
+  // CMD_EFFECT
+  theSys.CldJSONCommand("{'cmd':7, 'node_id':1, 'filter':1}");
+
+  // CMD_QUERY
+  theSys.CldJSONCommand("{'cmd':6, 'node_id':1}");
+}
+
 test(cloudinput)
 {
   /// Notes: if run in Cloud functions window, symbol \ should be removed
