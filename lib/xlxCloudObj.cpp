@@ -348,7 +348,7 @@ void CloudObjClass::GotNodeConfigAck(const UC _nodeID, const UC *data)
 {
 	String strTemp;
 
-  strTemp = String::format("{'node_id':%d,'ver':%d,'tp':%d,'senMap':%d,'funcMap':%d,'data':[%d,%d,%d,%d,%d,%d]}",
+  strTemp = String::format("{'nd':%d,'ver':%d,'tp':%d,'senMap':%d,'funcMap':%d,'data':[%d,%d,%d,%d,%d,%d]}",
 			 _nodeID, data[0], data[1],	data[2] + data[3]*256, data[4] + data[5]*256,
        data[6], data[7], data[8], data[9], data[10], data[11]);
 	PublishDeviceConfig(strTemp.c_str());

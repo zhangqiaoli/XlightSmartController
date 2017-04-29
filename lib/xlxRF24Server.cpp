@@ -619,7 +619,7 @@ bool RF24ServerClass::ProcessReceive()
 
 			case C_REQ:
 				if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL
-					  || msgType == V_RGBW || msgType == V_DISTANCE ) {
+					  || msgType == V_RGBW || msgType == V_DISTANCE || msgType == V_VAR1 ) {
 					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 					BOOL bDataChanged = false;
 					if( _bIsAck ) {

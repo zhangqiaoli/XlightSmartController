@@ -840,12 +840,13 @@ int SmartControllerClass::ExeJSONCommand(String jsonCmd)
 				}
 				const char* strData = (*m_jpCldCmd)["data"];
 				theConsole.ExecuteCloudCommand(strData);
+				return 1;
 			}
 		}
 		//COMMAND 1: Toggle light switch
 		else if (_cmd == CMD_POWER) {
-			if ((*m_jpCldCmd).containsKey("node_id") && (*m_jpCldCmd).containsKey("state")) {
-				const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+			if ((*m_jpCldCmd).containsKey("nd") && (*m_jpCldCmd).containsKey("state")) {
+				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
 				const int state = (*m_jpCldCmd)["state"].as<int>();
 
 				//char buf[64];
@@ -853,13 +854,13 @@ int SmartControllerClass::ExeJSONCommand(String jsonCmd)
 				//String strCmd(buf);
 				//ExecuteLightCommand(strCmd);
 				String strCmd = String::format("%d:7:%d", node_id, state);
-				theRadio.ProcessSend(strCmd);
+				return theRadio.ProcessSend(strCmd);
 			}
 		}
 		//COMMAND 2: Change light color
 		else if (_cmd == CMD_COLOR) {
-			if ((*m_jpCldCmd).containsKey("node_id") && (*m_jpCldCmd).containsKey("ring")) {
-				const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+			if ((*m_jpCldCmd).containsKey("nd") && (*m_jpCldCmd).containsKey("ring")) {
+				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
 				const uint8_t ring = (*m_jpCldCmd)["ring"][0].as<uint8_t>();
 				const uint8_t State = (*m_jpCldCmd)["ring"][1].as<uint8_t>();
 				const uint8_t BR = (*m_jpCldCmd)["ring"][2].as<uint8_t>();
@@ -875,14 +876,14 @@ int SmartControllerClass::ExeJSONCommand(String jsonCmd)
 				payl_len = CreateColorPayload(payl_buf, ring, State, BR, W, R, G, B);
 				tmpMsg.build(theRadio.getAddress(), node_id, NODEID_DUMMY, C_SET, V_RGBW, true);
 				tmpMsg.set((void *)payl_buf, payl_len);
-				theRadio.ProcessSend(&tmpMsg);
+				return theRadio.ProcessSend(&tmpMsg);
 			}
 		}
 		//COMMAND 3: Change brightness
 		//COMMAND 5: Change CCT
 		else if (_cmd == CMD_BRIGHTNESS || _cmd == CMD_CCT) {
-			if ((*m_jpCldCmd).containsKey("node_id") && (*m_jpCldCmd).containsKey("value")) {
-				const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+			if ((*m_jpCldCmd).containsKey("nd") && (*m_jpCldCmd).containsKey("value")) {
+				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
 				const int value = (*m_jpCldCmd)["value"].as<int>();
 
 				//char buf[64];
@@ -891,36 +892,36 @@ int SmartControllerClass::ExeJSONCommand(String jsonCmd)
 				//ExecuteLightCommand(strCmd);
 				// Use shortcut instead
 				String strCmd = String::format("%d:%d:%d", node_id, (_cmd == CMD_BRIGHTNESS ? 9 : 11), value);
-				theRadio.ProcessSend(strCmd);
+				return theRadio.ProcessSend(strCmd);
 			}
 		}
 		//COMMAND 4: Change color with scenario input
 		else if (_cmd == CMD_SCENARIO) {
-			if ((*m_jpCldCmd).containsKey("node_id") && (*m_jpCldCmd).containsKey("SNT_id")) {
-				const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+			if ((*m_jpCldCmd).containsKey("nd") && (*m_jpCldCmd).containsKey("SNT_id")) {
+				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
 				const int SNT_uid = (*m_jpCldCmd)["SNT_id"].as<int>();
-				ChangeLampScenario((UC)node_id, (UC)SNT_uid);
+				return ChangeLampScenario((UC)node_id, (UC)SNT_uid);
 			}
 		}
 		//COMMAND 6: Query Device Status
 		else if (_cmd == CMD_QUERY) {
-			if ((*m_jpCldCmd).containsKey("node_id")) {
-				const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+			if ((*m_jpCldCmd).containsKey("nd")) {
+				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
 				UC ring_id = RING_ID_ALL;
 				if( (*m_jpCldCmd).containsKey("Ring") ) {
 					ring_id = (UC)(*m_jpCldCmd)["Ring"].as<int>();
 					if( ring_id > MAX_RING_NUM ) ring_id = RING_ID_ALL;
 				}
-				QueryDeviceStatus((UC)node_id, ring_id);
+				return QueryDeviceStatus((UC)node_id, ring_id);
 			}
 		}
 		//COMMAND 7: Special effect
 		else if (_cmd == CMD_EFFECT) {
-			if ((*m_jpCldCmd).containsKey("node_id")) {
-				const int node_id = (*m_jpCldCmd)["node_id"].as<int>();
+			if ((*m_jpCldCmd).containsKey("nd")) {
+				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
 				const int filter_id = ((*m_jpCldCmd).containsKey("filter") ? (*m_jpCldCmd)["filter"].as<int>() : 0);
 				String strCmd = String::format("%d:17:%d", node_id, filter_id);
-				theRadio.ProcessSend(strCmd);
+				return theRadio.ProcessSend(strCmd);
 			}
 		}
 	}
@@ -1198,8 +1199,8 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 				if( data.containsKey("csc") ) {
 					// Change CSC
 					theConfig.SetCloudSerialEnabled(data["csc"] > 0);
-				} else if( data.containsKey("node_id") ) {
-					UC node_id = (UC)data["node_id"];
+				} else if( data.containsKey("nd") ) {
+					UC node_id = (UC)data["nd"];
 					if( data.containsKey("new_id") ) {
 						UC new_id = (UC)data["new_id"];
 						String strCmd = String::format("%d:1:%d", node_id, new_id);
@@ -2313,7 +2314,7 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 	}
 
 	// Publish Device-Scenario-Change message
-	String strTemp = String::format("{'node_id':%d,'SNT_uid':%d,'found':%d}",
+	String strTemp = String::format("{'nd':%d,'SNT_uid':%d,'found':%d}",
 			 _nodeID, _scenarioID, _findIt);
 	PublishDeviceStatus(strTemp.c_str());
 

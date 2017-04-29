@@ -122,7 +122,7 @@ void NodeListClass::publishNode(NodeIdRow_t _node)
 	char strDisplay[64];
 
 	UL lv_now = Time.now();
-	strTemp = String::format("{'node_id':%d,'mac':'%s','device':%d,'recent':%d}", _node.nid,
+	strTemp = String::format("{'nd':%d,'mac':'%s','device':%d,'recent':%d}", _node.nid,
 			PrintMacAddress(strDisplay, _node.identity), _node.device,
 			(_node.recentActive > 0 ? lv_now - _node.recentActive : -1));
 	theSys.PublishDeviceConfig(strTemp.c_str());
