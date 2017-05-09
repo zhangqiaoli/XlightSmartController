@@ -46,23 +46,16 @@
 
 #include "MyParserSerial.h"
 
-#define BROADCAST_REPEAT
-
 //------------------------------------------------------------------
 // the one and only instance of RF24ServerClass
 RF24ServerClass theRadio(PIN_RF24_CE, PIN_RF24_CS);
 MyMessage msg;
 UC *msgData = (UC *)&(msg.msg);
 
-#ifdef BROADCAST_REPEAT
-MyMessage msg_rpt;
-UL tickMsgRpt = 0;
-UC timesMsgRpt = 0;
-#endif
-
 RF24ServerClass::RF24ServerClass(uint8_t ce, uint8_t cs, uint8_t paLevel)
 	:	MyTransportNRF24(ce, cs, paLevel)
-	, CDataQueue(MAX_MESSAGE_LENGTH * MQ_MAX_RF_MSG)
+	, CDataQueue(MAX_MESSAGE_LENGTH * MQ_MAX_RF_RCVMSG)
+	, CFastMessageQ(MQ_MAX_RF_SNDMSG, MAX_MESSAGE_LENGTH)
 {
 	_times = 0;
 	_succ = 0;
@@ -118,6 +111,13 @@ void RF24ServerClass::SetRole_Gateway()
 {
 	uint64_t lv_networkID = GetNetworkID();
 	setAddress(GATEWAY_ADDRESS, lv_networkID);
+}
+
+bool RF24ServerClass::ProcessMQ()
+{
+	ProcessSendMQ();
+	ProcessReceiveMQ();
+	return true;
 }
 
 bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg)
@@ -375,35 +375,39 @@ bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
 {
 	if( !pMsg ) { pMsg = &msg; }
 
-#ifdef BROADCAST_REPEAT
-	if( pMsg->getDestination() == BROADCAST_ADDRESS ) {
-		SetRepeatBCastMsg(pMsg);
+	// Convent message if necessary
+	bool _bConvert = false;
+	if( pMsg->getDestination() == BROADCAST_ADDRESS || IS_GROUP_NODEID(pMsg->getDestination()) ) {
+		if( theConfig.GetBcMsgRptTimes() > 0 ) {
+			_bConvert = true;
+		}
+	} else if( theConfig.GetNdMsgRptTimes() > 0 ) {
+		_bConvert = true;
 	}
-#endif
+	if( _bConvert ) {
+		ConvertRepeatMsg(pMsg);
+	}
 
-	// Determine the receiver addresse
+	// Add message to sending MQ. Right now tag has no actual purpose (just for debug)
 	_times++;
-	if( send(pMsg->getDestination(), *pMsg) )
-	{
-		_succ++;
+	if( AddMessage((UC *)&(pMsg->msg), MAX_MESSAGE_LENGTH, GetMQLength()) > 0 ) {
 		return true;
 	}
 
+	LOGW(LOGTAG_MSG, "Failed to add sendMQ");
 	return false;
 }
 
-void RF24ServerClass::SetRepeatBCastMsg(MyMessage *pMsg)
+void RF24ServerClass::ConvertRepeatMsg(MyMessage *pMsg)
 {
-#ifdef BROADCAST_REPEAT
-	msg_rpt = *pMsg;
 	// Note: change relative value to absolute value
-	if( msg_rpt.getCommand() == C_SET ) {
-		uint8_t *payload = (uint8_t *)msg_rpt.getCustom();
+	if( pMsg->getCommand() == C_SET ) {
+		uint8_t *payload = (uint8_t *)pMsg->getCustom();
 		uint8_t bytValue = payload[0];
-		if( msg_rpt.getType() == V_STATUS && bytValue == DEVICE_SW_TOGGLE ) {
+		if( pMsg->getType() == V_STATUS && bytValue == DEVICE_SW_TOGGLE ) {
 			bytValue = 1 - theSys.GetDevOnOff(CURRENT_DEVICE);
-			msg_rpt.set(bytValue);
-		} else if( msg_rpt.getType() == V_PERCENTAGE && msg_rpt.getLength() == 2 ) {
+			pMsg->set(bytValue);
+		} else if( pMsg->getType() == V_PERCENTAGE && pMsg->getLength() == 2 ) {
 			if( bytValue != OPERATOR_SET ) {
 				payload[0] = OPERATOR_SET;
 				if( bytValue == OPERATOR_ADD ) {
@@ -417,7 +421,7 @@ void RF24ServerClass::SetRepeatBCastMsg(MyMessage *pMsg)
 					}
 				}
 			}
-		} else if( msg_rpt.getType() == V_LEVEL && msg_rpt.getLength() == 3 ) {
+		} else if( pMsg->getType() == V_LEVEL && pMsg->getLength() == 3 ) {
 			if( bytValue != OPERATOR_SET ) {
 				uint16_t _CCTValue = theSys.GetDevCCT(CURRENT_DEVICE);
 				uint16_t _deltaValue = payload[2] * 256 + payload[1];
@@ -437,9 +441,6 @@ void RF24ServerClass::SetRepeatBCastMsg(MyMessage *pMsg)
 			}
 		}
 	}
-	tickMsgRpt = millis();
-	timesMsgRpt = 0;
-#endif
 }
 
 bool RF24ServerClass::SendNodeConfig(UC _node, UC _ncf, unsigned int _value)
@@ -451,24 +452,9 @@ bool RF24ServerClass::SendNodeConfig(UC _node, UC _ncf, unsigned int _value)
 	return ProcessSend(&lv_msg);
 }
 
+// Get messages from RF buffer and store them in MQ
 bool RF24ServerClass::PeekMessage()
 {
-#ifdef BROADCAST_REPEAT
-	// Repeatly send
-	if( tickMsgRpt > 0 ) {
-			if( millis() - tickMsgRpt > 150 ) {
-				if( ++timesMsgRpt > 3 ) {
-						tickMsgRpt = 0;
-				} else {
-					send(msg_rpt.getDestination(), msg_rpt);
-					tickMsgRpt = millis();
-					// ToDo: Test
-					SERIAL_LN("Test Repeat BCast Message: %d, times:%d", msg_rpt.getCommand(), timesMsgRpt);
-				}
-			}
-	}
-#endif
-
 	if( !isValid() ) return false;
 
 	UC to = 0;
@@ -495,16 +481,17 @@ bool RF24ServerClass::PeekMessage()
 	  LOGD(LOGTAG_MSG, "Received from pipe %d msg-len=%d, from:%d to:%d dest:%d cmd:%d type:%d sensor:%d payl-len:%d",
 	        pipe, len, lv_msg.getSender(), to, lv_msg.getDestination(), lv_msg.getCommand(),
 	        lv_msg.getType(), lv_msg.getSensor(), lv_msg.getLength());
-		if( !Append(lv_pData, len) ) return false;
+		if( Append(lv_pData, len) <= 0 ) return false;
 	}
 	return true;
 }
 
-bool RF24ServerClass::ProcessReceive()
+// Parse and process message in MQ
+bool RF24ServerClass::ProcessReceiveMQ()
 {
 	bool msgReady = false;
   bool sentOK = false;
-	UC pipe, len, payl_len;
+	UC len, payl_len;
 	UC replyTo, _sensor, msgType, transTo;
 	bool _bIsAck, _needAck;
 	UC *payload;
@@ -515,7 +502,6 @@ bool RF24ServerClass::ProcessReceive()
   while (Length() > 0) {
 
 	  len = Remove(MAX_MESSAGE_LENGTH, msgData);
-		pipe = PRIVATE_NET_PIPE;
 		payl_len = msg.getLength();
 		_sensor = msg.getSensor();
 		msgType = msg.getType();
@@ -543,7 +529,6 @@ bool RF24ServerClass::ProcessReceive()
 					char cNodeType = (char)_sensor;
 					uint64_t nIdentity = msg.getUInt64();
 	        UC newID = theConfig.lstNodes.requestNodeID(replyTo, cNodeType, nIdentity);
-					pipe = CURRENT_NODE_PIPE;  // Use Base Network
 
 	        /// Send response message
 	        msg.build(getAddress(), replyTo, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
@@ -698,15 +683,6 @@ bool RF24ServerClass::ProcessReceive()
 							msg.build(getAddress(), transTo, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
 							// Keep payload unchanged
 							msgReady = true;
-
-#ifdef BROADCAST_REPEAT
-							// Process broadcast message
-							if( transTo == BROADCAST_ADDRESS ) {
-								SetRepeatBCastMsg(&msg);
-								msgReady = false;	// Don't send, but leave it to repeat routine
-							}
-#endif
-
 						}
 					}
 				}
@@ -718,11 +694,58 @@ bool RF24ServerClass::ProcessReceive()
 
 		// Send reply message
 		if( msgReady ) {
-			_times++;
-			sentOK = send(msg.getDestination(), msg, pipe);
-			if( sentOK ) _succ++;
+			ProcessSend(&msg);
 		}
 	}
 
   return true;
+}
+
+// Scan sendMQ and send messages, repeat if necessary
+bool RF24ServerClass::ProcessSendMQ()
+{
+	MyMessage lv_msg;
+	UC *pData = (UC *)&(lv_msg.msg);
+	CFastMessageNode *pNode = NULL, *pOld;
+	UC pipe, _repeat, _tag;
+	bool _remove;
+
+	if( GetMQLength() > 0 ) {
+		while( pNode = GetMessage(pNode) ) {
+			pOld = pNode;
+			// Get message data
+			if( pNode->ReadMessage(pData, &_repeat, &_tag, 15) > 0 )
+			{
+				// Determine pipe
+				if( lv_msg.getCommand() == C_INTERNAL && lv_msg.getType() == I_ID_RESPONSE ) {
+					pipe = CURRENT_NODE_PIPE;
+				} else {
+					pipe = PRIVATE_NET_PIPE;
+				}
+
+				// Send message
+				_remove = send(lv_msg.getDestination(), lv_msg, pipe);
+				LOGD(LOGTAG_MSG, "RF-send msg %d-%d tag %d to %d pipe %d tried %d %s", lv_msg.getCommand(), lv_msg.getType(), _tag, lv_msg.getDestination(), pipe, _repeat, _remove ? "OK" : "Failed");
+
+				// Determine whether requires retry
+				if( lv_msg.getDestination() == BROADCAST_ADDRESS || IS_GROUP_NODEID(lv_msg.getDestination()) ) {
+					if( _remove && _repeat == 1 ) _succ++;
+					_remove = (_repeat > theConfig.GetBcMsgRptTimes());
+				} else {
+					if( _remove ) _succ++;
+					if( _repeat > theConfig.GetNdMsgRptTimes() ) 	_remove = true;
+				}
+
+				// Remove message if succeeded or retried enough times
+				if( _remove ) {
+					RemoveMessage(pNode);
+				}
+			}
+
+			// Next node
+			pNode = pOld->m_pNext;
+		}
+	}
+
+	return true;
 }

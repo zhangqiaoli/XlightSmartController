@@ -26,7 +26,7 @@
 #endif
 
 // Change it only if Config_t structure is updated
-#define VERSION_CONFIG_DATA       9
+#define VERSION_CONFIG_DATA       10
 
 // Xlight Application Identification
 #define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM
@@ -78,7 +78,8 @@
 #define SENSORDATA_JSON_SIZE		196
 
 // Maximum RF messages buffered
-#define MQ_MAX_RF_MSG           5
+#define MQ_MAX_RF_RCVMSG        5
+#define MQ_MAX_RF_SNDMSG        8
 
 // Maximum Cloud Command messages buffered
 #define MQ_MAX_CLOUD_MSG        6

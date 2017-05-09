@@ -542,7 +542,7 @@ void SmartControllerClass::ProcessCommands()
 	theRadio.PeekMessage();
 
 	// Process RF2.4 messages
-	theRadio.ProcessReceive();
+	theRadio.ProcessMQ();
 
 	// Process Console Command
   theConsole.processCommand();
@@ -2135,22 +2135,41 @@ void SmartControllerClass::CheckDevTimeout()
 UC SmartControllerClass::GetDevOnOff(UC _nodeID)
 {
 	//(m_pMainDev->data.ring[0].BR < BR_MIN_VALUE ? true : !m_pMainDev->data.ring[0].State);
-	return( thePanel.GetRingOnOff() ? DEVICE_SW_ON : DEVICE_SW_OFF);
+	//return(thePanel.GetRingOnOff() ? DEVICE_SW_ON : DEVICE_SW_OFF);
+	UC _st;
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = FindDevice(_nodeID);
+	if (DevStatusRowPtr) {
+		_st = (DevStatusRowPtr->data.ring[0].BR < BR_MIN_VALUE ? DEVICE_SW_OFF : DevStatusRowPtr->data.ring[0].State);
+	} else {
+		_st = thePanel.GetRingOnOff() ? DEVICE_SW_ON : DEVICE_SW_OFF;
+	}
+	return _st;
 }
 
 UC SmartControllerClass::GetDevBrightness(UC _nodeID)
 {
-	UC _br = (UC)thePanel.GetDimmerValue();
-//	ListNode<DevStatusRow_t> *DevStatusRowPtr = FindDevice(_nodeID);
-//	if (DevStatusRowPtr) {
-//		_br = DevStatusRowPtr->data.ring[0].BR;
-//	}
+	 //return((UC)thePanel.GetDimmerValue());
+	 UC _br;
+	 ListNode<DevStatusRow_t> *DevStatusRowPtr = FindDevice(_nodeID);
+	 if (DevStatusRowPtr) {
+		 _br = DevStatusRowPtr->data.ring[0].BR;
+	 } else {
+		 _br = (UC)thePanel.GetDimmerValue();
+	 }
 	return _br;
 }
 
 US SmartControllerClass::GetDevCCT(UC _nodeID)
 {
-	return (US)thePanel.GetCCTValue();
+	//return (US)thePanel.GetCCTValue(false);
+	US _cct;
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = FindDevice(_nodeID);
+	if (DevStatusRowPtr) {
+		_cct = DevStatusRowPtr->data.ring[0].CCT;
+	} else {
+		_cct = (US)thePanel.GetCCTValue(false);
+	}
+ return _cct;
 }
 
 US SmartControllerClass::VerifyDevicePresence(UC *_assoDev, UC _nodeID, UC _devType, uint64_t _identity)
@@ -2398,7 +2417,6 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 					_nodeID, _st, _percentage);
 			}
 			PublishDeviceStatus(strTemp.c_str());
-		} else {
 			ConfirmLampPresent(DevStatusRowPtr, true);
 		}
 		rc = true;
@@ -2441,9 +2459,8 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID)
 			 	strTemp = String::format("{'nd':%d,'CCT':%d}", _nodeID, _cct);
 			}
 			PublishDeviceStatus(strTemp.c_str());
+			ConfirmLampPresent(DevStatusRowPtr, true);
 			rc = true;
-		} else {
-			rc = ConfirmLampPresent(DevStatusRowPtr, true);
 		}
 	}
 	return rc;
@@ -2489,9 +2506,8 @@ BOOL SmartControllerClass::ConfirmLampHue(UC _nodeID, UC _white, UC _red, UC _gr
 				  _nodeID, _white, _red, _green, _blue);
 			}
 			PublishDeviceStatus(strTemp.c_str());
+			ConfirmLampPresent(DevStatusRowPtr, true);
 			rc = true;
-		} else {
-			rc = ConfirmLampPresent(DevStatusRowPtr, true);
 		}
 	}
 	return rc;
@@ -2562,9 +2578,8 @@ BOOL SmartControllerClass::ConfirmLampTop(UC _nodeID, UC *_payl, UC _len)
 					jroot->printTo(buffer, 256);
 					PublishDeviceStatus(buffer);
 				}
-			} else {
-				bChanged = ConfirmLampPresent(DevStatusRowPtr, true);
 			}
+			ConfirmLampPresent(DevStatusRowPtr, true);
 		}
 	}
 
@@ -2585,9 +2600,8 @@ BOOL SmartControllerClass::ConfirmLampFilter(UC _nodeID, UC _filter)
 			// Publish device status event
 			String strTemp = String::format("{'nd':%d,'filter':%d}", _nodeID, _filter);
 			PublishDeviceStatus(strTemp.c_str());
+			ConfirmLampPresent(DevStatusRowPtr, true);
 			return true;
-		} else {
-			return ConfirmLampPresent(DevStatusRowPtr, true);
 		}
 	}
 	return false;

@@ -59,8 +59,12 @@ typedef struct
   UC typeMainDevice           :8;           // Type of the main lamp
   UC numDevices               :8;           // Number of devices
   Timezone_t timeZone;                      // Time zone
-  char Organization[24];                    // Organization name
-  char ProductName[24];                     // Product name
+  char Organization[20];                    // Organization name
+  UC bcMsgRtpTimes            :4;           // Broadcast message repeat times
+  UC ndMsgRtpTimes            :4;           // Node message repeat times
+  UC Reserved_UC1[3];
+  char ProductName[20];                     // Product name
+  UC Reserved_UC2[4];
   char Token[64];                           // Token
   BOOL enableCloudSerialCmd   :1;           // Whether enable cloud serial command
   BOOL enableDailyTimeSync    :1;           // Whether enable daily time synchronization
@@ -408,6 +412,12 @@ public:
 
   UC GetRFPowerLevel();
   BOOL SetRFPowerLevel(UC level);
+
+  UC GetBcMsgRptTimes();
+  BOOL SetBcMsgRptTimes(UC _times);
+
+  UC GetNdMsgRptTimes();
+  BOOL SetNdMsgRptTimes(UC _times);
 
   UC GetASR_SNT(const UC _code);
   BOOL SetASR_SNT(const UC _code, const UC _snt = 0);

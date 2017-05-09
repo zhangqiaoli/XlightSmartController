@@ -374,6 +374,8 @@ void ConfigClass::InitConfig()
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
 	m_config.useCloud = CLOUD_ENABLE;
 	m_config.stWiFi = 1;
+	m_config.bcMsgRtpTimes = 3;
+	m_config.ndMsgRtpTimes = 1;
 	memset(m_config.asrSNT, 0x00, MAX_ASR_SNT_ITEMS);
 }
 
@@ -1041,6 +1043,36 @@ BOOL ConfigClass::SetRFPowerLevel(UC level)
 		return true;
 	}
 	return false;
+}
+
+UC ConfigClass::GetBcMsgRptTimes()
+{
+	return m_config.bcMsgRtpTimes;
+}
+
+BOOL ConfigClass::SetBcMsgRptTimes(UC _times)
+{
+	if( _times != m_config.bcMsgRtpTimes ) {
+    m_config.bcMsgRtpTimes = _times;
+    m_isChanged = true;
+    return true;
+  }
+  return false;
+}
+
+UC ConfigClass::GetNdMsgRptTimes()
+{
+	return m_config.ndMsgRtpTimes;
+}
+
+BOOL ConfigClass::SetNdMsgRptTimes(UC _times)
+{
+	if( _times != m_config.ndMsgRtpTimes ) {
+    m_config.ndMsgRtpTimes = _times;
+    m_isChanged = true;
+    return true;
+  }
+  return false;
 }
 
 UC ConfigClass::GetASR_SNT(const UC _code)
