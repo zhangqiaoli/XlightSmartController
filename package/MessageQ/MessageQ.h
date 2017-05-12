@@ -17,6 +17,7 @@ public:
 
   void WriteMessage(const uint8_t *f_data, uint8_t f_len, uint8_t f_Tag = 0);
   uint8_t ReadMessage(uint8_t *f_data, uint8_t *f_repeat, uint8_t *f_Tag = NULL, uint8_t f_10ms = 0);
+  bool CompareMessage(const uint8_t *f_data, uint8_t f_len);
   void ClearMessage();
 
 private:
@@ -46,6 +47,9 @@ public:
 	void UnlockQueue();
   bool GetLock(uint8_t f_10ms = 0);
 
+  bool GetDuplicateMsg();
+  void SetDuplicateMsg(const bool f_sw = true);
+
 protected:
 	CFastMessageNode *m_pQHead;
 	CFastMessageNode *m_pQTail;
@@ -55,6 +59,7 @@ protected:
 
 private:
 	bool m_bLock;
+  bool m_bDupMsg;
 };
 
 #endif

@@ -389,8 +389,9 @@ bool RF24ServerClass::ProcessSend(MyMessage *pMsg)
 	}
 
 	// Add message to sending MQ. Right now tag has no actual purpose (just for debug)
-	_times++;
 	if( AddMessage((UC *)&(pMsg->msg), MAX_MESSAGE_LENGTH, GetMQLength()) > 0 ) {
+		_times++;
+		//LOGD(LOGTAG_MSG, "Add sendMQ len:%d", GetMQLength());
 		return true;
 	}
 
@@ -489,8 +490,7 @@ bool RF24ServerClass::PeekMessage()
 // Parse and process message in MQ
 bool RF24ServerClass::ProcessReceiveMQ()
 {
-	bool msgReady = false;
-  bool sentOK = false;
+	bool msgReady;
 	UC len, payl_len;
 	UC replyTo, _sensor, msgType, transTo;
 	bool _bIsAck, _needAck;
@@ -501,6 +501,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 
   while (Length() > 0) {
 
+		msgReady = false;
 	  len = Remove(MAX_MESSAGE_LENGTH, msgData);
 		payl_len = msg.getLength();
 		_sensor = msg.getSensor();

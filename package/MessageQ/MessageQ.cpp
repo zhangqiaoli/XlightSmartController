@@ -83,6 +83,13 @@ uint8_t CFastMessageNode::ReadMessage(uint8_t *f_data, uint8_t *f_repeat, uint8_
 	return m_nLen;
 }
 
+// return true if messages are identical
+bool CFastMessageNode::CompareMessage(const uint8_t *f_data, uint8_t f_len)
+{
+  if(f_len != m_nLen) return false;
+  return(memcmp(f_data, m_pData, m_nLen) == 0);
+}
+
 void CFastMessageNode::ClearMessage()
 {
   m_nLen = 0;
@@ -91,7 +98,9 @@ void CFastMessageNode::ClearMessage()
 CFastMessageQ::CFastMessageQ(uint8_t f_iMaxLen, uint8_t f_iNodeSize)
 	: m_iQLength(0),
 	  m_pQHead(NULL),
-	  m_pQTail(NULL)
+	  m_pQTail(NULL),
+    m_bDupMsg(false),
+    m_bLock(false)
 {
 	// Get maxium length
 	m_iMaxQLength = f_iMaxLen;
@@ -156,12 +165,27 @@ uint8_t CFastMessageQ::AddMessage(const uint8_t *f_data, uint8_t f_len, uint8_t 
 {
   if( GetLock(20) ) return 0;
 
-  uint8_t lv_retVal;
+  uint8_t lv_retVal = 0;
 
   // Lock Queue
 	LockQueue();
 
-	if( m_iQLength < m_iMaxQLength )
+  if( !m_bDupMsg ) {
+    // Skip duplicated message
+    CFastMessageNode *lv_pNode = m_pQHead;
+    while( lv_pNode != NULL && lv_pNode != m_pQTail )
+    {
+      if( lv_pNode->CompareMessage(f_data, f_len) )
+      {
+        // Same message
+        lv_retVal = m_iQLength;
+        break;
+      }
+      lv_pNode = lv_pNode->m_pNext;
+    }
+  }
+
+	if( m_iQLength < m_iMaxQLength && lv_retVal == 0 )
 	{
 		// Set Data
 		m_pQTail->WriteMessage(f_data, f_len, f_Tag);
@@ -169,12 +193,6 @@ uint8_t CFastMessageQ::AddMessage(const uint8_t *f_data, uint8_t f_len, uint8_t 
 		m_iQLength++;
 		lv_retVal = m_iQLength;
     //SERIAL_LN("Messgae Queue len:%d", m_iQLength);
-	}
-	else
-	{
-		// Messgae Queue is full
-    //SERIAL_LN("Messgae Queue is full");
-		lv_retVal = 0;
 	}
 
 	// Unlock
@@ -238,6 +256,16 @@ void CFastMessageQ::RemoveAllMessage()
 	m_pQHead = m_pQTail;
 	// Unlock
 	UnlockQueue();
+}
+
+bool CFastMessageQ::GetDuplicateMsg()
+{
+  return m_bDupMsg;
+}
+
+void CFastMessageQ::SetDuplicateMsg(const bool f_sw)
+{
+  m_bDupMsg = f_sw;
 }
 
 bool CFastMessageQ::GetLock(uint8_t f_10ms)
