@@ -2383,6 +2383,7 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 	//m_pMainDev->data.ring[0].BR = _percentage;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
+		ConfirmLampPresent(DevStatusRowPtr, true);
 		if( DevStatusRowPtr->data.ring[r_index].State != _st || DevStatusRowPtr->data.ring[r_index].BR != _percentage ) {
 			DevStatusRowPtr->data.present = 1;
 			DevStatusRowPtr->data.ring[r_index].State = _st;
@@ -2417,7 +2418,6 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 					_nodeID, _st, _percentage);
 			}
 			PublishDeviceStatus(strTemp.c_str());
-			ConfirmLampPresent(DevStatusRowPtr, true);
 		}
 		rc = true;
 	}
@@ -2431,6 +2431,7 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID)
 	//m_pMainDev->data.ring[0].CCT = _cct;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
+		ConfirmLampPresent(DevStatusRowPtr, true);
 		if( DevStatusRowPtr->data.ring[r_index].CCT != _cct ) {
 			DevStatusRowPtr->data.present = 1;
 			DevStatusRowPtr->data.ring[r_index].CCT = _cct;
@@ -2459,7 +2460,6 @@ BOOL SmartControllerClass::ConfirmLampCCT(UC _nodeID, US _cct, UC _ringID)
 			 	strTemp = String::format("{'nd':%d,'CCT':%d}", _nodeID, _cct);
 			}
 			PublishDeviceStatus(strTemp.c_str());
-			ConfirmLampPresent(DevStatusRowPtr, true);
 			rc = true;
 		}
 	}
@@ -2472,6 +2472,7 @@ BOOL SmartControllerClass::ConfirmLampHue(UC _nodeID, UC _white, UC _red, UC _gr
 	UC r_index = (_ringID == RING_ID_ALL ? 0 : _ringID - 1);
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
+		ConfirmLampPresent(DevStatusRowPtr, true);
 		if( (DevStatusRowPtr->data.ring[r_index].CCT % 256) != _white ||
 		    DevStatusRowPtr->data.ring[r_index].R != _red ||
 			  DevStatusRowPtr->data.ring[r_index].G != _green ||
@@ -2506,7 +2507,6 @@ BOOL SmartControllerClass::ConfirmLampHue(UC _nodeID, UC _white, UC _red, UC _gr
 				  _nodeID, _white, _red, _green, _blue);
 			}
 			PublishDeviceStatus(strTemp.c_str());
-			ConfirmLampPresent(DevStatusRowPtr, true);
 			rc = true;
 		}
 	}
@@ -2522,6 +2522,7 @@ BOOL SmartControllerClass::ConfirmLampTop(UC _nodeID, UC *_payl, UC _len)
 	if( _len >= 7 ) {
 		ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 		if (DevStatusRowPtr) {
+			ConfirmLampPresent(DevStatusRowPtr, true);
 			StaticJsonBuffer<256> jBuf;
 			JsonObject *jroot;
 			jroot = &(jBuf.createObject());
@@ -2579,7 +2580,6 @@ BOOL SmartControllerClass::ConfirmLampTop(UC _nodeID, UC *_payl, UC _len)
 					PublishDeviceStatus(buffer);
 				}
 			}
-			ConfirmLampPresent(DevStatusRowPtr, true);
 		}
 	}
 
@@ -2590,6 +2590,7 @@ BOOL SmartControllerClass::ConfirmLampFilter(UC _nodeID, UC _filter)
 {
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
+		ConfirmLampPresent(DevStatusRowPtr, true);
 		if( DevStatusRowPtr->data.filter != _filter ) {
 			DevStatusRowPtr->data.filter = _filter;
 			DevStatusRowPtr->data.run_flag = EXECUTED;
@@ -2600,7 +2601,6 @@ BOOL SmartControllerClass::ConfirmLampFilter(UC _nodeID, UC _filter)
 			// Publish device status event
 			String strTemp = String::format("{'nd':%d,'filter':%d}", _nodeID, _filter);
 			PublishDeviceStatus(strTemp.c_str());
-			ConfirmLampPresent(DevStatusRowPtr, true);
 			return true;
 		}
 	}

@@ -392,11 +392,13 @@ bool SerialConsoleClass::doCheck(const char *cmd)
   if( sTopic ) {
     if (strnicmp(sTopic, "rf", 2) == 0) {
       SERIAL_LN("**RF module is %s Received %lu", theRadio.isValid() ? "available." : "not available!", theRadio._received);
+      float succ_r = 0;
       if( theRadio._times > 0 ) {
+        succ_r = (float)theRadio._succ * 100 / theRadio._times;
         SERIAL_LN("  Sent %lu out of %lu, Succ-rate %.2f%%",
-            theRadio._succ, theRadio._times, (float)theRadio._succ * 100 / theRadio._times);
+            theRadio._succ, theRadio._times, succ_r);
       }
-      CloudOutput("c_rf:%d", theRadio.isValid());
+      CloudOutput("c_rf:%d, succ_r:%.2f", theRadio.isValid(), succ_r);
     } else if (strnicmp(sTopic, "wifi", 4) == 0) {
       SERIAL("**Wi-Fi module is %s, ", (WiFi.ready() ? "ready" : "not ready!"));
       int lv_RSSI = WiFi.RSSI();
