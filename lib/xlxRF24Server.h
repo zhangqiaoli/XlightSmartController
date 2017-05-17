@@ -17,8 +17,9 @@ public:
   uint64_t GetNetworkID(bool _full = false);
   void SetRole_Gateway();
   bool ChangeNodeID(const uint8_t bNodeID);
-  bool ProcessSend(String &strMsg, MyMessage &my_msg);
-  bool ProcessSend(String &strMsg); //overloaded
+  bool ProcessSend(const UC _node, const UC _msgID, String &strPayl, MyMessage &my_msg, const UC _replyTo);
+  bool ProcessSend(String &strMsg, MyMessage &my_msg, const UC _replyTo = 0);
+  bool ProcessSend(String &strMsg, const UC _replyTo = 0); //overloaded
   bool ProcessSend(MyMessage *pMsg = NULL);
   bool SendNodeConfig(UC _node, UC _ncf, unsigned int _value);
 

@@ -25,6 +25,7 @@
 
 #include "xlxCloudObj.h"
 #include "xlxLogger.h"
+#include "xlxBLEInterface.h"
 
 //------------------------------------------------------------------
 // Xlight Cloud Object Class
@@ -329,6 +330,10 @@ BOOL CloudObjClass::PublishLog(const char *msg)
     rc = Particle.publish(CLT_NAME_LOGMSG, msg, CLT_TTL_LOGMSG, PRIVATE);
   }
 #endif
+
+  // Notify via BLE
+  //if( theBLE.isGood() ) theBLE.sendNotification(CLT_ID_LOGMSG, msg);
+
   return rc;
 }
 
@@ -341,6 +346,10 @@ BOOL CloudObjClass::PublishDeviceStatus(const char *msg)
     rc = Particle.publish(CLT_NAME_DeviceStatus, msg, CLT_TTL_DeviceStatus, PRIVATE);
   }
 #endif
+
+  // Notify via BLE
+  if( theBLE.isGood() ) theBLE.sendNotification(CLT_ID_DeviceStatus, msg);
+
   return rc;
 }
 
@@ -363,6 +372,10 @@ BOOL CloudObjClass::PublishDeviceConfig(const char *msg)
     rc = Particle.publish(CLT_NAME_DeviceConfig, msg, CLT_TTL_DeviceConfig, PRIVATE);
   }
 #endif
+
+  // Notify via BLE
+  if( theBLE.isGood() ) theBLE.sendNotification(CLT_ID_DeviceConfig, msg);
+
   return rc;
 }
 
@@ -375,6 +388,10 @@ BOOL CloudObjClass::PublishAlarm(const char *msg)
     rc = Particle.publish(CLT_NAME_Alarm, msg, CLT_TTL_Alarm, PRIVATE);
   }
 #endif
+
+  // Notify via BLE
+  if( theBLE.isGood() ) theBLE.sendNotification(CLT_ID_Alarm, msg);
+
   return rc;
 }
 

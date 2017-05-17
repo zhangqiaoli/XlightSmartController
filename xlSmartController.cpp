@@ -1788,7 +1788,7 @@ bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr, bool _init
 		ChangeLampScenario(rulePtr->data.node_id, rulePtr->data.SNT_uid);
 
 		// Send Notification
-		if( rulePtr->data.notif_uid < 255 && Particle.connected() ) {
+		if( rulePtr->data.notif_uid < 255 ) {
 			StaticJsonBuffer<256> jBuf;
 			JsonObject *jroot;
 			jroot = &(jBuf.createObject());
@@ -2269,7 +2269,7 @@ BOOL SmartControllerClass::ChangeBR_CCT(UC _nodeID, UC _br, US _cct)
 	return theRadio.ProcessSend(strCmd);
 }
 
-BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
+BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID, UC _replyTo)
 {
 	// Find node object
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
@@ -2297,7 +2297,7 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 				} else {
 					strCmd = String::format("%d:13:%d:%d", _nodeID, rowptr->data.ring[0].BR, rowptr->data.ring[0].CCT);
 				}
-				theRadio.ProcessSend(strCmd);
+				theRadio.ProcessSend(strCmd, _replyTo);
 			} else { // Rainbow and Migrage
 				MyMessage tmpMsg;
 				UC payl_buf[MAX_PAYLOAD];
@@ -2310,13 +2310,13 @@ BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID)
 					if( !bAllRings || idx == 0 ) {
 						payl_len = CreateColorPayload(payl_buf, bAllRings ? RING_ID_ALL : idx + 1, rowptr->data.ring[idx].State,
 												rowptr->data.ring[idx].BR, rowptr->data.ring[idx].CCT % 256, rowptr->data.ring[idx].R, rowptr->data.ring[idx].G, rowptr->data.ring[idx].B);
-						tmpMsg.build(theRadio.getAddress(), _nodeID, 0, C_SET, V_RGBW, true);
+						tmpMsg.build(theRadio.getAddress(), _nodeID, _replyTo, C_SET, V_RGBW, true);
 						tmpMsg.set((void *)payl_buf, payl_len);
 						theRadio.ProcessSend(&tmpMsg);
 					}
 					if( IS_MIRAGE(lv_type) ) {
 						// ToDo: construct mirage message
-						//tmpMsg.build(theRadio.getAddress(), _nodeID, NODEID_DUMMY, C_SET, V_DISTANCE, true);
+						//tmpMsg.build(theRadio.getAddress(), _nodeID, _replyTo, C_SET, V_DISTANCE, true);
 						//tmpMsg.set((void *)payl_buf, payl_len);
 						//theRadio.ProcessSend(&tmpMsg);
 					}

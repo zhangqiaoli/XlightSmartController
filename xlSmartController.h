@@ -129,7 +129,7 @@ public:
   BOOL ChangeLampBrightness(UC _nodeID = NODEID_MAINDEVICE, UC _percentage = 50);
   BOOL ChangeLampCCT(UC _nodeID = NODEID_MAINDEVICE, US _cct = 3000);
   BOOL ChangeBR_CCT(UC _nodeID, UC _br, US _cct);
-  BOOL ChangeLampScenario(UC _nodeID, UC _scenarioID);
+  BOOL ChangeLampScenario(UC _nodeID, UC _scenarioID, UC _replyTo = 0);
   BOOL RequestDeviceStatus(UC _nodeID);
   BOOL ConfirmLampOnOff(UC _nodeID, UC _st);
   BOOL ConfirmLampBrightness(UC _nodeID, UC _st, UC _percentage, UC _ringID = RING_ID_ALL);
