@@ -2650,6 +2650,8 @@ BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID, UC _ringID)
 			(*jroot)["tp"] = DevStatusRowPtr->data.type;
 			if( !DevStatusRowPtr->data.present ) {
 				(*jroot)["up"] = 0;
+				jroot->printTo(buffer, 256);
+				return PublishDeviceStatus(buffer);
 			} else {
 				if(DevStatusRowPtr->data.filter > 0)(*jroot)["filter"] = DevStatusRowPtr->data.filter;
 				if( IS_SUNNY(DevStatusRowPtr->data.type) ) {
