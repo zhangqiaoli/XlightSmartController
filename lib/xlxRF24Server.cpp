@@ -541,7 +541,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 	        /// Send response message
 	        msg.build(getAddress(), replyTo, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
 					if( newID > 0 ) {
-		        msg.set(getMyNetworkID());
+		        msg.set(getMyNetworkID(), nIdentity);
 		        LOGN(LOGTAG_EVENT, "Allocated NodeID:%d type:%c to %s", newID, cNodeType, PrintUint64(strDisplay, nIdentity));
 					} else {
 						LOGW(LOGTAG_MSG, "Failed to allocate NodeID type:%c to %s", cNodeType, PrintUint64(strDisplay, nIdentity));
