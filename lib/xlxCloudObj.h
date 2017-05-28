@@ -16,6 +16,7 @@
 // Notes: Variable name max length is 12 characters long.
 // Cloud variables
 #define CLV_SysID               "sysID"           // Can also be a Particle Object
+#define CLV_AppVersion          "appVersion"      // Can also be a Particle Object
 #define CLV_TimeZone            "timeZone"        // Can also be a Particle Object
 #define CLV_SysStatus           "sysStatus"       // Can also be a Particle Object
 #define CLV_JSONData            "jsonData"        // Can also be a Particle Object
@@ -116,6 +117,7 @@ public:
 
 protected:
   void InitCloudObj();
+  int m_nAppVersion;
 
   StaticJsonBuffer<512> m_jBuf;
   JsonObject *m_jpRoot;
