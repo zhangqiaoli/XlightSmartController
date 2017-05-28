@@ -61,7 +61,7 @@ void CloudObjClass::InitCloudObj()
 
 #ifdef USE_PARTICLE_CLOUD
   Particle.variable(CLV_SysID, &m_SysID, STRING);
-  Particle.variable(CLV_AppVersion, &m_SysID, INT);
+  Particle.variable(CLV_AppVersion, &m_nAppVersion, INT);
   Particle.variable(CLV_TimeZone, &m_tzString, STRING);
   Particle.variable(CLV_SysStatus, &m_SysStatus, INT);
   Particle.variable(CLV_JSONData, &m_jsonData, STRING);

@@ -68,6 +68,7 @@ public:
   // Variables should be defined as public
   String m_SysID;
   String m_SysVersion;    // firmware version
+  int m_nAppVersion;
   int m_SysStatus;
   String m_tzString;
   String m_jsonData;
@@ -117,7 +118,6 @@ public:
 
 protected:
   void InitCloudObj();
-  int m_nAppVersion;
 
   StaticJsonBuffer<512> m_jBuf;
   JsonObject *m_jpRoot;

@@ -411,14 +411,15 @@ void RF24ServerClass::ConvertRepeatMsg(MyMessage *pMsg)
 	// Note: change relative value to absolute value
 	if( pMsg->getCommand() == C_SET ) {
 		uint8_t *payload = (uint8_t *)pMsg->getCustom();
+		uint_t _destNode = (pMsg->getDestination() == BROADCAST_ADDRESS ?  CURRENT_DEVICE : pMsg->getDestination() );
 		uint8_t bytValue = payload[0];
 		if( pMsg->getType() == V_STATUS && bytValue == DEVICE_SW_TOGGLE ) {
-			bytValue = 1 - theSys.GetDevOnOff(pMsg->getDestination());
+			bytValue = 1 - theSys.GetDevOnOff(_destNode);
 			pMsg->set(bytValue);
 		} else if( pMsg->getType() == V_PERCENTAGE && pMsg->getLength() == 2 ) {
 			if( bytValue != OPERATOR_SET ) {
 				payload[0] = OPERATOR_SET;
-				uint8_t _br = theSys.GetDevBrightness(pMsg->getDestination());
+				uint8_t _br = theSys.GetDevBrightness(_destNode);
 				if( bytValue == OPERATOR_ADD ) {
 					payload[1] += _br;
 					if( payload[1] > 100 ) payload[1] = 100;
@@ -432,7 +433,7 @@ void RF24ServerClass::ConvertRepeatMsg(MyMessage *pMsg)
 			}
 		} else if( pMsg->getType() == V_LEVEL && pMsg->getLength() == 3 ) {
 			if( bytValue != OPERATOR_SET ) {
-				uint16_t _CCTValue = theSys.GetDevCCT(pMsg->getDestination());
+				uint16_t _CCTValue = theSys.GetDevCCT(_destNode);
 				uint16_t _deltaValue = payload[2] * 256 + payload[1];
 				payload[0] = OPERATOR_SET;
 				if( bytValue == OPERATOR_ADD ) {
