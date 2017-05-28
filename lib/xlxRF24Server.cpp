@@ -413,17 +413,18 @@ void RF24ServerClass::ConvertRepeatMsg(MyMessage *pMsg)
 		uint8_t *payload = (uint8_t *)pMsg->getCustom();
 		uint8_t bytValue = payload[0];
 		if( pMsg->getType() == V_STATUS && bytValue == DEVICE_SW_TOGGLE ) {
-			bytValue = 1 - theSys.GetDevOnOff(CURRENT_DEVICE);
+			bytValue = 1 - theSys.GetDevOnOff(pMsg->getDestination());
 			pMsg->set(bytValue);
 		} else if( pMsg->getType() == V_PERCENTAGE && pMsg->getLength() == 2 ) {
 			if( bytValue != OPERATOR_SET ) {
 				payload[0] = OPERATOR_SET;
+				uint8_t _br = theSys.GetDevBrightness(pMsg->getDestination());
 				if( bytValue == OPERATOR_ADD ) {
-					payload[1] += theSys.GetDevBrightness(CURRENT_DEVICE);
+					payload[1] += _br;
 					if( payload[1] > 100 ) payload[1] = 100;
 				} else if( bytValue == OPERATOR_SUB ) {
-					if( theSys.GetDevBrightness(CURRENT_DEVICE) > payload[1] + BR_MIN_VALUE ) {
-						payload[1] = theSys.GetDevBrightness(CURRENT_DEVICE) - payload[1];
+					if( _br > payload[1] + BR_MIN_VALUE ) {
+						payload[1] = _br - payload[1];
 					} else {
 						payload[1] = BR_MIN_VALUE;
 					}
@@ -431,7 +432,7 @@ void RF24ServerClass::ConvertRepeatMsg(MyMessage *pMsg)
 			}
 		} else if( pMsg->getType() == V_LEVEL && pMsg->getLength() == 3 ) {
 			if( bytValue != OPERATOR_SET ) {
-				uint16_t _CCTValue = theSys.GetDevCCT(CURRENT_DEVICE);
+				uint16_t _CCTValue = theSys.GetDevCCT(pMsg->getDestination());
 				uint16_t _deltaValue = payload[2] * 256 + payload[1];
 				payload[0] = OPERATOR_SET;
 				if( bytValue == OPERATOR_ADD ) {
