@@ -2641,60 +2641,51 @@ BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID, UC _ringID)
 {
 	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
 	if (DevStatusRowPtr) {
-		StaticJsonBuffer<256> jBuf;
-		JsonObject *jroot;
-		char buffer[256];
-		jroot = &(jBuf.createObject());
-		if( jroot->success() ) {
-			(*jroot)["nd"] = DevStatusRowPtr->data.node_id;
-			(*jroot)["tp"] = DevStatusRowPtr->data.type;
-			if( !DevStatusRowPtr->data.present ) {
-				(*jroot)["up"] = 0;
-				jroot->printTo(buffer, 256);
-				return PublishDeviceStatus(buffer);
-			} else {
-				if(DevStatusRowPtr->data.filter > 0)(*jroot)["filter"] = DevStatusRowPtr->data.filter;
-				if( IS_SUNNY(DevStatusRowPtr->data.type) ) {
-					(*jroot)["State"] = DevStatusRowPtr->data.ring[0].State;
-					(*jroot)["BR"] = DevStatusRowPtr->data.ring[0].BR;
-					(*jroot)["CCT"] = DevStatusRowPtr->data.ring[0].CCT;
-					jroot->printTo(buffer, 256);
-					return PublishDeviceStatus(buffer);
-				} else if( IS_RAINBOW(DevStatusRowPtr->data.type) || IS_MIRAGE(DevStatusRowPtr->data.type) ) {
-					UC r_index;
-					BOOL _bMore = false;
-					do {
-						if( _ringID > MAX_RING_NUM ) {
-							_bMore = false;
-							break;
-						}
-						if( _ringID == RING_ID_ALL ) {
-							r_index = 0;
-							if( IsAllRingHueSame(DevStatusRowPtr) ) {
-								(*jroot)["Ring"] = RING_ID_ALL;
-							} else {
-								(*jroot)["Ring"] = RING_ID_1;
-								_bMore = true;
-								_ringID = RING_ID_2;	// Next
-							}
-						} else {
-							r_index = _ringID - 1;
-							(*jroot)["Ring"] = RING_ID_1;
-							if( _bMore ) _ringID++;
-						}
-						(*jroot)["State"] = DevStatusRowPtr->data.ring[r_index].State;
-						(*jroot)["BR"] = DevStatusRowPtr->data.ring[r_index].BR;
-						(*jroot)["W"] = DevStatusRowPtr->data.ring[r_index].CCT % 256;
-						(*jroot)["R"] = DevStatusRowPtr->data.ring[r_index].R;
-						(*jroot)["G"] = DevStatusRowPtr->data.ring[r_index].G;
-						(*jroot)["B"] = DevStatusRowPtr->data.ring[r_index].B;
-						jroot->printTo(buffer, 256);
-						PublishDeviceStatus(buffer);
-					} while(_bMore);
-				}
+		String strTemp = String::format("{'nd':%d,'tp':%d", DevStatusRowPtr->data.node_id, DevStatusRowPtr->data.type);
+		if( !DevStatusRowPtr->data.present ) {
+			strTemp += ",'up':0}";
+			return PublishDeviceStatus(strTemp.c_str());
+		} else {
+			if(DevStatusRowPtr->data.filter > 0) {
+				strTemp += String::format(",'filter':%d", DevStatusRowPtr->data.filter);
 			}
-			return true;
+			if( IS_SUNNY(DevStatusRowPtr->data.type) ) {
+				strTemp += String::format(",'State':%d,'BR':%d,'CCT':%d}", DevStatusRowPtr->data.ring[0].State,
+						DevStatusRowPtr->data.ring[0].BR, DevStatusRowPtr->data.ring[0].CCT);
+				return PublishDeviceStatus(strTemp.c_str());
+			} else if( IS_RAINBOW(DevStatusRowPtr->data.type) || IS_MIRAGE(DevStatusRowPtr->data.type) ) {
+				UC r_index;
+				BOOL _bMore = false;
+				String strRow;
+				do {
+					if( _ringID > MAX_RING_NUM ) {
+						_bMore = false;
+						break;
+					}
+					strRow = strTemp;
+					if( _ringID == RING_ID_ALL ) {
+						r_index = 0;
+						if( IsAllRingHueSame(DevStatusRowPtr) ) {
+							strRow += String::format(",'Ring':%d", RING_ID_ALL);
+						} else {
+							strRow += String::format(",'Ring':%d", RING_ID_1);
+							_bMore = true;
+							_ringID = RING_ID_2;	// Next
+						}
+					} else {
+						r_index = _ringID - 1;
+						strRow += String::format(",'Ring':%d", _ringID);
+						if( _bMore ) _ringID++;
+					}
+					strRow += String::format(",'State':%d,'BR':%d,'W':%d,'R':%d,'G':%d,'B':%d}",
+							DevStatusRowPtr->data.ring[r_index].State, DevStatusRowPtr->data.ring[r_index].BR,
+							DevStatusRowPtr->data.ring[r_index].CCT, DevStatusRowPtr->data.ring[r_index].R,
+							DevStatusRowPtr->data.ring[r_index].G, DevStatusRowPtr->data.ring[r_index].B);
+					PublishDeviceStatus(strRow.c_str());
+				} while(_bMore);
+			}
 		}
+		return true;
 	}
 	return false;
 }
