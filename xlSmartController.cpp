@@ -2104,11 +2104,11 @@ BOOL SmartControllerClass::FindCurrentDevice()
 
 ListNode<DevStatusRow_t> *SmartControllerClass::FindDevice(UC _nodeID)
 {
-	ListNode<DevStatusRow_t> *DevStatusRowPtr = NULL;
-	if( IS_CURRENT_DEVICE(_nodeID) ) {
-		DevStatusRowPtr = m_pMainDev;
-	} else {
-		DevStatusRowPtr = SearchDevStatus(_nodeID);
+	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+	if( DevStatusRowPtr == NULL ) {
+		if( IS_CURRENT_DEVICE(_nodeID) ) {
+			DevStatusRowPtr = m_pMainDev;
+		}
 	}
 	return DevStatusRowPtr;
 }

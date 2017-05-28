@@ -411,8 +411,13 @@ void RF24ServerClass::ConvertRepeatMsg(MyMessage *pMsg)
 	// Note: change relative value to absolute value
 	if( pMsg->getCommand() == C_SET ) {
 		uint8_t *payload = (uint8_t *)pMsg->getCustom();
-		uint8_t _destNode = (pMsg->getDestination() == BROADCAST_ADDRESS ?  CURRENT_DEVICE : pMsg->getDestination() );
 		uint8_t bytValue = payload[0];
+		uint8_t _destNode;
+		if( pMsg->getDestination() == BROADCAST_ADDRESS || IS_GROUP_NODEID(pMsg->getDestination()) ) {
+			_destNode = CURRENT_DEVICE;
+		} else {
+			_destNode = pMsg->getDestination();
+		}
 		if( pMsg->getType() == V_STATUS && bytValue == DEVICE_SW_TOGGLE ) {
 			bytValue = 1 - theSys.GetDevOnOff(_destNode);
 			pMsg->set(bytValue);
