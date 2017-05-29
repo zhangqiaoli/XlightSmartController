@@ -33,6 +33,7 @@
 #include "xlxLogger.h"
 #include "MyParserSerial.h"
 #include "xlxRF24Server.h"
+#include "xlxSerialConsole.h"
 
 #define BLE_CHIP_HC05             5
 #define BLE_CHIP_HC06             6
@@ -375,15 +376,61 @@ BOOL BLEInterfaceClass::exectueCommand(char *inputString)
       } else if( _msgType == I_CONFIG && _needAck ) {
         // Config Controller
         if( _sensor == NODEID_SMARTPHONE ) {
-          // ToDo: set Wi-Fi: SSID, security and Password
-          // ToDo: set cloud option: Serial command
-          // ToDo: set base on/off: Serial command
+          if( payload[0] == '0' ) {
+            // Wi-Fi(0):SSID:Password:Auth:Cipher
+            String strSSID, strPWD;
+            // Auth: WEP=1, WPA=2, WPA2=3
+            // Cipher: WLAN_CIPHER_AES=1, WLAN_CIPHER_TKIP=2, WLAN_CIPHER_AES_TKIP=3
+            int authValue = 0;
+            int cipherValue = 0;
+            char *token, *last;
+            token = strtok_r(payload, ":", &last);
+            if( token ) {
+              token = strtok_r(NULL, ":", &last);
+              if( token ) {
+                strSSID = token;
+                strPWD = "";
+                token = strtok_r(NULL, ":", &last);
+                if( token ) {
+                  strPWD = token;
+                  token = strtok_r(NULL, ":", &last);
+                  if( token ) {
+                    authValue = atoi(token);
+                    if( authValue > 3 || authValue < 0 ) {
+                      authValue = 0;
+                    } else {
+                      token = strtok_r(NULL, ":", &last);
+                      if( token ) {
+                        cipherValue = atoi(token);
+                        if( cipherValue > 3 || cipherValue < 0 ) {
+                          cipherValue = 0;
+                        }
+                      }
+                    }
+                  }
+                }
+
+                if( cipherValue > 0 ) {
+                  WiFi.setCredentials(strSSID.c_str(), strPWD.c_str(), authValue, cipherValue);
+                } else if( authValue > 0 ) {
+                  WiFi.setCredentials(strSSID.c_str(), strPWD.c_str(), authValue);
+                } else if( strPWD.length() > 0 ) {
+                  WiFi.setCredentials(strSSID.c_str(), strPWD.c_str());
+                } else {
+                  WiFi.setCredentials(strSSID.c_str());
+                }
+              }
+            }
+          } else {
+            // serial set command
+            String strCmd = String::format("set %s", payload);
+            theConsole.ExecuteCloudCommand(strCmd.c_str());
+          }
         }
       } else if( _msgType == I_REBOOT ) {
         if( _sensor == NODEID_SMARTPHONE ) {
-          // ToDo: reboot Controller or Node
-          // ToDo: DFU
-          // ToDo: update and reboot Controller
+          String strCmd = String::format("sys %s", payload);
+          theConsole.ExecuteCloudCommand(strCmd.c_str());
         }
       }
       break;
