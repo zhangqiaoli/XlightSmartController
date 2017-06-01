@@ -341,6 +341,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN("   safe:    enter safe/recover mode");
     SERIAL_LN("   setup:   setup Wi-Fi crediential");
     SERIAL_LN("   dfu:     enter DFU mode");
+    SERIAL_LN("   listen:  enter listening mode");
     SERIAL_LN("   update:  update firmware");
     SERIAL_LN("   serial reset: reset serial port");
     SERIAL_LN("   sync <object>: object synchronize with Cloud");
@@ -974,15 +975,21 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
     }
     else if (strnicmp(sTopic, "safe", 4) == 0) {
       SERIAL_LN("System is about to enter safe mode...");
-      CloudOutput("System is about to enter safe mode");
+      CloudOutput("Will enter safe mode");
       delay(1000);
       System.enterSafeMode();
     }
     else if (strnicmp(sTopic, "dfu", 3) == 0) {
       SERIAL_LN("System is about to enter DFU mode...");
-      CloudOutput("System is about to enter DFU mode");
+      CloudOutput("Will enter DFU mode");
       delay(1000);
       System.dfu();
+    }
+    else if (strnicmp(sTopic, "listen", 6) == 0) {
+      SERIAL_LN("System is about to enter listening mode...");
+      CloudOutput("Will enter listening mode");
+      delay(1000);
+      WiFi.listen();
     }
     else if (strnicmp(sTopic, "update", 6) == 0) {
       // ToDo: to OTA
