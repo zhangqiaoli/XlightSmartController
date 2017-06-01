@@ -82,7 +82,11 @@ void SysteTimerCB()
 #ifndef SYS_SERIAL_DEBUG
 	if( WiFi.listening() ) {
 		// Get Wi-Fi credential from BLE
-		// ToDo:...
+		theSys.ProcessCommands();
+		if( WiFi.hasCredentials() && !theConfig.GetWiFiStatus() ) {
+			WiFi.listen(false);
+			theSys.connectWiFi();
+		}
 		// Reset?
 	}
 #endif
@@ -96,6 +100,7 @@ void setup()
 {
 	// Open Wi-Fi
 	WiFi.on();
+	WiFi.listen(false);
 
   // System Initialization
   theSys.Init();
@@ -110,11 +115,16 @@ void setup()
   // Initialize Pins
   theSys.InitPins();
 
+	// Initialization Radio Interfaces
+	theSys.InitRadio();
+
+	// Initialize Serial Console
+  theConsole.Init();
+
   // Start system timer: callback every n * 0.5ms using hmSec timescale
   //Use TIMER6 to retain PWM capabilities on all pins
   sysTimer.begin(SysteTimerCB, RTE_DELAY_SYSTIMER, hmSec, TIMER6);
 
-	WiFi.listen(false);
 	while(1) {
 		if( !WiFi.hasCredentials() || !theConfig.GetWiFiStatus() ) {
 			if( !theSys.connectWiFi() ) {
@@ -147,9 +157,6 @@ void setup()
 		break;
 	}
 
-	// Initialization Radio Interfaces
-	theSys.InitRadio();
-
   // Initialization network Interfaces
   theSys.InitNetwork();
 
@@ -162,9 +169,6 @@ void setup()
 
   // Initialize Sensors
   theSys.InitSensors();
-
-	// Initialize Serial Console
-  theConsole.Init();
 
   // System Starts
   theSys.Start();

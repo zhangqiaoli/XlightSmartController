@@ -340,7 +340,7 @@ BOOL SmartControllerClass::connectWiFi()
 	BOOL retVal = WiFi.ready();
 	if( !retVal ) {
 		SERIAL("Wi-Fi connecting...");
-	  WiFi.connect();
+	  WiFi.connect(WIFI_CONNECT_SKIP_LISTEN);
 	  waitFor(WiFi.ready, RTE_WIFI_CONN_TIMEOUT);
 	  retVal = WiFi.ready();
 		SERIAL_LN("%s", retVal ? "OK" : "Failed");
