@@ -340,7 +340,7 @@ BOOL BLEInterfaceClass::exectueCommand(char *inputString)
     UC _sensor, _msgType, _cmd, _nodeID;
   	bool _bIsAck, _needAck;
   	char *payload;
-    String strCmd;
+    String strCmd, strPayl;
 
     _cmd = lv_msg.getCommand();
     _nodeID = lv_msg.getDestination();
@@ -433,6 +433,7 @@ BOOL BLEInterfaceClass::exectueCommand(char *inputString)
             }
           } else {
             // serial set command
+            strPayl = payload;
             strCmd = String::format("set %s", payload);
             theConsole.ExecuteCloudCommand(strCmd.c_str());
 
@@ -440,20 +441,21 @@ BOOL BLEInterfaceClass::exectueCommand(char *inputString)
             lv_msg.set((UC)1);
             memset(strDisplay, 0x00, sizeof(strDisplay));
             lv_msg.getSerialString(strDisplay);
-            strCmd = String::format("%s:%s", strDisplay, payload);
+            strCmd = String::format("%s:%s", strDisplay, strPayl.c_str());
             sendCommand(strCmd);
           }
         }
       } else if( _msgType == I_REBOOT ) {
         if( _sensor == NODEID_SMARTPHONE ) {
+          strPayl = payload;
           lv_msg.build(_sensor, _sensor, NODEID_GATEWAY, C_INTERNAL, I_REBOOT, false, true);
           lv_msg.set((UC)1);
           memset(strDisplay, 0x00, sizeof(strDisplay));
           lv_msg.getSerialString(strDisplay);
-          strCmd = String::format("%s:%s", strDisplay, payload);
+          strCmd = String::format("%s:%s", strDisplay, strPayl.c_str());
           sendCommand(strCmd);
 
-          strCmd = String::format("sys %s", payload);
+          strCmd = String::format("sys %s", strPayl.c_str());
           theConsole.ExecuteCloudCommand(strCmd.c_str());
         }
       }
