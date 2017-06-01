@@ -131,7 +131,7 @@ void setup()
 				// get credential from BLE or Serial
 				SERIAL_LN("will enter listening mode");
 				WiFi.listen();
-				break;
+				//break;
 			}
 		}
 
