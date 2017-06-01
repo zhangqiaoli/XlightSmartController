@@ -1029,15 +1029,13 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
               SERIAL_LN("Failed to clear NodeID:%s\n\r", sParam1);
               CloudOutput("Failed to clear NodeID:%s", sParam1);
             }
-          } else if( stricmp(sParam1, "credentials") == 0 ) {
-            WiFi.clearCredentials();
-            SERIAL_LN("WiFi credentials cleared\n\r");
-            CloudOutput("WiFi credentials cleared");
-          } else {
-            return false;
           }
+        } else if( stricmp(sParam1, "credentials") == 0 ) {
+          WiFi.clearCredentials();
+          SERIAL_LN("WiFi credentials cleared\n\r");
+          CloudOutput("WiFi credentials cleared");
         } else {
-          // ToDo: other clearance
+          return false;
         }
       } else {
         return false;
