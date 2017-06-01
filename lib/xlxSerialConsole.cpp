@@ -347,7 +347,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN("   clear <object>: clear object, such as nodeid");
     SERIAL_LN("e.g. sys sync time");
     SERIAL_LN("e.g. sys clear nodeid 1");
-    SERIAL_LN("e.g. sys clear credientials");
+    SERIAL_LN("e.g. sys clear credentials");
     SERIAL_LN("e.g. sys reset\n\r");
     //CloudOutput("sys base|private|reset|safe|setup|dfu|update|serial|sync|clear");
   } else {
@@ -1022,10 +1022,10 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
               SERIAL_LN("Failed to clear NodeID:%s\n\r", sParam1);
               CloudOutput("Failed to clear NodeID:%s", sParam1);
             }
-          } else if( stricmp(sParam1, "credientials") == 0 ) {
+          } else if( stricmp(sParam1, "credentials") == 0 ) {
             WiFi.clearCredentials();
-            SERIAL_LN("WiFi credientials cleared\n\r");
-            CloudOutput("WiFi credientials cleared");
+            SERIAL_LN("WiFi credentials cleared\n\r");
+            CloudOutput("WiFi credentials cleared");
           } else {
             return false;
           }
