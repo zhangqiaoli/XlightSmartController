@@ -2258,7 +2258,7 @@ BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 	if (DevStatusRowPtr) {
 		_st = (DevStatusRowPtr->data.ring[0].BR < BR_MIN_VALUE ? true : !DevStatusRowPtr->data.ring[0].State);
 	} else {
-		_st = thePanel.GetRingOnOff() ? DEVICE_SW_ON : DEVICE_SW_OFF;
+		_st = thePanel.GetRingOnOff() ? DEVICE_SW_OFF : DEVICE_SW_ON;
 	}
 	rc = DevSoftSwitch(_st, _nodeID);
 	// Wait for confirmation or not
