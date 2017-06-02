@@ -2145,7 +2145,12 @@ UC SmartControllerClass::GetDevOnOff(UC _nodeID)
 	//(m_pMainDev->data.ring[0].BR < BR_MIN_VALUE ? true : !m_pMainDev->data.ring[0].State);
 	//return(thePanel.GetRingOnOff() ? DEVICE_SW_ON : DEVICE_SW_OFF);
 	UC _st;
-	ListNode<DevStatusRow_t> *DevStatusRowPtr = FindDevice(_nodeID);
+	ListNode<DevStatusRow_t> *DevStatusRowPtr;
+	if( IS_NOT_DEVICE_NODEID(_nodeID) ) {
+		DevStatusRowPtr = NULL;
+	} else {
+		DevStatusRowPtr = FindDevice(_nodeID);
+ 	}
 	if (DevStatusRowPtr) {
 		_st = (DevStatusRowPtr->data.ring[0].BR < BR_MIN_VALUE ? DEVICE_SW_OFF : DevStatusRowPtr->data.ring[0].State);
 	} else {
@@ -2156,14 +2161,19 @@ UC SmartControllerClass::GetDevOnOff(UC _nodeID)
 
 UC SmartControllerClass::GetDevBrightness(UC _nodeID)
 {
-	 //return((UC)thePanel.GetDimmerValue());
-	 UC _br;
-	 ListNode<DevStatusRow_t> *DevStatusRowPtr = FindDevice(_nodeID);
-	 if (DevStatusRowPtr) {
-		 _br = DevStatusRowPtr->data.ring[0].BR;
-	 } else {
-		 _br = (UC)thePanel.GetDimmerValue();
-	 }
+	//return((UC)thePanel.GetDimmerValue());
+	UC _br;
+	ListNode<DevStatusRow_t> *DevStatusRowPtr;
+	if( IS_NOT_DEVICE_NODEID(_nodeID) ) {
+		DevStatusRowPtr = NULL;
+	} else {
+		DevStatusRowPtr = FindDevice(_nodeID);
+	}
+	if (DevStatusRowPtr) {
+		_br = DevStatusRowPtr->data.ring[0].BR;
+	} else {
+		_br = (UC)thePanel.GetDimmerValue();
+	}
 	return _br;
 }
 
@@ -2171,7 +2181,12 @@ US SmartControllerClass::GetDevCCT(UC _nodeID)
 {
 	//return (US)thePanel.GetCCTValue(false);
 	US _cct;
-	ListNode<DevStatusRow_t> *DevStatusRowPtr = FindDevice(_nodeID);
+	ListNode<DevStatusRow_t> *DevStatusRowPtr;
+	if( IS_NOT_DEVICE_NODEID(_nodeID) ) {
+		DevStatusRowPtr = NULL;
+	} else {
+		DevStatusRowPtr = FindDevice(_nodeID);
+	}
 	if (DevStatusRowPtr) {
 		_cct = DevStatusRowPtr->data.ring[0].CCT;
 	} else {
