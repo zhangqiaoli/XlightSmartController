@@ -2248,21 +2248,23 @@ US SmartControllerClass::VerifyDevicePresence(UC *_assoDev, UC _nodeID, UC _devT
 
 BOOL SmartControllerClass::ToggleLampOnOff(UC _nodeID)
 {
-	BOOL rc = false, _st;
+	BOOL rc, _st;
 	ListNode<DevStatusRow_t> *DevStatusRowPtr;
-	if( IS_CURRENT_DEVICE(_nodeID) ) {
-		DevStatusRowPtr = m_pMainDev;
+	if( IS_NOT_DEVICE_NODEID(_nodeID) ) {
+		DevStatusRowPtr = NULL;
 	} else {
-		DevStatusRowPtr = SearchDevStatus(_nodeID);
-	}
+		DevStatusRowPtr = FindDevice(_nodeID);
+ 	}
 	if (DevStatusRowPtr) {
 		_st = (DevStatusRowPtr->data.ring[0].BR < BR_MIN_VALUE ? true : !DevStatusRowPtr->data.ring[0].State);
-		rc = DevSoftSwitch(_st, _nodeID);
-		// Wait for confirmation or not
-		if( !rc ) {
-			// no need to wait
-			ConfirmLampOnOff(_nodeID, _st);
-		}
+	} else {
+		_st = thePanel.GetRingOnOff() ? DEVICE_SW_ON : DEVICE_SW_OFF;
+	}
+	rc = DevSoftSwitch(_st, _nodeID);
+	// Wait for confirmation or not
+	if( !rc ) {
+		// no need to wait
+		ConfirmLampOnOff(_nodeID, _st);
 	}
 	return rc;
 }
