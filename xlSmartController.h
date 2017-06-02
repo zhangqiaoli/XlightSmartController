@@ -58,6 +58,7 @@ public:
   BOOL connectCloud();
 
   // Process all kinds of commands
+  void ProcessLocalCommands();
   void ProcessCommands();
   void ProcessCloudCommands();
   void CollectData(UC tick);

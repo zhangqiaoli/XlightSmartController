@@ -535,9 +535,8 @@ BOOL SmartControllerClass::IsWANGood()
 	return m_isWAN;
 }
 
-// Process all kinds of commands
-void SmartControllerClass::ProcessCommands()
-{
+// Process Local bridge commands
+void SmartControllerClass::ProcessLocalCommands() {
 	// Check RF Message
 	theRadio.PeekMessage();
 
@@ -547,11 +546,18 @@ void SmartControllerClass::ProcessCommands()
 	// Process Console Command
   theConsole.processCommand();
 
-	// Process ASR Command
-	theASR.processCommand();
-
 	// Process BLE commands
   theBLE.processCommand();
+}
+
+// Process all kinds of commands
+void SmartControllerClass::ProcessCommands()
+{
+	// Process Local Bridge Commands
+	ProcessLocalCommands();
+
+	// Process ASR Command
+	theASR.processCommand();
 
 	// Process Cloud Commands
 	ProcessCloudCommands();

@@ -79,17 +79,19 @@ void SysteTimerCB()
 	}
 
 	// Timeout interuption of Cloud connecting
-#ifndef SYS_SERIAL_DEBUG
+//#ifndef SYS_SERIAL_DEBUG
 	if( WiFi.listening() ) {
 		// Get Wi-Fi credential from BLE
-		theSys.ProcessCommands();
+		theSys.ProcessLocalCommands();
 		if( WiFi.hasCredentials() && !theConfig.GetWiFiStatus() ) {
 			WiFi.listen(false);
+			theSys.ResetSerialPort();
+			SERIAL_LN("will connect Wi-Fi in system thread");
 			theSys.connectWiFi();
 		}
 		// Reset?
 	}
-#endif
+//#endif
 }
 
 // Set "manual" mode
@@ -136,6 +138,7 @@ void setup()
 		}
 
 		// Connect to Wi-Fi
+		SERIAL_LN("will connect WiFi");
 		if( theSys.connectWiFi() ) {
 			if( theConfig.GetUseCloud() == CLOUD_DISABLE ) {
 				Particle.disconnect();
