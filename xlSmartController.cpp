@@ -339,11 +339,13 @@ BOOL SmartControllerClass::connectWiFi()
 {
 	BOOL retVal = WiFi.ready();
 	if( !retVal ) {
-		SERIAL("Wi-Fi connecting...");
-	  WiFi.connect(WIFI_CONNECT_SKIP_LISTEN);
-	  waitFor(WiFi.ready, RTE_WIFI_CONN_TIMEOUT);
-	  retVal = WiFi.ready();
-		SERIAL_LN("%s", retVal ? "OK" : "Failed");
+		if( WiFi.hasCredentials() ) {
+			SERIAL("Wi-Fi connecting...");
+		  WiFi.connect();
+		  waitFor(WiFi.ready, RTE_WIFI_CONN_TIMEOUT);
+		  retVal = WiFi.ready();
+			SERIAL_LN("%s", retVal ? "OK" : "Failed");
+		}
 	}
   theConfig.SetWiFiStatus(retVal);
   return retVal;

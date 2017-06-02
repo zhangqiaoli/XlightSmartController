@@ -47,6 +47,7 @@
 #include "xlSmartController.h"
 #include "xlxSerialConsole.h"
 #include "SparkIntervalTimer.h"
+#include "xlxBLEInterface.h"
 
 //------------------------------------------------------------------
 // Program Body Begins Here
@@ -65,6 +66,7 @@ IntervalTimer sysTimer;
 void SysteTimerCB()
 {
 	static UC fastTick = 0;				// must be static
+	static UC slowTick = 0;				// must be static
 
   // Change Status Indicator according to system status
   // e.g: fast blink, slow blink, breath, etc
@@ -81,13 +83,17 @@ void SysteTimerCB()
 	// Timeout interuption of Cloud connecting
 //#ifndef SYS_SERIAL_DEBUG
 	if( WiFi.listening() ) {
-		// Get Wi-Fi credential from BLE
-		theSys.ProcessLocalCommands();
-		if( WiFi.hasCredentials() && !theConfig.GetWiFiStatus() ) {
-			WiFi.listen(false);
-			theSys.ResetSerialPort();
-			SERIAL_LN("will connect Wi-Fi in system thread");
-			theSys.connectWiFi();
+		if (++slowTick > RTE_DELAY_SYSTIMER) {
+			slowTick = 0;
+			//SERIAL_LN("Wi-Fi in listening mode...");
+			// Get Wi-Fi credential from BLE
+			theSys.ProcessLocalCommands();
+			/*if( WiFi.hasCredentials() ) {
+				//WiFi.listen(false);
+				//theSys.ResetSerialPort();
+				SERIAL_LN("will connect Wi-Fi in system thread");
+				//theSys.connectWiFi();
+			}*/
 		}
 		// Reset?
 	}
@@ -133,7 +139,7 @@ void setup()
 				// get credential from BLE or Serial
 				SERIAL_LN("will enter listening mode");
 				WiFi.listen();
-				//break;
+				break;
 			}
 		}
 
