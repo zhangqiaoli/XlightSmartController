@@ -431,7 +431,11 @@ BOOL BLEInterfaceClass::exectueCommand(char *inputString)
               strCmd = String::format("%d;0;3;2;6;0:0\n", NODEID_SMARTPHONE);
               sendCommand(strCmd);
             }
-          } else {
+          } else if( payload[0] == '1' ) {
+            // Query CoreID
+            strCmd = String::format("%d;0;3;2;6;1:1:%s\n", NODEID_SMARTPHONE, theSys.GetSysID().c_str());
+            sendCommand(strCmd);
+          }else {
             // serial set command
             strCmd = String::format("set %s", payload);
             theConsole.ExecuteCloudCommand(strCmd.c_str());
