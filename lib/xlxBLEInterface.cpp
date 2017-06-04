@@ -340,7 +340,7 @@ BOOL BLEInterfaceClass::exectueCommand(char *inputString)
     UC _sensor, _msgType, _cmd, _nodeID;
   	bool _bIsAck, _needAck;
   	char *payload;
-    String strCmd, strPayl;
+    String strCmd;
 
     _cmd = lv_msg.getCommand();
     _nodeID = lv_msg.getDestination();
@@ -421,41 +421,31 @@ BOOL BLEInterfaceClass::exectueCommand(char *inputString)
                   WiFi.setCredentials(strSSID.c_str());
                 }
 
-                strCmd = String::format("%d;0;3;2;6;1:0:%s", NODEID_SMARTPHONE, theSys.GetSysID().c_str());
+                strCmd = String::format("%d;0;3;2;6;1:0:%s\n", NODEID_SMARTPHONE, theSys.GetSysID().c_str());
                 sendCommand(strCmd);
 
                 WiFi.listen(false);
                 theSys.connectWiFi();
               }
             } else {
-              strCmd = String::format("%d;0;3;2;6;0:0", NODEID_SMARTPHONE);
+              strCmd = String::format("%d;0;3;2;6;0:0\n", NODEID_SMARTPHONE);
               sendCommand(strCmd);
             }
           } else {
             // serial set command
-            strPayl = payload;
             strCmd = String::format("set %s", payload);
             theConsole.ExecuteCloudCommand(strCmd.c_str());
 
-            lv_msg.build(_sensor, _sensor, NODEID_GATEWAY, C_INTERNAL, I_CONFIG, false, true);
-            lv_msg.set((UC)1);
-            memset(strDisplay, 0x00, sizeof(strDisplay));
-            lv_msg.getSerialString(strDisplay);
-            strCmd = String::format("%s:%s", strDisplay, strPayl.c_str());
+            strCmd = String::format("%d;0;3;2;6;1:%s\n", NODEID_SMARTPHONE, payload);
             sendCommand(strCmd);
           }
         }
       } else if( _msgType == I_REBOOT ) {
         if( _sensor == NODEID_SMARTPHONE ) {
-          strPayl = payload;
-          lv_msg.build(_sensor, _sensor, NODEID_GATEWAY, C_INTERNAL, I_REBOOT, false, true);
-          lv_msg.set((UC)1);
-          memset(strDisplay, 0x00, sizeof(strDisplay));
-          lv_msg.getSerialString(strDisplay);
-          strCmd = String::format("%s:%s", strDisplay, strPayl.c_str());
+          strCmd = String::format("%d;0;3;2;13;1:%s\n", NODEID_SMARTPHONE, payload);
           sendCommand(strCmd);
 
-          strCmd = String::format("sys %s", strPayl.c_str());
+          strCmd = String::format("sys %s", payload);
           theConsole.ExecuteCloudCommand(strCmd.c_str());
         }
       }
