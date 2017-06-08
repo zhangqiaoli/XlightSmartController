@@ -165,7 +165,7 @@ bool RF24ServerClass::ProcessSend(const UC _node, const UC _msgID, String &strPa
 				ListNode<DevStatusRow_t> *DevStatusRowPtr = theSys.SearchDevStatus(_node);
 				if( DevStatusRowPtr ) {
 					lv_msg.build(getAddress(), _node, GATEWAY_ADDRESS, C_INTERNAL, I_REBOOT, false);
-					msg.set((unsigned int)DevStatusRowPtr->data.token);
+					lv_msg.set((unsigned int)DevStatusRowPtr->data.token);
 					bMsgReady = true;
 				}
 			}
