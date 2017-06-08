@@ -92,6 +92,7 @@
 #define NODEID_MIN_REMOTE       64
 #define NODEID_MAX_REMOTE       127
 #define NODEID_PROJECTOR        128
+#define NODEID_KEYSIMULATOR     129
 #define NODEID_SMARTPHONE       139
 #define NODEID_MIN_GROUP        192
 #define NODEID_MAX_GROUP        223

@@ -146,31 +146,29 @@ bool RF24ServerClass::ProcessSend(const UC _node, const UC _msgID, String &strPa
 		break;
 
 	case 1:   // Request new node ID
-		if (getAddress() == GATEWAY_ADDRESS) {
-			if( _node == GATEWAY_ADDRESS ) {
-				SERIAL_LN("Controller can not request node ID\n\r");
+		if( _node == GATEWAY_ADDRESS ) {
+			SERIAL_LN("Controller can not request node ID\n\r");
+		} else {
+			// Set specific NodeID to node
+			UC newID = 0;
+			if( strPayl.length() > 0 ) {
+				newID = (UC)strPayl.toInt();
+			}
+			if( newID > 0 ) {
+				lv_msg.build(getAddress(), _node, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
+				lv_msg.set(getMyNetworkID());
+				//theConfig.lstNodes.clearNodeId(_node);
+				SERIAL("Now sending new id:%d to node:%d...", newID, _node);
+				bMsgReady = true;
 			} else {
-				// Set specific NodeID to node
-				UC newID = _node;
-				if( strPayl.length() > 0 ) {
-					newID = (UC)strPayl.toInt();
-				}
-				if( newID > 0 ) {
-					lv_msg.build(getAddress(), _node, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
-					lv_msg.set(getMyNetworkID());
+				// Reboot node
+				ListNode<DevStatusRow_t> *DevStatusRowPtr = theSys.SearchDevStatus(_node);
+				if( DevStatusRowPtr ) {
+					lv_msg.build(getAddress(), _node, GATEWAY_ADDRESS, C_INTERNAL, I_REBOOT, false);
+					msg.set((unsigned int)DevStatusRowPtr->data.token);
 					bMsgReady = true;
-					//theConfig.lstNodes.clearNodeId(_node);
-					SERIAL("Now sending new id:%d to node:%d...", newID, _node);
 				}
 			}
-		}
-		else {
-			UC deviceType = (getAddress() == 3 ? NODE_TYP_REMOTE : NODE_TYP_LAMP);
-			ChangeNodeID(AUTO);
-			lv_msg.build(AUTO, BASESERVICE_ADDRESS, deviceType, C_INTERNAL, I_ID_REQUEST, false);
-			lv_msg.set(GetNetworkID(true));		// identity: could be MAC, serial id, etc
-			bMsgReady = true;
-			SERIAL("Now sending request node id message...");
 		}
 		break;
 
@@ -607,7 +605,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 							theSys.UpdateNoise(replyTo, _iValue);
 						}
 					} else if( _sensor == S_DUST || _sensor == S_AIR_QUALITY || _sensor == S_SMOKE ) {
-						if( msgType == V_LIGHT_LEVEL) { // Dust, Gas or Smoke
+						if( msgType == V_LEVEL) { // Dust, Gas or Smoke
 							_iValue = payload[1] * 256 + payload[0];
 							if( _sensor == S_DUST ) {
 								theSys.UpdateDust(replyTo, _iValue);
@@ -692,6 +690,11 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						msg.getSerialString(strDisplay);
 						if( theBLE.isGood() ) theBLE.sendCommand(strDisplay);
 					}
+				} else if( _sensor == NODEID_KEYSIMULATOR ) {
+					// Transfer message to Key Simuluator, use msgType to identify target device
+					msg.build(getAddress(), NODEID_KEYSIMULATOR, replyTo, C_SET, msgType, _needAck, _bIsAck, true);
+					// Keep payload unchanged
+					msgReady = true;
 				} else {
 					transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 					if( transTo > 0 ) {

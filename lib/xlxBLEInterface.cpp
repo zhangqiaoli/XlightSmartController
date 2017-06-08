@@ -379,47 +379,38 @@ BOOL BLEInterfaceClass::exectueCommand(char *inputString)
         if( _sensor == NODEID_SMARTPHONE ) {
           if( payload[0] == '0' ) {
             // Wi-Fi(0):SSID:Password:Auth:Cipher
-            String strSSID, strPWD;
             // Auth: WEP=1, WPA=2, WPA2=3
             // Cipher: WLAN_CIPHER_AES=1, WLAN_CIPHER_TKIP=2, WLAN_CIPHER_AES_TKIP=3
-            int authValue = 0;
-            int cipherValue = 0;
+            gintWiFi_Auth = 0;
+            gintWiFi_Cipher = 0;
             char *token, *last;
             token = strtok_r(payload, ":", &last);
             if( token ) {
               token = strtok_r(NULL, ":", &last);
               if( token ) {
-                strSSID = token;
-                strPWD = "";
+                gstrWiFi_SSID = token;
+                gstrWiFi_Password = "";
                 token = strtok_r(NULL, ":", &last);
                 if( token ) {
-                  strPWD = token;
+                  gstrWiFi_Password = token;
                   token = strtok_r(NULL, ":", &last);
                   if( token ) {
-                    authValue = atoi(token);
-                    if( authValue > 3 || authValue < 0 ) {
-                      authValue = 0;
+                    gintWiFi_Auth = atoi(token);
+                    if( gintWiFi_Auth > 3 || gintWiFi_Auth < 0 ) {
+                      gintWiFi_Auth = 0;
                     } else {
                       token = strtok_r(NULL, ":", &last);
                       if( token ) {
-                        cipherValue = atoi(token);
-                        if( cipherValue > 3 || cipherValue < 0 ) {
-                          cipherValue = 0;
+                        gintWiFi_Cipher = atoi(token);
+                        if( gintWiFi_Cipher > 3 || gintWiFi_Cipher < 0 ) {
+                          gintWiFi_Cipher = 0;
                         }
                       }
                     }
                   }
                 }
 
-                if( cipherValue > 0 ) {
-                  WiFi.setCredentials(strSSID.c_str(), strPWD.c_str(), authValue, cipherValue);
-                } else if( authValue > 0 ) {
-                  WiFi.setCredentials(strSSID.c_str(), strPWD.c_str(), authValue);
-                } else if( strPWD.length() > 0 ) {
-                  WiFi.setCredentials(strSSID.c_str(), strPWD.c_str());
-                } else {
-                  WiFi.setCredentials(strSSID.c_str());
-                }
+                theConsole.UpdateWiFiCredential();
 
                 strCmd = String::format("%d;0;3;2;6;1:0:%s\n", NODEID_SMARTPHONE, theSys.GetSysID().c_str());
                 sendCommand(strCmd);

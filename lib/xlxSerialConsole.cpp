@@ -55,7 +55,8 @@
 SerialConsoleClass theConsole;
 String gstrWiFi_SSID;
 String gstrWiFi_Password;
-int gintWiFi_Auth;
+uint8_t gintWiFi_Auth;
+uint8_t gintWiFi_Cipher;
 
 //------------------------------------------------------------------
 // Global Callback Function Helper
@@ -94,6 +95,7 @@ typedef enum
   consoleWF_GetSSID,
   consoleWF_GetPassword,
   consoleWF_GetAUTH,
+  consoleWF_Cipher,
   consoleWF_Confirm,
 
   consoleDummy = 255
@@ -137,11 +139,16 @@ const StateMachine_t fsmMain[] = {
   {consoleWF_YesNo,   consoleRoot,    "",                 gc_nop},
   {consoleWF_GetSSID, consoleWF_GetPassword, "",          gc_doSysSetupWiFi},
   {consoleWF_GetPassword, consoleWF_GetAUTH, "",          gc_doSysSetupWiFi},
-  {consoleWF_GetAUTH, consoleWF_Confirm, "0",             gc_doSysSetupWiFi},
-  {consoleWF_GetAUTH, consoleWF_Confirm, "1",             gc_doSysSetupWiFi},
-  {consoleWF_GetAUTH, consoleWF_Confirm, "2",             gc_doSysSetupWiFi},
-  {consoleWF_GetAUTH, consoleWF_Confirm, "3",             gc_doSysSetupWiFi},
+  {consoleWF_GetAUTH, consoleWF_Cipher,  "0",             gc_doSysSetupWiFi},
+  {consoleWF_GetAUTH, consoleWF_Cipher,  "1",             gc_doSysSetupWiFi},
+  {consoleWF_GetAUTH, consoleWF_Cipher,  "2",             gc_doSysSetupWiFi},
+  {consoleWF_GetAUTH, consoleWF_Cipher,  "3",             gc_doSysSetupWiFi},
   {consoleWF_GetAUTH, consoleRoot,    "q",                gc_nop},
+  {consoleWF_Cipher,  consoleWF_Confirm, "0",             gc_doSysSetupWiFi},
+  {consoleWF_Cipher,  consoleWF_Confirm, "1",             gc_doSysSetupWiFi},
+  {consoleWF_Cipher,  consoleWF_Confirm, "2",             gc_doSysSetupWiFi},
+  {consoleWF_Cipher,  consoleWF_Confirm, "3",             gc_doSysSetupWiFi},
+  {consoleWF_Cipher,  consoleRoot,    "q",                gc_nop},
   {consoleWF_Confirm, consoleRoot,    "yes",              gc_doSysSetWiFiCredential},
   {consoleWF_Confirm, consoleRoot,    "y",                gc_doSysSetWiFiCredential},
   {consoleWF_Confirm, consoleRoot,    "no",               gc_nop},
@@ -152,7 +159,8 @@ const StateMachine_t fsmMain[] = {
   {consoleDummy,      consoleRoot,    "",                 gc_doHelp}
 };
 
-const char *strAuthMethods[4] = {"None", "WPA2", "WEP", "TKIP"};
+const char *strAuthMethods[4] = {"None", "WEP", "WPA", "WPA2"};
+const char *strCipherMethods[4] = {"None", "AES", "TKIP", "AES_TKIP"};
 
 //------------------------------------------------------------------
 // Xlight SerialConsole Class
@@ -506,6 +514,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("m_temperature = \t\t%.2f", theSys.m_temperature);
   		SERIAL_LN("m_humidity = \t\t\t%.2f", theSys.m_humidity);
   		SERIAL_LN("m_brightness = \t\t\t%u", theSys.m_brightness);
+      SERIAL_LN("m_dust = \t\t\t%d", theSys.m_dust);
   		SERIAL_LN("m_motion = \t\t\t%s", (theSys.m_motion ? "true" : "false"));
       SERIAL_LN("");
       SERIAL_LN("Main DeviceID = \t\t%d", CURRENT_DEVICE);
@@ -969,9 +978,20 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
   char *sParam1;
   if( sTopic ) {
     if (strnicmp(sTopic, "reset", 5) == 0) {
-      SERIAL_LN("System is about to reset...");
-      CloudOutput("System is about to reset");
-      theSys.Restart();
+      uint8_t lv_NodeID = 0;
+      sParam1 = next();     // Get code
+      if( sParam1) {
+        lv_NodeID = (uint8_t)atoi(sParam1);
+      }
+      if( lv_NodeID == 0) {
+        SERIAL_LN("System is about to reset...");
+        CloudOutput("System is about to reset");
+        theSys.Restart();
+      } else {
+        // Reboot node
+        SERIAL_LN("Will reboot node %d", lv_NodeID);
+        theSys.RebootNode(lv_NodeID);
+      }
     }
     else if (strnicmp(sTopic, "safe", 4) == 0) {
       SERIAL_LN("System is about to enter safe mode...");
@@ -1101,14 +1121,28 @@ bool SerialConsoleClass::SetupWiFi(const char *cmd)
     CloudOutput("Select authentication method [0..3]");
     break;
 
-  case consoleWF_Confirm:
+  case consoleWF_Cipher:
     // Record authentication method
     if( strlen(cmd) > 0 )
       gintWiFi_Auth = atoi(cmd) % 4;
+    SERIAL_LN("Please select cipher method: [%d]", gintWiFi_Cipher);
+    SERIAL_LN("  0. %s", strCipherMethods[0]);
+    SERIAL_LN("  1. %s", strCipherMethods[1]);
+    SERIAL_LN("  2. %s", strCipherMethods[2]);
+    SERIAL_LN("  3. %s", strCipherMethods[3]);
+    SERIAL_LN("  (q)uit");
+    CloudOutput("Select cipher method [0..3]");
+    break;
+
+  case consoleWF_Confirm:
+    // Record cipher method
+    if( strlen(cmd) > 0 )
+      gintWiFi_Cipher = atoi(cmd) % 4;
     SERIAL_LN("Are you sure to apply the Wi-Fi credential? (y/N)");
     SERIAL_LN("  SSID: %s", gstrWiFi_SSID.c_str());
     SERIAL_LN("  Password: ******");
     SERIAL_LN("  Authentication: %s", strAuthMethods[gintWiFi_Auth]);
+    SERIAL_LN("  Cipher: %s", strCipherMethods[gintWiFi_Cipher]);
     CloudOutput("Sure to apply the Wi-Fi credential? (y/N)");
     break;
   }
@@ -1116,18 +1150,22 @@ bool SerialConsoleClass::SetupWiFi(const char *cmd)
   return true;
 }
 
+void SerialConsoleClass::UpdateWiFiCredential()
+{
+  if( gintWiFi_Cipher > 0 ) {
+    WiFi.setCredentials(gstrWiFi_SSID, gstrWiFi_Password, gintWiFi_Auth, gintWiFi_Cipher);
+  } else if( gintWiFi_Auth > 0 ) {
+    WiFi.setCredentials(gstrWiFi_SSID, gstrWiFi_Password, gintWiFi_Auth);
+  } else if( gstrWiFi_Password.length() > 0 ) {
+    WiFi.setCredentials(gstrWiFi_SSID, gstrWiFi_Password);
+  } else {
+    WiFi.setCredentials(gstrWiFi_SSID);
+  }
+}
+
 bool SerialConsoleClass::SetWiFiCredential(const char *cmd)
 {
-  //WiFi.listen();
-  if( gintWiFi_Auth = 0 ) {
-    WiFi.setCredentials(gstrWiFi_SSID);
-  } else if( gintWiFi_Auth = 1 ) {
-    WiFi.setCredentials(gstrWiFi_SSID, gstrWiFi_Password, WPA2, WLAN_CIPHER_AES);
-  } else if( gintWiFi_Auth = 2 ) {
-    WiFi.setCredentials(gstrWiFi_SSID, gstrWiFi_Password, WEP);
-  } else if( gintWiFi_Auth = 3 ) {
-    WiFi.setCredentials(gstrWiFi_SSID, gstrWiFi_Password, WPA, WLAN_CIPHER_TKIP);
-  }
+  UpdateWiFiCredential();
   SERIAL("Wi-Fi credential saved");
   WiFi.listen(false);
   theSys.connectWiFi();

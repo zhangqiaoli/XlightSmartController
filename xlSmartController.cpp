@@ -915,12 +915,18 @@ int SmartControllerClass::ExeJSONCommand(String jsonCmd)
 		else if (_cmd == CMD_QUERY) {
 			if ((*m_jpCldCmd).containsKey("nd")) {
 				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
-				UC ring_id = RING_ID_ALL;
-				if( (*m_jpCldCmd).containsKey("Ring") ) {
-					ring_id = (UC)(*m_jpCldCmd)["Ring"].as<int>();
-					if( ring_id > MAX_RING_NUM ) ring_id = RING_ID_ALL;
+				if( (*m_jpCldCmd).containsKey("reset") ) {
+					if( (*m_jpCldCmd)["reset"].as<int>() == 1 ) {
+						return RebootNode((uint8_t)node_id);
+					}
+				} else {
+					UC ring_id = RING_ID_ALL;
+					if( (*m_jpCldCmd).containsKey("Ring") ) {
+						ring_id = (UC)(*m_jpCldCmd)["Ring"].as<int>();
+						if( ring_id > MAX_RING_NUM ) ring_id = RING_ID_ALL;
+					}
+					return QueryDeviceStatus((UC)node_id, ring_id);
 				}
-				return QueryDeviceStatus((UC)node_id, ring_id);
 			}
 		}
 		//COMMAND 7: Special effect
@@ -929,6 +935,19 @@ int SmartControllerClass::ExeJSONCommand(String jsonCmd)
 				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
 				const int filter_id = ((*m_jpCldCmd).containsKey("filter") ? (*m_jpCldCmd)["filter"].as<int>() : 0);
 				String strCmd = String::format("%d:17:%d", node_id, filter_id);
+				return theRadio.ProcessSend(strCmd);
+			}
+		}
+		//COMMAND 8: Externed funcions of special node, e.g. Key Simulator (nd=129)
+		else if (_cmd == CMD_EXT) {
+			if ((*m_jpCldCmd).containsKey("nd") && (*m_jpCldCmd).containsKey("msg")) {
+				const int node_id = (*m_jpCldCmd)["nd"].as<int>();
+				const int msg_id = (*m_jpCldCmd)["msg"].as<int>();
+				const int ack_flag = ((*m_jpCldCmd).containsKey("ack") ? (*m_jpCldCmd)["ack"].as<int>() : 0);
+				const int tag = ((*m_jpCldCmd).containsKey("tag") ? (*m_jpCldCmd)["tag"].as<int>() : 0);
+				String payl = ((*m_jpCldCmd).containsKey("pl") ? (*m_jpCldCmd)["pl"] : "");
+				// nd;Remote-node-id(Orig=0);Msg;Ack;Type;Payload\n
+				String strCmd = String::format("%d;0;%d;%d;%d;%s", node_id, msg_id, ack_flag, tag, payl.c_str());
 				return theRadio.ProcessSend(strCmd);
 			}
 		}
@@ -2713,6 +2732,12 @@ BOOL SmartControllerClass::QueryDeviceStatus(UC _nodeID, UC _ringID)
 		return true;
 	}
 	return false;
+}
+
+BOOL SmartControllerClass::RebootNode(UC _nodeID)
+{
+	String strCmd = String::format("%d:1", _nodeID);
+	return theRadio.ProcessSend(strCmd);
 }
 
 BOOL SmartControllerClass::IsAllRingHueSame(ListNode<DevStatusRow_t> *pDev)
