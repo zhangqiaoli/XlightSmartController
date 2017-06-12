@@ -799,13 +799,13 @@ int SmartControllerClass::CldSetCurrentTime(String tmStr)
 int SmartControllerClass::CldPowerSwitch(String swStr)
 {
 	//fast, simple control
-	UC bytDev = 1;		// Default value
+	UC bytDev = CURRENT_DEVICE;		// Default value
 	UC blnOn;
 	swStr.toLowerCase();
 	int nPos = swStr.indexOf(':');
 	if( nPos > 0 ) {
 		bytDev = (uint8_t)(swStr.substring(0, nPos).toInt());
-		if( bytDev > NODEID_MAX_DEVCIE ) return 1;
+		if( IS_NOT_DEVICE_NODEID(bytDev) && !IS_GROUP_NODEID(bytDev) && bytDev != NODEID_DUMMY ) return 0;
 	}
 	String strOn = swStr.substring(nPos + 1);
 	if(strOn == "0" || strOn == "off") {
