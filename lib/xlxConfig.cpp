@@ -177,7 +177,9 @@ UC NodeListClass::requestNodeID(UC preferID, char type, uint64_t identity)
 	if( identity == 0 ) return 0;
 
 	UC nodeID = 0;		// error
-	if( IS_GROUP_NODEID(preferID) ) {
+	if( IS_GROUP_NODEID(preferID) && type == NODE_TYP_LAMP ) {
+		nodeID = preferID;
+	} else if( IS_SPECIAL_NODEID(preferID) && type == NODE_TYP_SYSTEM ) {
 		nodeID = preferID;
 	} else {
 		switch( type ) {

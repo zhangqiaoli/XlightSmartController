@@ -155,7 +155,7 @@ bool RF24ServerClass::ProcessSend(const UC _node, const UC _msgID, String &strPa
 				newID = (UC)strPayl.toInt();
 			}
 			if( newID > 0 ) {
-				lv_msg.build(getAddress(), _node, newID, C_INTERNAL, I_ID_RESPONSE, false, true);
+				lv_msg.build(getAddress(), _node, newID, C_INTERNAL, I_ID_RESPONSE, false, false);
 				lv_msg.set(getMyNetworkID());
 				//theConfig.lstNodes.clearNodeId(_node);
 				SERIAL("Now sending new id:%d to node:%d...", newID, _node);
@@ -570,7 +570,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						UC lv_nNodeID = msg.getSender();
 						UC lv_assoDev;
 						uint64_t nIdentity = msg.getUInt64();
-						if( IS_GROUP_NODEID(lv_nNodeID) ) {
+						if( IS_GROUP_NODEID(lv_nNodeID) || IS_SPECIAL_NODEID(lv_nNodeID) ) {
 							token = 6666;
 						} else {
 							token = theSys.VerifyDevicePresence(&lv_assoDev, lv_nNodeID, msgType, nIdentity);
@@ -739,7 +739,7 @@ bool RF24ServerClass::ProcessSendMQ()
 			if( pNode->ReadMessage(pData, &_repeat, &_tag, 15) > 0 )
 			{
 				// Determine pipe
-				if( lv_msg.getCommand() == C_INTERNAL && lv_msg.getType() == I_ID_RESPONSE ) {
+				if( lv_msg.getCommand() == C_INTERNAL && lv_msg.getType() == I_ID_RESPONSE && && lv_msg.isAck() ) {
 					pipe = CURRENT_NODE_PIPE;
 				} else {
 					pipe = PRIVATE_NET_PIPE;
