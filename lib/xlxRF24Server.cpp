@@ -739,7 +739,7 @@ bool RF24ServerClass::ProcessSendMQ()
 			if( pNode->ReadMessage(pData, &_repeat, &_tag, 15) > 0 )
 			{
 				// Determine pipe
-				if( lv_msg.getCommand() == C_INTERNAL && lv_msg.getType() == I_ID_RESPONSE && && lv_msg.isAck() ) {
+				if( lv_msg.getCommand() == C_INTERNAL && lv_msg.getType() == I_ID_RESPONSE && lv_msg.isAck() ) {
 					pipe = CURRENT_NODE_PIPE;
 				} else {
 					pipe = PRIVATE_NET_PIPE;
