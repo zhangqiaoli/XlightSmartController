@@ -25,8 +25,8 @@
   #define IF_MAINLOOP_TIMER(x, name) ({x;})
 #endif
 
-// Change it only if Config_t structure is updated
-#define VERSION_CONFIG_DATA       13
+// Main Version. Must change if Config_t structure is updated
+#define VERSION_CONFIG_DATA       14
 
 // Xlight Application Identification
 #define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM

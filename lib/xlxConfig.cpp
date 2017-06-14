@@ -365,6 +365,7 @@ void ConfigClass::InitConfig()
 	strcpy(m_config.pptAccessCode, XLIGHT_BLE_PIN);
   m_config.indBrightness = 0;
 	m_config.mainDevID = NODEID_MAINDEVICE;
+	m_config.subDevID = 0;
   m_config.typeMainDevice = (UC)devtypWRing3;
   m_config.numDevices = 1;
   m_config.numNodes = 2;	// One main device( the smart lamp) and one remote control
@@ -878,6 +879,21 @@ BOOL ConfigClass::SetMainDeviceID(UC devID)
   {
     m_config.mainDevID = devID;
 		theSys.FindCurrentDevice();		// Refresh current device pointer
+    m_isChanged = true;
+  }
+  return true;
+}
+
+UC ConfigClass::GetSubDeviceID()
+{
+	return m_config.subDevID;
+}
+
+BOOL ConfigClass::SetSubDeviceID(UC devID)
+{
+  if( devID != m_config.subDevID )
+  {
+    m_config.subDevID = devID;
     m_isChanged = true;
   }
   return true;
