@@ -575,7 +575,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 	      break;
 
 			case C_PRESENTATION:
-				if( _sensor == S_LIGHT || _sensor == S_DIMMER ) {
+				if( _sensor == S_LIGHT || _sensor == S_DIMMER || _sensor == S_ZENSENSOR || _sensor == S_ZENREMOTE ) {
 					US token;
 					if( _needAck ) {
 						// Presentation message: appear of Smart Lamp
@@ -583,7 +583,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						UC lv_nNodeID = msg.getSender();
 						UC lv_assoDev;
 						uint64_t nIdentity = msg.getUInt64();
-						if( IS_GROUP_NODEID(lv_nNodeID) || IS_SPECIAL_NODEID(lv_nNodeID) ) {
+						if( IS_GROUP_NODEID(lv_nNodeID) || IS_SPECIAL_NODEID(lv_nNodeID) || _sensor == S_ZENSENSOR || _sensor == S_ZENREMOTE ) {
 							token = 6666;
 						} else {
 							token = theSys.VerifyDevicePresence(&lv_assoDev, lv_nNodeID, msgType, nIdentity);
