@@ -138,6 +138,9 @@ typedef enum {
 	V_HVAC_SETPOINT_HEAT, // S_HEATER, S_HVAC. HVAC/Heater setpoint (Integer between 0-100)
 	V_HVAC_FLOW_MODE, // S_HVAC. Flow mode for HVAC ("Auto", "ContinuousOn", "PeriodicOn")
 
+	V_RELAY_ON = 65,        // Xlight relay on
+	V_RELAY_OFF,            // Xlight relay off
+
 } mysensor_data;
 
 

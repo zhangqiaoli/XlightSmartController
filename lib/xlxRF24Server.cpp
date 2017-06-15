@@ -514,6 +514,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 	UC _bValue;
 	US _iValue;
 	char strDisplay[SENSORDATA_JSON_SIZE];
+	String strTemp;
 
   while (Length() > 0) {
 
@@ -641,7 +642,18 @@ bool RF24ServerClass::ProcessReceiveMQ()
 					if( _bIsAck ) {
 						//SERIAL_LN("REQ ack:%d to: %d 0x%x-0x%x-0x%x-0x%x-0x%x-0x%x-0x%x", msgType, transTo, payload[0],payload[1], payload[2], payload[3], payload[4],payload[5],payload[6]);
 						if( msgType == V_STATUS ||  msgType == V_PERCENTAGE ) {
-							bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
+							if( IS_SPECIAL_NODEID(replyTo) ) {
+								// Publish Special Node Status
+								if( msgType == V_STATUS ) {
+									strTemp = String::format("{'nd':%d,'State':%d}", replyTo, payload[0]);
+								} else {
+									strTemp = String::format("{'nd':%d,'State':%d,'BR':%d}", replyTo, payload[0], payload[1]);
+								}
+								theSys.PublishDeviceStatus(strTemp.c_str());
+								bDataChanged = true;
+							} else {
+								bDataChanged |= theSys.ConfirmLampBrightness(replyTo, payload[0], payload[1]);
+							}
 						} else if( msgType == V_LEVEL ) {
 							bDataChanged |= theSys.ConfirmLampCCT(replyTo, (US)msg.getUInt());
 						} else if( msgType == V_RGBW ) {
@@ -671,6 +683,11 @@ bool RF24ServerClass::ProcessReceiveMQ()
 							if( IS_MIRAGE(_devType) ) {
 								bDataChanged |= theSys.ConfirmLampTop(replyTo, payload, payl_len);
 							}
+						} else if( msgType == V_RELAY_ON || msgType == V_RELAY_OFF ) {
+							// Publish Relay Status
+							strTemp = String::format("{'nd':%d,'k_%s':'%c'}", replyTo, msgType == V_RELAY_ON ? "on" : "off", payload[0]);
+							theSys.PublishDeviceStatus(strTemp.c_str());
+							bDataChanged = true;
 						}
 
 						// If data changed, new status must broadcast to all end points

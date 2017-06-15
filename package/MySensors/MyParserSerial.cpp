@@ -44,7 +44,7 @@ bool MyParserSerial::parse(MyMessage &message, char *inputString) {
 	if( str ) {
 		_hasSubID = true;
 		message.setDestination((uint8_t)atoi(str));
-		strtok_r(NULL, ";", &p);
+		str = strtok_r(NULL, ";", &p);
 		if( str ) {
 			message.setSensor((uint8_t)atoi(str));
 		}
