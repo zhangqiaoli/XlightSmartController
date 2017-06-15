@@ -635,7 +635,8 @@ bool RF24ServerClass::ProcessReceiveMQ()
 
 			case C_REQ:
 				if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL
-					  || msgType == V_RGBW || msgType == V_DISTANCE || msgType == V_VAR1 ) {
+					  || msgType == V_RGBW || msgType == V_DISTANCE || msgType == V_VAR1
+					  || msgType == V_RELAY_ON || msgType == V_RELAY_OFF ) {
 					//transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 					transTo = msg.getDestination();
 					BOOL bDataChanged = false;
