@@ -939,7 +939,7 @@ BOOL ConfigClass::SetRemoteNodeDevice(UC remoteID, US devID)
 		lv_Node.nid = remoteID;
 		if( lstNodes.get(&lv_Node) >= 0 ) {
 			if( lv_Node.device != devID ) {
-				lv_Node.device = devID;
+				lv_Node.device = devID % 255;
 				lstNodes.update(&lv_Node);
 				lstNodes.m_isChanged = true;
 

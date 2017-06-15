@@ -1248,6 +1248,8 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 				if( data.containsKey("csc") ) {
 					// Change CSC
 					theConfig.SetCloudSerialEnabled(data["csc"] > 0);
+				} else if( data.containsKey("asrcmd") && data.containsKey("SNT_id") ) {
+					theConfig.SetASR_SNT((UC)data["asrcmd"], (UC)data["SNT_id"]);
 				} else if( data.containsKey("nd") ) {
 					UC node_id = (UC)data["nd"];
 					if( data.containsKey("new_id") ) {
@@ -1257,19 +1259,25 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 						LOGN(LOGTAG_MSG, "Change nodeid:%d to %d", node_id, new_id);
 					} else if( data.containsKey("ncf") && data.containsKey("value") ) {
 						UC _config = (UC)data["ncf"];
-						US _value = (US)data["value"];
-						if( _config == NCF_DEV_ASSOCIATE ) {
-							theConfig.SetRemoteNodeDevice(node_id, _value);
+						if( _config == NCF_DATA_FN_HUE  ) {
+							UC lv_data[NCF_LEN_DATA_FN_HUE];
+							for( _cond = 0; _cond < NCF_LEN_DATA_FN_HUE; _cond++ ) {
+								lv_data[_cond] = data["value"][_cond];
+							}
+							theRadio.SendNodeConfig(node_id, _config, lv_data, NCF_LEN_DATA_FN_HUE);
 						} else {
-							theRadio.SendNodeConfig(node_id, _config, _value);
+							US _value = (US)data["value"];
+							if( _config == NCF_DEV_ASSOCIATE ) {
+								theConfig.SetRemoteNodeDevice(node_id, _value);
+							} else {
+								theRadio.SendNodeConfig(node_id, _config, _value);
+							}
+							LOGN(LOGTAG_MSG, "Set nodeid:%d config %d to %d", node_id, _config, _value);
 						}
-						LOGN(LOGTAG_MSG, "Set nodeid:%d config %d to %d", node_id, _config, _value);
 					}
-				} else if( data.containsKey("asrcmd") && data.containsKey("SNT_id") ) {
-					theConfig.SetASR_SNT((UC)data["asrcmd"], (UC)data["SNT_id"]);
+				// ToDo: more config
 				}
 			}
-			// ToDo: more config
 			break;
 		}
 		default:
@@ -1280,6 +1288,7 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 
 	return 0;
 }
+
 //------------------------------------------------------------------
 // Cloud Interface Action Types
 //------------------------------------------------------------------
