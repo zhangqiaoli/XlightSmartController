@@ -632,11 +632,12 @@ void SmartControllerClass::CollectData(UC tick)
 		float t = senDHT.getTempCelcius();
 		float h = senDHT.getHumidity();
 
-		if (!isnan(t)) {
-			UpdateTemperature(t);
-		}
-		if (!isnan(h)) {
-			UpdateHumidity(h);
+		if (!isnan(t) && !isnan(h)) {
+			UpdateDHT(0, t, h);
+		} else if (!isnan(t)) {
+			UpdateTemperature(0, t);
+		} else {
+			UpdateHumidity(0, h);
 		}
 	}
 
@@ -1697,7 +1698,7 @@ bool SmartControllerClass::ExecuteLightCommand(String mySerialStr)
 */
 
 // Match sensor data to condition
-bool SmartControllerClass::Check_SensorData(UC _scope, UC _sr, UC _symbol, US _val1, US _val2)
+bool SmartControllerClass::Check_SensorData(UC _thisNd, UC _scope, UC _sr, UC _nd, UC _symbol, US _val1, US _val2)
 {
 	// Retrieve sensor data
 	US senData = 0;
@@ -1706,9 +1707,11 @@ bool SmartControllerClass::Check_SensorData(UC _scope, UC _sr, UC _symbol, US _v
 		case SR_SCOPE_NODE:
 		// ToDo: should distinguish node and more sensors
 		if( _sr == sensorDHT ) {
-			senData = (US)(m_temperature + 0.5);
+			if( _sr == 0 && m_sysTemp.IsDataReady() ) senData = (US)(m_sysTemp.GetValue() + 0.5);
+			else senData = (US)(m_temperature + 0.5);
 		} else if( _sr == sensorDHT_h ) {
-			senData = (US)(m_humidity + 0.5);
+			if( _sr == 0 && m_sysHumi.IsDataReady() ) senData = (US)(m_sysHumi.GetValue() + 0.5);
+			else senData = (US)(m_humidity + 0.5);
 		} else if( _sr == sensorALS ) {
 			senData = m_brightness;
 		} else if( _sr == sensorPIR ) {
@@ -1776,7 +1779,7 @@ bool SmartControllerClass::Check_SensorData(UC _scope, UC _sr, UC _symbol, US _v
 }
 
 // Execute Rule, called by Action_Rule(), AlarmTimerTriggered() and OnSensorDataChanged()
-bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr, bool _init, UC _sr)
+bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr, bool _init, const UC _sr, const UC _nd)
 {
 	// Whether execute
 	if( _init ) {
@@ -1822,7 +1825,9 @@ bool SmartControllerClass::Execute_Rule(ListNode<RuleRow_t> *rulePtr, bool _init
 	for(_cond = 0; _cond < MAX_CONDITION_PER_RULE; _cond++ ) {
 		if( !rulePtr->data.actCond[_cond].enabled ) break;
 
-		bTest = Check_SensorData(rulePtr->data.actCond[_cond].sr_scope, rulePtr->data.actCond[_cond].sr_id,
+		//if( _sr < 255 && _sr != rulePtr->data.actCond[_cond].sr_id ) continue;
+
+		bTest = Check_SensorData(rulePtr->data.node_id, rulePtr->data.actCond[_cond].sr_scope, rulePtr->data.actCond[_cond].sr_id, _nd,
 				rulePtr->data.actCond[_cond].symbol, rulePtr->data.actCond[_cond].sr_value1, rulePtr->data.actCond[_cond].sr_value2);
 
 		if( _connector != COND_SYM_NOT ) {
@@ -1883,13 +1888,13 @@ void SmartControllerClass::ReadNewRules(bool force)
 }
 
 // Scan rule list and check conditions in accordance with changed sensor
-void SmartControllerClass::OnSensorDataChanged(UC _sr)
+void SmartControllerClass::OnSensorDataChanged(const UC _sr, const UC _nd)
 {
 	ListNode<RuleRow_t> *ruleRowPtr = Rule_table.getRoot();
 	while (ruleRowPtr != NULL)
 	{
 		// Execute the rule with changed sensor
-		Execute_Rule(ruleRowPtr, false, _sr);
+		Execute_Rule(ruleRowPtr, false, _sr, _nd);
 		ruleRowPtr = ruleRowPtr->next;
 	} //end of loop
 }

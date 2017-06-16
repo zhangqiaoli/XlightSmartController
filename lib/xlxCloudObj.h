@@ -6,6 +6,7 @@
 #include "xliCommon.h"
 #include "ArduinoJson.h"
 #include "LinkedList.h"
+#include "MoveAverage.h"
 
 // Comment it off if we don't use Particle public cloud
 /// Notes:
@@ -19,7 +20,6 @@
 #define CLV_AppVersion          "appVersion"      // Can also be a Particle Object
 #define CLV_TimeZone            "timeZone"        // Can also be a Particle Object
 #define CLV_SysStatus           "sysStatus"       // Can also be a Particle Object
-#define CLV_JSONData            "jsonData"        // Can also be a Particle Object
 #define CLV_LastMessage         "lastMsg"         // Can also be a Particle Object
 #define CLV_SenTemperatur       "senTemp"
 #define CLV_SenHumidity         "senHumid"
@@ -71,9 +71,11 @@ public:
   int m_nAppVersion;
   int m_SysStatus;
   String m_tzString;
-  String m_jsonData;
   String m_lastMsg;
   String m_strCldCmd;
+
+  CMoveAverage m_sysTemp;
+  CMoveAverage m_sysHumi;
 
   float m_temperature;
   float m_humidity;
@@ -96,11 +98,12 @@ public:
   virtual int CldSetTimeZone(String tzStr) = 0;
   virtual int CldPowerSwitch(String swStr) = 0;
   virtual int CldSetCurrentTime(String tmStr) = 0;
-  virtual void OnSensorDataChanged(UC _sr) = 0;
+  virtual void OnSensorDataChanged(const UC _sr, const UC _nd) = 0;
   int ProcessJSONString(String inStr);
 
-  BOOL UpdateTemperature(float value);
-  BOOL UpdateHumidity(float value);
+  BOOL UpdateTemperature(uint8_t nid, float value);
+  BOOL UpdateHumidity(uint8_t nid, float value);
+  BOOL UpdateDHT(uint8_t nid, float _temp, float _humi);
   BOOL UpdateBrightness(uint8_t nid, uint8_t value);
   BOOL UpdateMotion(uint8_t nid, bool value);
   BOOL UpdateGas(uint8_t nid, uint16_t value);
@@ -119,9 +122,6 @@ public:
 protected:
   void InitCloudObj();
 
-  StaticJsonBuffer<512> m_jBuf;
-  JsonObject *m_jpRoot;
-  JsonObject *m_jpData;
   JsonObject *m_jpCldCmd;
 
   LinkedList<String> m_cmdList;
