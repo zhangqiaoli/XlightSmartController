@@ -1,4 +1,4 @@
-/* DHT library
+/* DHT library 
  *
  * MIT license
  * written by Adafruit Industries
@@ -102,13 +102,13 @@ float DHT::readHumidity(void) {
 float DHT::computeHeatIndex(float tempFahrenheit, float percentHumidity) {
 // Adapted from equation at: https://github.com/adafruit/DHT-sensor-library/issues/9 and
 // Wikipedia: http://en.wikipedia.org/wiki/Heat_index
-	return -42.379 +
-		 2.04901523 * tempFahrenheit +
+	return -42.379 + 
+		 2.04901523 * tempFahrenheit + 
 		10.14333127 * percentHumidity +
 		-0.22475541 * tempFahrenheit * percentHumidity +
 		-0.00683783 * pow(tempFahrenheit, 2) +
-		-0.05481717 * pow(percentHumidity, 2) +
-		 0.00122874 * pow(tempFahrenheit, 2) * percentHumidity +
+		-0.05481717 * pow(percentHumidity, 2) + 
+		 0.00122874 * pow(tempFahrenheit, 2) * percentHumidity + 
 		 0.00085282 * tempFahrenheit * pow(percentHumidity, 2) +
 		-0.00000199 * pow(tempFahrenheit, 2) * pow(percentHumidity, 2);
 }
@@ -147,7 +147,7 @@ boolean DHT::read(void) {
 	_lastreadtime = millis();
 
 	data[0] = data[1] = data[2] = data[3] = data[4] = 0;
-
+  
 // pull the pin high and wait 250 milliseconds
 	digitalWrite(_pin, HIGH);
 	delay(250);
@@ -199,11 +199,11 @@ boolean DHT::read(void) {
 */
 
 // check we read 40 bits and that the checksum matches
-	if ((j >= 40) &&
+	if ((j >= 40) && 
 	   (data[4] == ((data[0] + data[1] + data[2] + data[3]) & 0xFF)) ) {
 		return true;
 	}
-
+ 
 	return false;
 
 }

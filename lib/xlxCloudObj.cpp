@@ -98,18 +98,6 @@ int CloudObjClass::CldJSONConfig(String jsonData)
   return 1;
 }
 
-// Here we can either send/publish data on individual data entry basis,
-/// or compose data entries into one larger json string and transfer it in main loop.
-BOOL CloudObjClass::UpdateTemperature(uint8_t nid, float value)
-{
-  return UpdateDHT(nid, value, 255);
-}
-
-BOOL CloudObjClass::UpdateHumidity(uint8_t nid, float value)
-{
-  return UpdateDHT(nid, 255, value);
-}
-
 BOOL CloudObjClass::UpdateDHT(uint8_t nid, float _temp, float _humi)
 {
   static float preTemp = 255;

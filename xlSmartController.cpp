@@ -631,14 +631,9 @@ void SmartControllerClass::CollectData(UC tick)
 	if (blnReadDHT) {
 		float t = senDHT.getTempCelcius();
 		float h = senDHT.getHumidity();
-
-		if (!isnan(t) && !isnan(h)) {
-			UpdateDHT(0, t, h);
-		} else if (!isnan(t)) {
-			UpdateTemperature(0, t);
-		} else {
-			UpdateHumidity(0, h);
-		}
+		if (!isnan(t)) t = 255;
+		if (!isnan(h)) h = 255;
+		UpdateDHT(0, t, h);
 	}
 
 	// Read from ALS
@@ -652,9 +647,9 @@ void SmartControllerClass::CollectData(UC tick)
 	}*/
 
 	// Update json data and publish on to the cloud
-	if (blnReadDHT || blnReadALS || blnReadPIR) {
-		UpdateJSONData();
-	}
+	//if (blnReadDHT || blnReadALS || blnReadPIR) {
+	//	UpdateJSONData();
+	//}
 
 	// ToDo: Proximity detection
 	// from all channels including Wi-Fi, BLE, etc. for MAC addresses and distance to device

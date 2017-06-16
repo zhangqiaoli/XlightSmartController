@@ -101,8 +101,6 @@ public:
   virtual void OnSensorDataChanged(const UC _sr, const UC _nd) = 0;
   int ProcessJSONString(String inStr);
 
-  BOOL UpdateTemperature(uint8_t nid, float value);
-  BOOL UpdateHumidity(uint8_t nid, float value);
   BOOL UpdateDHT(uint8_t nid, float _temp, float _humi);
   BOOL UpdateBrightness(uint8_t nid, uint8_t value);
   BOOL UpdateMotion(uint8_t nid, bool value);
@@ -112,7 +110,6 @@ public:
   BOOL UpdateSound(uint8_t nid, bool value);
   BOOL UpdateNoise(uint8_t nid, uint16_t value);
 
-  void UpdateJSONData();
   BOOL PublishLog(const char *msg);
   BOOL PublishDeviceStatus(const char *msg);
   BOOL PublishDeviceConfig(const char *msg);
