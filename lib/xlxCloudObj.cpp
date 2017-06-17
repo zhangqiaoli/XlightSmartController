@@ -36,15 +36,34 @@ CloudObjClass::CloudObjClass()
   m_SysVersion = "";
   m_nAppVersion = VERSION_CONFIG_DATA;
   m_SysStatus = STATUS_OFF;
-  m_temperature = 0.0;
-  m_humidity = 0.0;
-  m_brightness = 0;
-  m_motion = false;
-  m_sound = false;
-  m_gas = 0;
-  m_dust = 0;
-  m_smoke = 0;
-  m_noise = 0;
+
+  m_temperature.node_id = 0;
+  m_temperature.data = 0.0;
+
+  m_humidity.node_id = 0;
+  m_humidity.data = 0.0;
+
+  m_brightness.node_id = 0;
+  m_brightness.data = 0;
+
+  m_motion.node_id = 0;
+  m_motion.data = false;
+
+  m_sound.node_id = 0;
+  m_sound.data = false;
+
+  m_gas.node_id = 0;
+  m_gas.data = 0;
+
+  m_dust.node_id = 0;
+  m_dust.data = 0;
+
+  m_smoke.node_id = 0;
+  m_smoke.data = 0;
+
+  m_noise.node_id = 0;
+  m_noise.data = 0;
+
   m_strCldCmd = "";
 }
 
@@ -109,14 +128,16 @@ BOOL CloudObjClass::UpdateDHT(uint8_t nid, float _temp, float _humi)
   BOOL humi_ok = false;
   if( nid > 0 ) {
     if( _temp <= 100 ) {
-      if( m_temperature != _temp ) {
-        m_temperature = _temp;
+      if( m_temperature.data != _temp || m_temperature.node_id != nid ) {
+        m_temperature.node_id = nid;
+        m_temperature.data = _temp;
         temp_ok = true;
       }
     }
     if( _humi <= 100 ) {
-      if( m_humidity != _humi ) {
-        m_humidity = _humi;
+      if( m_humidity.data != _humi || m_humidity.node_id != nid ) {
+        m_humidity.node_id = nid;
+        m_humidity.data = _humi;
         humi_ok = true;
       }
     }
@@ -164,8 +185,9 @@ BOOL CloudObjClass::UpdateDHT(uint8_t nid, float _temp, float _humi)
 
 BOOL CloudObjClass::UpdateBrightness(uint8_t nid, uint8_t value)
 {
-  if( m_brightness != value ) {
-    m_brightness = value;
+  if( m_brightness.data != value || m_brightness.node_id != nid ) {
+    m_brightness.node_id = nid;
+    m_brightness.data = value;
     OnSensorDataChanged(sensorALS, nid);
 #ifdef USE_PARTICLE_CLOUD
     // Publis right away
@@ -181,8 +203,9 @@ BOOL CloudObjClass::UpdateBrightness(uint8_t nid, uint8_t value)
 
 BOOL CloudObjClass::UpdateMotion(uint8_t nid, bool value)
 {
-  if( m_motion != value ) {
-    m_motion = value;
+  if( m_motion.data != value || m_motion.node_id != nid ) {
+    m_motion.node_id = nid;
+    m_motion.data = value;
     OnSensorDataChanged(sensorPIR, nid);
 #ifdef USE_PARTICLE_CLOUD
     // Publis right away
@@ -198,8 +221,9 @@ BOOL CloudObjClass::UpdateMotion(uint8_t nid, bool value)
 
 BOOL CloudObjClass::UpdateGas(uint8_t nid, uint16_t value)
 {
-  if( m_gas != value ) {
-    m_gas = value;
+  if( m_gas.data != value || m_gas.node_id != nid ) {
+    m_gas.node_id = nid;
+    m_gas.data = value;
     OnSensorDataChanged(sensorGAS, nid);
 #ifdef USE_PARTICLE_CLOUD
     // Publis right away
@@ -215,8 +239,9 @@ BOOL CloudObjClass::UpdateGas(uint8_t nid, uint16_t value)
 
 BOOL CloudObjClass::UpdateDust(uint8_t nid, uint16_t value)
 {
-  if( m_dust != value ) {
-    m_dust = value;
+  if( m_dust.data != value || m_dust.node_id != nid ) {
+    m_dust.node_id = nid;
+    m_dust.data = value;
     OnSensorDataChanged(sensorDUST, nid);
 #ifdef USE_PARTICLE_CLOUD
     // Publis right away
@@ -232,8 +257,9 @@ BOOL CloudObjClass::UpdateDust(uint8_t nid, uint16_t value)
 
 BOOL CloudObjClass::UpdateSmoke(uint8_t nid, uint16_t value)
 {
-  if( m_smoke != value ) {
-    m_smoke = value;
+  if( m_smoke.data != value || m_smoke.node_id != nid ) {
+    m_smoke.node_id = nid;
+    m_smoke.data = value;
     OnSensorDataChanged(sensorSMOKE, nid);
 #ifdef USE_PARTICLE_CLOUD
     // Publis right away
@@ -249,8 +275,9 @@ BOOL CloudObjClass::UpdateSmoke(uint8_t nid, uint16_t value)
 
 BOOL CloudObjClass::UpdateSound(uint8_t nid, bool value)
 {
-  if( m_sound != value ) {
-    m_sound = value;
+  if( m_sound.data != value || m_sound.node_id != nid ) {
+    m_sound.node_id = nid;
+    m_sound.data = value;
     OnSensorDataChanged(sensorMIC_b, nid);
 #ifdef USE_PARTICLE_CLOUD
     // Publis right away
@@ -266,8 +293,9 @@ BOOL CloudObjClass::UpdateSound(uint8_t nid, bool value)
 
 BOOL CloudObjClass::UpdateNoise(uint8_t nid, uint16_t value)
 {
-  if( m_noise != value ) {
-    m_noise = value;
+  if( m_noise.data != value || m_noise.node_id != nid ) {
+    m_noise.node_id = nid;
+    m_noise.data = value;
     OnSensorDataChanged(sensorMIC, nid);
 #ifdef USE_PARTICLE_CLOUD
     // Publis right away

@@ -59,6 +59,33 @@
 #define CLT_NAME_DeviceConfig   "xlc-config-device"
 #define CLT_TTL_DeviceConfig    30
 
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
+{
+  UC node_id;                       // RF nodeID
+  float data;
+} nd_float_t;
+
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
+{
+  UC node_id;                       // RF nodeID
+  US data;
+} nd_us_t;
+
+typedef struct
+#ifdef PACK
+	__attribute__((packed))
+#endif
+{
+  UC node_id;                       // RF nodeID
+  bool data                         :1;
+} nd_bool_t;
+
 //------------------------------------------------------------------
 // Xlight CloudObj Class
 //------------------------------------------------------------------
@@ -74,18 +101,20 @@ public:
   String m_lastMsg;
   String m_strCldCmd;
 
+  // Sensor Data from Controller
   CMoveAverage m_sysTemp;
   CMoveAverage m_sysHumi;
 
-  float m_temperature;
-  float m_humidity;
-  uint16_t m_brightness;
-  bool m_motion;
-  uint16_t m_gas;
-  uint16_t m_dust;
-  uint16_t m_smoke;
-  bool m_sound;
-  uint16_t m_noise;
+  // Sensor Data from Node
+  nd_float_t m_temperature;
+  nd_float_t m_humidity;
+  nd_us_t m_brightness;
+  nd_bool_t m_motion;
+  nd_us_t m_gas;
+  nd_us_t m_dust;
+  nd_us_t m_smoke;
+  nd_bool_t m_sound;
+  nd_us_t m_noise;
 
 public:
   CloudObjClass();

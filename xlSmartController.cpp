@@ -1696,27 +1696,27 @@ bool SmartControllerClass::ExecuteLightCommand(String mySerialStr)
 bool SmartControllerClass::Check_SensorData(UC _thisNd, UC _scope, UC _sr, UC _nd, UC _symbol, US _val1, US _val2)
 {
 	// Retrieve sensor data
-	US senData = 0;
+	US senData = 255;
 	switch( _scope ) {
 		case SR_SCOPE_CONTROLLER:
 		case SR_SCOPE_NODE:
 		// ToDo: should distinguish node and more sensors
 		if( _sr == sensorDHT ) {
-			if( _sr == 0 && m_sysTemp.IsDataReady() ) senData = (US)(m_sysTemp.GetValue() + 0.5);
-			else senData = (US)(m_temperature + 0.5);
+			if( _nd == 0 && m_sysTemp.IsDataReady() ) senData = (US)(m_sysTemp.GetValue() + 0.5);
+			else if( _nd == m_temperature.node_id ) senData = (US)(m_temperature.data + 0.5);
 		} else if( _sr == sensorDHT_h ) {
-			if( _sr == 0 && m_sysHumi.IsDataReady() ) senData = (US)(m_sysHumi.GetValue() + 0.5);
-			else senData = (US)(m_humidity + 0.5);
-		} else if( _sr == sensorALS ) {
-			senData = m_brightness;
-		} else if( _sr == sensorPIR ) {
-			senData = m_motion;
-		} else if( _sr == sensorSMOKE ) {
-			senData = m_smoke;
-		} else if( _sr == sensorGAS ) {
-			senData = m_gas;
-		} else if( _sr == sensorDUST ) {
-			senData = m_dust;
+			if( _nd == 0 && m_sysHumi.IsDataReady() ) senData = (US)(m_sysHumi.GetValue() + 0.5);
+			else if( _nd == m_humidity.node_id ) senData = (US)(m_humidity.data + 0.5);
+		} else if( _sr == sensorALS && _nd == m_brightness.node_id ) {
+			senData = m_brightness.data;
+		} else if( _sr == sensorPIR && _nd == m_motion.node_id ) {
+			senData = m_motion.data;
+		} else if( _sr == sensorSMOKE && _nd == m_smoke.node_id ) {
+			senData = m_smoke.data;
+		} else if( _sr == sensorGAS && _nd == m_gas.node_id ) {
+			senData = m_gas.data;
+		} else if( _sr == sensorDUST && _nd == m_dust.node_id ) {
+			senData = m_dust.data;
 		}
 		break;
 
@@ -1732,43 +1732,45 @@ bool SmartControllerClass::Check_SensorData(UC _thisNd, UC _scope, UC _sr, UC _n
 		return false;
 	}
 
-	// Assert value
 	bool rc = false;
-	switch( _symbol ) {
-		case SR_SYM_EQ:
-		rc = (senData == _val1);
-		break;
+	if( senData < 255 ) {
+		// Assert value
+		switch( _symbol ) {
+			case SR_SYM_EQ:
+			rc = (senData == _val1);
+			break;
 
-		case SR_SYM_NE:
-		rc = (senData != _val1);
-		break;
+			case SR_SYM_NE:
+			rc = (senData != _val1);
+			break;
 
-		case SR_SYM_GT:
-		rc = (senData > _val1);
-		break;
+			case SR_SYM_GT:
+			rc = (senData > _val1);
+			break;
 
-		case SR_SYM_GE:
-		rc = (senData >= _val1);
-		break;
+			case SR_SYM_GE:
+			rc = (senData >= _val1);
+			break;
 
-		case SR_SYM_LT:
-		rc = (senData < _val1);
-		break;
+			case SR_SYM_LT:
+			rc = (senData < _val1);
+			break;
 
-		case SR_SYM_LE:
-		rc = (senData <= _val1);
-		break;
+			case SR_SYM_LE:
+			rc = (senData <= _val1);
+			break;
 
-		case SR_SYM_BW:
-		rc = (senData >= _val1 && senData <= _val2);
-		break;
+			case SR_SYM_BW:
+			rc = (senData >= _val1 && senData <= _val2);
+			break;
 
-		case SR_SYM_NB:
-		rc = (senData < _val1 || senData > _val2);
-		break;
+			case SR_SYM_NB:
+			rc = (senData < _val1 || senData > _val2);
+			break;
 
-		default:
-		return false;
+			default:
+			return false;
+		}
 	}
 	return rc;
 }
