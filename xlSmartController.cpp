@@ -631,8 +631,8 @@ void SmartControllerClass::CollectData(UC tick)
 	if (blnReadDHT) {
 		float t = senDHT.getTempCelcius();
 		float h = senDHT.getHumidity();
-		if (!isnan(t)) t = 255;
-		if (!isnan(h)) h = 255;
+		if (isnan(t)) t = 255;
+		if (isnan(h)) h = 255;
 		UpdateDHT(0, t, h);
 	}
 
