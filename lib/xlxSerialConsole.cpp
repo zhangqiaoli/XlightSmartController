@@ -370,6 +370,9 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN("Use 'help <command>' for more information\n\r");
     //CloudOutput("check, show, ping, do, test, send, set, sys, help or ?");
   }
+#else
+  SERIAL_LN("Available Commands:");
+  SERIAL_LN("    check, show, ping, do, test, send, set, sys, help or ?\n\r");
 #endif
 
   return true;

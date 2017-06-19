@@ -96,7 +96,7 @@ public:
   ChainClass<DevStatusRow_t> DevStatus_table = ChainClass<DevStatusRow_t>(MAX_DEVICE_PER_CONTROLLER);
   ChainClass<ScheduleRow_t> Schedule_table = ChainClass<ScheduleRow_t>(MAX_TABLE_SIZE);
   ChainClass<ScenarioRow_t> Scenario_table = ChainClass<ScenarioRow_t>(MAX_TABLE_SIZE);
-  ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>(128); // 65536/24 is too big = (int)(MEM_RULES_LEN / sizeof(RuleRow_t))
+  ChainClass<RuleRow_t> Rule_table = ChainClass<RuleRow_t>(256); // 65536/24 is too big = (int)(MEM_RULES_LEN / sizeof(RuleRow_t))
 
   //Print LinkedLists (Working memory tables)
   String print_devStatus_table(int row);
