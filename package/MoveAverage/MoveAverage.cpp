@@ -31,8 +31,10 @@ CMoveAverage::CMoveAverage(uint8_t f_iSize)
 {
   m_pData = NULL;
   if( f_iSize > 0 ) m_pData = new float[f_iSize];
-	if( m_pData )
+	if( m_pData ) {
 		m_nSize = f_iSize;
+    memset(m_pData, 0x00, sizeof(float) * f_iSize);
+  }
 	else
 		m_nSize = 0;
 

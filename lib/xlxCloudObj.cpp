@@ -122,7 +122,7 @@ BOOL CloudObjClass::UpdateDHT(uint8_t nid, float _temp, float _humi)
   static float preTemp = 255;
   static float preHumi = 255;
 
-  if( _temp > 100 && _humi > 100 ) return false;
+  if( _temp > 100 && (_humi > 100 || _humi < 0) ) return false;
 
   BOOL temp_ok = false;
   BOOL humi_ok = false;
@@ -134,7 +134,7 @@ BOOL CloudObjClass::UpdateDHT(uint8_t nid, float _temp, float _humi)
         temp_ok = true;
       }
     }
-    if( _humi <= 100 ) {
+    if( _humi >= 0 && _humi <= 100 ) {
       if( m_humidity.data != _humi || m_humidity.node_id != nid ) {
         m_humidity.node_id = nid;
         m_humidity.data = _humi;
@@ -151,7 +151,7 @@ BOOL CloudObjClass::UpdateDHT(uint8_t nid, float _temp, float _humi)
         }
       }
     }
-    if( _humi <= 100 ) {
+    if( _humi >= 0 && _humi <= 100 ) {
       if( m_sysHumi.AddData(_humi) ) {
         _humi = m_sysHumi.GetValue();
         if( _humi != preHumi ) {
