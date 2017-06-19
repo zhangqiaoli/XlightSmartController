@@ -451,7 +451,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
       }
     } else {
 			// Try to send testing message
-			String strCmd = String::format("255:3");
+			String strCmd = String::format("255:8");
 			theRadio.ProcessSend(strCmd);
 		}
 
