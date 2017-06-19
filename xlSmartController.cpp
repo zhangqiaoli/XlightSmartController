@@ -449,7 +449,11 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 				theRadio.switch2MyNetwork();
         LOGN(LOGTAG_MSG, "RF24 moudle recovered.");
       }
-    }
+    } else {
+			// Try to send testing message
+			String strCmd = String::format("255:3");
+			theRadio.ProcessSend(strCmd);
+		}
 
 		// Check Network
 		if( theConfig.GetWiFiStatus() ) {

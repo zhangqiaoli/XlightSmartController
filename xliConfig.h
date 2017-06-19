@@ -49,7 +49,7 @@
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
 
 // Keep alive message timeout
-#define RTE_TM_KEEP_ALIVE         15
+#define RTE_TM_KEEP_ALIVE         16
 
 // Panel Operarion Timers
 #define RTE_TM_MAX_CCT_IDLE       6           // Maximum idle time (seconds) in CCT control mode
