@@ -2800,7 +2800,8 @@ BOOL SmartControllerClass::IsAllRingHueSame(ListNode<DevStatusRow_t> *pDev)
 //------------------------------------------------------------------
 String SmartControllerClass::print_devStatus_table(int row)
 {
-	String strShortDesc;
+	String strShortDesc = "";
+	if( DevStatus_table.get(row).node_id == 0 ) return(strShortDesc);
 
 	SERIAL_LN("==== DevStatus Row %d ====", row);
 	SERIAL_LN("%cuid = %d, type = %d", DevStatus_table.get(row).node_id == CURRENT_DEVICE ? '*' : ' ', DevStatus_table.get(row).uid, DevStatus_table.get(row).type);

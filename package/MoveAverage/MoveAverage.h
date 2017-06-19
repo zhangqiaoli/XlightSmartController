@@ -8,7 +8,7 @@
 class CMoveAverage
 {
 public:
-  CMoveAverage(uint8_t f_iSize = 10);
+  CMoveAverage(uint8_t f_iSize = 5);
   ~CMoveAverage();
 
   bool AddData(const float f_data);

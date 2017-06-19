@@ -1130,11 +1130,11 @@ BOOL ConfigClass::LoadDeviceStatus()
 			{
 				if (theSys.DevStatus_table.add(DevStatusArray[i]))
 				{
-					LOGD(LOGTAG_MSG, "Loaded device status row for node_id:%d, uid:%d", DevStatusArray[i].node_id, DevStatusArray[i].uid);
+					LOGD(LOGTAG_MSG, "Loaded device status row for node_id:%d, uid:%d, size:%d", DevStatusArray[i].node_id, DevStatusArray[i].uid, theSys.DevStatus_table.size());
 				}
 				else
 				{
-					LOGW(LOGTAG_MSG, "DevStatus row %d failed to load from flash", i);
+					LOGW(LOGTAG_MSG, "DevStatus row %d failed to load from flash size:%d", i, theSys.DevStatus_table.size());
 				}
 			}
 		}

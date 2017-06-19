@@ -43,6 +43,7 @@
 
 #include "xlxSerialConsole.h"
 #include "xlSmartController.h"
+#include "xliConfig.h"
 #include "xlxConfig.h"
 #include "xlxLogger.h"
 #include "xlxPanel.h"
@@ -203,6 +204,8 @@ bool SerialConsoleClass::callbackDefault(const char *cmd)
 //--------------------------------------------------
 bool SerialConsoleClass::showThisHelp(String &strTopic)
 {
+#ifndef SYS_RELEASE
+
   if(strTopic.equals("check")) {
     SERIAL_LN("--- Command: check <object> ---");
     SERIAL_LN("To check component status, where <object> could be:");
@@ -367,6 +370,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN("Use 'help <command>' for more information\n\r");
     //CloudOutput("check, show, ping, do, test, send, set, sys, help or ?");
   }
+#endif
 
   return true;
 }

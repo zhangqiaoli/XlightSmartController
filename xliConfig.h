@@ -6,6 +6,7 @@
 /*** USER DEFINES:  ***/
 #define FAILURE_HANDLING
 //#define SYS_SERIAL_DEBUG
+#define SYS_RELEASE
 //#define SERIAL_DEBUG
 //#define MAINLOOP_TIMER
 
@@ -78,8 +79,8 @@
 #define SENSORDATA_JSON_SIZE		196
 
 // Maximum RF messages buffered
-#define MQ_MAX_RF_RCVMSG        5
-#define MQ_MAX_RF_SNDMSG        8
+#define MQ_MAX_RF_RCVMSG        3
+#define MQ_MAX_RF_SNDMSG        5
 
 // Maximum Cloud Command messages buffered
 #define MQ_MAX_CLOUD_MSG        6

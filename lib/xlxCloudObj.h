@@ -21,9 +21,6 @@
 #define CLV_TimeZone            "timeZone"        // Can also be a Particle Object
 #define CLV_SysStatus           "sysStatus"       // Can also be a Particle Object
 #define CLV_LastMessage         "lastMsg"         // Can also be a Particle Object
-#define CLV_SenTemperatur       "senTemp"
-#define CLV_SenHumidity         "senHumid"
-#define CLV_SenBrightness       "senBright"
 
 // Notes: The length of the funcKey is limited to a max of 12 characters.
 // Cloud functions
@@ -60,27 +57,18 @@
 #define CLT_TTL_DeviceConfig    30
 
 typedef struct
-#ifdef PACK
-	__attribute__((packed))
-#endif
 {
   UC node_id;                       // RF nodeID
   float data;
 } nd_float_t;
 
 typedef struct
-#ifdef PACK
-	__attribute__((packed))
-#endif
 {
   UC node_id;                       // RF nodeID
   US data;
 } nd_us_t;
 
 typedef struct
-#ifdef PACK
-	__attribute__((packed))
-#endif
 {
   UC node_id;                       // RF nodeID
   bool data                         :1;
