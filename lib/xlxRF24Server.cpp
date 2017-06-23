@@ -742,6 +742,15 @@ bool RF24ServerClass::ProcessReceiveMQ()
 				} else {
 					//transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 					if( transTo > 0 ) {
+						// Remote turns on or set scene: make sure hardswitch is on
+						if( (msgType == V_SCENE_ON || msgType == V_STATUS) && !IS_NOT_REMOTE_NODEID(replyTo) ) {
+							if( msgType == V_STATUS && theConfig.GetHardwareSwitch() ) {
+								theSys.DeviceSwitch(payload[0], 1, transTo, _sensor);
+							} else {
+								theSys.MakeSureHardSwitchOn(transTo, _sensor);
+							}
+						}
+
 						if( msgType == V_SCENE_ON ) {
 							theSys.ChangeLampScenario(transTo, payload[0], replyTo, _sensor);
 						}	else {

@@ -36,6 +36,7 @@ CloudObjClass::CloudObjClass()
   m_SysVersion = "";
   m_nAppVersion = VERSION_CONFIG_DATA;
   m_SysStatus = STATUS_OFF;
+  relay_key_value = 0;
 
   m_temperature.node_id = 0;
   m_temperature.data = 0.0;

@@ -178,7 +178,7 @@ void xlPanelClass::SetDimmerValue(int16_t _value)
 		m_nDimmerValue = _value;
     SetHC595();
     // Send Light Percentage message
-    theSys.ChangeLampBrightness(CURRENT_DEVICE, _value);
+    theSys.ChangeLampBrightness(CURRENT_DEVICE, _value, CURRENT_SUBDEVICE);
 		LOGD(LOGTAG_EVENT, "Dimmer-BR changed to %d", _value);
 	}
 }

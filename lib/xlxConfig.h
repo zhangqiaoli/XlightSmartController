@@ -26,6 +26,9 @@
 // Maximum items in AST scenario table
 #define MAX_ASR_SNT_ITEMS           16
 
+// Maximum items in Hardware Key Map
+#define MAX_KEY_MAP_ITEMS           4
+
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
 //------------------------------------------------------------------
@@ -35,6 +38,12 @@ typedef struct
   SHORT offset;                             // offser in minutes
   UC dst                      :1;           // daylight saving time flag
 } Timezone_t;
+
+typedef struct
+{
+  UC nid;                                   // NodeID
+  UC subID;                                 // SubID
+} HardKeyMap_t;
 
 typedef struct
 #ifdef PACK
@@ -76,7 +85,8 @@ typedef struct
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
   UC rfPowerLevel             :2;           // RF Power Level 0..3
   BOOL stWiFi                 :1;           // Wi-Fi status: On / Off
-  UC Reserved1                :5;           // Reserved bits
+  BOOL enHWSwitch             :1;           // Whether use Hardware Switch as default
+  UC Reserved1                :4;           // Reserved bits
   US maxBaseNetworkDuration;
   UC useCloud;                              // How to depend on the Cloud
   UC mainDevID;                             // NodeID for main device
@@ -84,6 +94,7 @@ typedef struct
   char blePin[6];
   char pptAccessCode[8];
   UC asrSNT[MAX_ASR_SNT_ITEMS];
+  HardKeyMap_t keyMap[MAX_KEY_MAP_ITEMS];
 } Config_t;
 
 //------------------------------------------------------------------
@@ -413,6 +424,9 @@ public:
   BOOL GetWiFiStatus();
   BOOL SetWiFiStatus(BOOL _st);
 
+  BOOL GetHardwareSwitch();
+  BOOL SetHardwareSwitch(BOOL _sw);
+
   UC GetRFPowerLevel();
   BOOL SetRFPowerLevel(UC level);
 
@@ -425,6 +439,12 @@ public:
   UC GetASR_SNT(const UC _code);
   BOOL SetASR_SNT(const UC _code, const UC _snt = 0);
   void showASRSNT();
+
+  UC GetKeyMapItem(const UC _key, UC *_subID = NULL);
+  BOOL SetKeyMapItem(const UC _key, const UC _nid, const UC _subID = 0);
+  UC SearchKeyMapItem(const UC _nid, const UC _subID = 0);
+  bool IsKeyMatchedItem(const UC _code, const UC _nid, const UC _subID = 0);
+  void showKeyMap();
 
   NodeListClass lstNodes;
   RemoteStatus_t m_stMainRemote;

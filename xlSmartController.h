@@ -66,7 +66,12 @@ public:
   bool ProcessPanel();
 
   // Device Control Functions
+  int DeviceSwitch(UC sw, UC hwsw = 2, UC dev = 0, const UC subID = 0);
   int DevSoftSwitch(UC sw, UC dev = 0, const UC subID = 0);
+  int DevHardSwitch(UC key, UC sw);
+  bool MakeSureHardSwitchOn(UC dev = 0, const UC subID = 0);
+  bool relay_set_key(UC _key, bool _on);
+  bool relay_get_key(UC _key);
 
   // High speed system timer process
   void FastProcess();

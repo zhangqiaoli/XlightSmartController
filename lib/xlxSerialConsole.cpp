@@ -233,6 +233,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN("   device:  show functional devices");
     SERIAL_LN("   remote:  show remotes");
     SERIAL_LN("   asrsnt:  show ASR command scenario table");
+    SERIAL_LN("   keymap:  show hardware key map table");
     SERIAL_LN("   version: show firmware version");
     SERIAL_LN("e.g. show rf\n\r");
     //CloudOutput("show ble|debug|dev|flag|net|node|rf|time|var|table|version");
@@ -257,6 +258,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN("   ping <ip address>: ping ip address");
     SERIAL_LN("   send <NodeId:MessageId[:Payload]>: send test message to node");
     SERIAL_LN("   send <message>: send MySensors format message");
+    SERIAL_LN("   keymap <key> <0:1>: set relay key on/off");
     SERIAL_LN("   ble <message>: send message via BLE");
     SERIAL_LN("   asr <cmd>: send command to ASR module\n\r");
     //CloudOutput("test ping|send|ble|asr");
@@ -272,14 +274,16 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     if( sObj ) {
       if (strnicmp(sObj, "flag", 4) == 0) {
         SERIAL_LN("--- Command: set flag <flag name> [0|1] ---");
-        SERIAL_LN("<flag name>: csc, cdts, fnid");
+        SERIAL_LN("<flag name>: csc, cdts, fnid, hwsw");
         SERIAL_LN("e.g. set flag csc [0|1]");
         SERIAL_LN("     , enable or disable Cloud Serial Command");
         SERIAL_LN("e.g. set flag cdts [0|1]");
         SERIAL_LN("     , enable or disable Cloud Daily Time Sync");
         SERIAL_LN("e.g. set flag fnid [0|1]");
         SERIAL_LN("     , enable or disable Fixed NodeID");
-        //CloudOutput("set flag csc|cdts");
+        SERIAL_LN("e.g. set flag hwsw [0|1]");
+        SERIAL_LN("     , default use hardware switch");
+        //CloudOutput("set flag csc|cdts|fnid|hwsw");
       } else if (strnicmp(sObj, "var", 3) == 0) {
         SERIAL_LN("--- Command: set var <var name> <value> ---");
         SERIAL_LN("<var name>: senmap, devst, bmrt, nmrt, rfpl");
@@ -340,6 +344,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN("     , to change PPT access code");
       SERIAL_LN("e.g. set asrsnt <code scenario_id>");
       SERIAL_LN("     , to set scenario for ASR command");
+      SERIAL_LN("e.g. set keymap <key nid subID>");
+      SERIAL_LN("     , to set keymap item");
       SERIAL_LN("e.g. set debug [log:level]");
       SERIAL_LN("     , where log is [serial|flash|syslog|cloud|all");
       SERIAL_LN("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r");
@@ -496,6 +502,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       CloudOutput("s_nlist:%d-%d", theConfig.lstNodes.count(), theConfig.lstNodes.size());
     } else if (strnicmp(sTopic, "asrsnt", 6) == 0) {
       theConfig.showASRSNT();
+    } else if (strnicmp(sTopic, "keymap", 6) == 0) {
+      theConfig.showKeyMap();
   	} else if (strnicmp(sTopic, "rf", 2) == 0) {
       theRadio.PrintRFDetails();
       SERIAL_LN("");
@@ -534,26 +542,28 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("nmrt =   \t\t\t%d", theConfig.GetNdMsgRptTimes());
       SERIAL_LN("PPT Pin = %s\n\r", theConfig.GetPPTAccessCode().c_str());
     } else if (strnicmp(sTopic, "flag", 4) == 0) {
-  		SERIAL_LN("m_isRF = \t\t\t%s", (theSys.IsRFGood() ? "true" : "false"));
-  		SERIAL_LN("m_isBLE = \t\t\t%s", (theSys.IsBLEGood() ? "true" : "false"));
-  		SERIAL_LN("m_isLAN = \t\t\t%s", (theSys.IsLANGood() ? "true" : "false"));
-  		SERIAL_LN("m_isWAN = \t\t\t%s", (theSys.IsWANGood() ? "true" : "false"));
+  		SERIAL_LN("m_isRF = \t\t\t%d", theSys.IsRFGood());
+  		SERIAL_LN("m_isBLE = \t\t\t%d", theSys.IsBLEGood());
+  		SERIAL_LN("m_isLAN = \t\t\t%d", theSys.IsLANGood());
+  		SERIAL_LN("m_isWAN = \t\t\t%d", theSys.IsWANGood());
       SERIAL_LN("");
-      SERIAL_LN("fixedNodeID = \t\t\t%s", (theConfig.IsFixedNID() ? "true" : "false"));
-      SERIAL_LN("enableCloudSerialCmd = \t\t%s", (theConfig.IsCloudSerialEnabled() ? "true" : "false"));
-      SERIAL_LN("enableDailyTimeSync = \t\t%s", (theConfig.IsDailyTimeSyncEnabled() ? "true" : "false"));
-      SERIAL_LN("enableSpeaker = \t\t%s", (theConfig.IsSpeakerEnabled() ? "true" : "false"));
-      SERIAL_LN("bBaseNetworkEnabled = \t\t%s", (theRadio.isBaseNetworkEnabled() ? "true" : "false"));
-      SERIAL_LN("stWiFi = \t\t\t%s", (theConfig.GetWiFiStatus() ? "On" : "Off"));
+      SERIAL_LN("fixedNodeID = \t\t\t%d", theConfig.IsFixedNID());
+      SERIAL_LN("enableCloudSerialCmd = \t\t%d", theConfig.IsCloudSerialEnabled());
+      SERIAL_LN("enableDailyTimeSync = \t\t%d", theConfig.IsDailyTimeSyncEnabled());
+      SERIAL_LN("enableSpeaker = \t\t%d", theConfig.IsSpeakerEnabled());
+      SERIAL_LN("bBaseNetworkEnabled = \t\t%d", theRadio.isBaseNetworkEnabled());
+      SERIAL_LN("stWiFi = \t\t\t%d", theConfig.GetWiFiStatus());
+      SERIAL_LN("hwsw =   \t\t\t%d", theConfig.GetHardwareSwitch());
       SERIAL_LN("");
-  		SERIAL_LN("m_isLoaded = \t\t\t%s", (theConfig.IsConfigLoaded() ? "true" : "false"));
-  		SERIAL_LN("m_isChanged = \t\t\t%s", (theConfig.IsConfigChanged() ? "true" : "false"));
-  		SERIAL_LN("m_isDSTChanged = \t\t%s", (theConfig.IsDSTChanged() ? "true" : "false"));
-  		SERIAL_LN("m_isSCTChanged = \t\t%s", (theConfig.IsSCTChanged() ? "true" : "false"));
-  		SERIAL_LN("m_isRTChanged = \t\t%s", (theConfig.IsRTChanged() ? "true" : "false"));
-  		SERIAL_LN("m_isSNTChanged = \t\t%s", (theConfig.IsSNTChanged() ? "true" : "false"));
-      SERIAL_LN("IsNIDChanged = \t\t\t%s\n\r", (theConfig.IsNIDChanged() ? "true" : "false"));
+  		SERIAL_LN("m_isLoaded = \t\t\t%d", theConfig.IsConfigLoaded());
+  		SERIAL_LN("m_isChanged = \t\t\t%d", theConfig.IsConfigChanged());
+  		SERIAL_LN("m_isDSTChanged = \t\t%d", theConfig.IsDSTChanged());
+  		SERIAL_LN("m_isSCTChanged = \t\t%d", theConfig.IsSCTChanged());
+  		SERIAL_LN("m_isRTChanged = \t\t%d", theConfig.IsRTChanged());
+  		SERIAL_LN("m_isSNTChanged = \t\t%d", theConfig.IsSNTChanged());
+      SERIAL_LN("IsNIDChanged = \t\t\t%d\n\r", theConfig.IsNIDChanged());
   	} else if (strnicmp(sTopic, "table", 5) == 0) {
+      SERIAL_LN("CONFIG_SIZE: \t\t\t\t%u", sizeof(Config_t));
   		SERIAL_LN("DST_ROW_SIZE: \t\t\t\t%u", DST_ROW_SIZE);
   		SERIAL_LN("RT_ROW_SIZE: \t\t\t\t%u", RT_ROW_SIZE);
   		SERIAL_LN("SCT_ROW_SIZE: \t\t\t\t%u", SCT_ROW_SIZE);
@@ -649,7 +659,7 @@ bool SerialConsoleClass::doTest(const char *cmd)
   bool retVal = false;
 
   char *sTopic = next();
-  char *sParam;
+  char *sParam, *sParam1;
   if( sTopic ) {
     if (strnicmp(sTopic, "ping", 4) == 0) {
       char *sIPaddress = next();
@@ -672,14 +682,26 @@ bool SerialConsoleClass::doTest(const char *cmd)
         retVal = true;
       }
     } else if (strnicmp(sTopic, "asr", 3) == 0) {
-      char *sParam = next();
+      sParam = next();
       if( strlen(sParam) > 0 ) {
         SERIAL("\n\r");
         theASR.sendCommand(atoi(sParam));
         retVal = true;
       }
+    } else if (strnicmp(sTopic, "keymap", 6) == 0) {
+      sParam = next();
+      if( sParam ) {
+        UC keyID = atoi(sParam);
+        sParam1 = next();
+        if( sParam1 ) {
+          UC _sw = atoi(sParam1);
+          SERIAL_LN("Turn keymap %d to %d\n\r", keyID, _sw);
+          theSys.DevHardSwitch(keyID, _sw);
+          retVal = true;
+        }
+      }
     } else if (strnicmp(sTopic, "ble", 3) == 0) {
-      char *sParam = next();
+      sParam = next();
       if( strlen(sParam) >= 3 ) {
         String strMsg = sParam;
         if( strMsg.charAt(strMsg.length()-1) != '\n') {
@@ -719,7 +741,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
   bool retVal = false;
 
   char *sTopic = next();
-  char *sParam1, *sParam2;
+  char *sParam1, *sParam2, *sParam3;
   if( sTopic ) {
     if (strnicmp(sTopic, "tz", 2) == 0) {
       sParam1 = next();
@@ -798,6 +820,11 @@ bool SerialConsoleClass::doSet(const char *cmd)
             theConfig.SetFixedNID(atoi(sParam2) > 0);
             SERIAL_LN("Fixed NodeID is %s\n\r", (theConfig.IsFixedNID() ? "enabled" : "disabled"));
             CloudOutput("f_fnid:%d", theConfig.IsFixedNID());
+            retVal = true;
+          } else if (strnicmp(sParam1, "hwsw", 4) == 0) {
+            theConfig.SetHardwareSwitch(atoi(sParam2) > 0);
+            SERIAL_LN("Default use %s switch\n\r", (theConfig.GetHardwareSwitch() ? "Hardware" : "Software"));
+            CloudOutput("hwsw:%d", theConfig.GetHardwareSwitch());
             retVal = true;
           }
         } else {
@@ -959,6 +986,27 @@ bool SerialConsoleClass::doSet(const char *cmd)
         }
       } else {
         SERIAL_LN("Require a valid scenario ID\n\r");
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "keymap", 6) == 0) {
+      // ASR command scenario
+      sParam1 = next();     // Get key
+      if( sParam1) {
+        sParam2 = next();   // Get nodeID
+        if( sParam2 ) {
+          UC subID = 0;
+          sParam3 = next();   // Get subID
+          if( sParam3 ) subID = (UC)atoi(sParam3);
+          theConfig.SetKeyMapItem((UC)atoi(sParam1), (UC)atoi(sParam2), subID);
+          SERIAL_LN("Key%s maps to %s-%d\n\r", sParam1, sParam2, subID);
+          CloudOutput("key%s:%s-%d", sParam1, sParam2, subID);
+          retVal = true;
+        } else {
+          SERIAL_LN("Require a valid nodeID\n\r");
+          retVal = true;
+        }
+      } else {
+        SERIAL_LN("Require a valid keyID (1 to %d)\n\r", MAX_KEY_MAP_ITEMS);
         retVal = true;
       }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {
