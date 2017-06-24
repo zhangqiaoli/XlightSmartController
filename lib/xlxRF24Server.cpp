@@ -748,7 +748,11 @@ bool RF24ServerClass::ProcessReceiveMQ()
 							if( msgType == V_STATUS && theConfig.GetHardwareSwitch() ) {
 								_bValue = payload[0];
 								if( _bValue == DEVICE_SW_TOGGLE ) _bValue = 1 - theSys.GetDevOnOff(transTo);
-								lv_skip = (theSys.DeviceSwitch(_bValue, 1, transTo, _sensor) > 0);
+								if( _bValue == DEVICE_SW_OFF ) {
+									lv_skip = theSys.DeviceSwitch(DEVICE_SW_OFF, 1, transTo, _sensor);
+								} else {
+									lv_skip = theSys.DevSoftSwitch(DEVICE_SW_ON, transTo, _sensor);
+								}
 							} else {
 								theSys.MakeSureHardSwitchOn(transTo, _sensor);
 							}
