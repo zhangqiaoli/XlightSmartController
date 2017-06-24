@@ -742,10 +742,13 @@ bool RF24ServerClass::ProcessReceiveMQ()
 				} else {
 					//transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 					if( transTo > 0 ) {
+						bool lv_skip = false;
 						// Remote turns on or set scene: make sure hardswitch is on
 						if( (msgType == V_SCENE_ON || msgType == V_STATUS) && !IS_NOT_REMOTE_NODEID(replyTo) ) {
 							if( msgType == V_STATUS && theConfig.GetHardwareSwitch() ) {
-								theSys.DeviceSwitch(payload[0], 1, transTo, _sensor);
+								_bValue = payload[0];
+								if( _bValue == DEVICE_SW_TOGGLE ) _bValue = 1 - theSys.GetDevOnOff(transTo);
+								lv_skip = (theSys.DeviceSwitch(_bValue, 1, transTo, _sensor) > 0);
 							} else {
 								theSys.MakeSureHardSwitchOn(transTo, _sensor);
 							}
@@ -753,7 +756,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 
 						if( msgType == V_SCENE_ON ) {
 							theSys.ChangeLampScenario(transTo, payload[0], replyTo, _sensor);
-						}	else {
+						}	else if(!lv_skip) {
 							// Transfer message
 							msg.build(replyTo, transTo, _sensor, C_SET, msgType, _needAck, _bIsAck, true);
 							// Keep payload unchanged
