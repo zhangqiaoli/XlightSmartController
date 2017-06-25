@@ -33,10 +33,12 @@
  *
 **/
 #include "xliPinMap.h"
+#include "xliNodeConfig.h"
 #include "xlxPanel.h"
 #include "xlxLogger.h"
 #include "xlSmartController.h"
 #include "xlxRF24Server.h"
+#include "xlxConfig.h"
 
 #define PANEL_NUM_LEDS_RING   12
 #define PANEL_NUM_LEDS_CCTIDX 8
@@ -149,7 +151,13 @@ bool xlPanelClass::ProcessEncoder()
         break;
       case BUTTON_CLICKED:
         LOGD(LOGTAG_ACTION, "Button Clicked");
-        theSys.ToggleLampOnOff(CURRENT_DEVICE, CURRENT_SUBDEVICE);
+        if( theConfig.GetRelayKeyObj() == BTN_OBJ_SCAN_KEY_MAP ) {
+          theSys.ToggleAllHardSwitchs();
+        } else if( theConfig.GetRelayKeyObj() == BTN_OBJ_LOOP_KEY_MAP ) {
+          theSys.ToggleLoopHardSwitch();
+        } else {
+          theSys.ToggleLampOnOff(CURRENT_DEVICE, CURRENT_SUBDEVICE);
+        }
         // Clear CCT flag, but don't need to change HC595, cuz the toggle function will do it
         //SetCCTFlag(false);
         m_bCCTFlag = false;

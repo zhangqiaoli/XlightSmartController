@@ -379,6 +379,7 @@ void ConfigClass::InitConfig()
 	m_config.stWiFi = 1;
 	m_config.bcMsgRtpTimes = 3;
 	m_config.ndMsgRtpTimes = 1;
+	m_config.tmLoopKC = RTE_TM_LOOP_KEYCODE;
 	memset(m_config.asrSNT, 0x00, MAX_ASR_SNT_ITEMS);
 	memset(m_config.keyMap, 0x00, MAX_KEY_MAP_ITEMS * sizeof(HardKeyMap_t));
 }
@@ -1052,6 +1053,36 @@ BOOL ConfigClass::SetHardwareSwitch(BOOL _sw)
   return false;
 }
 
+UC ConfigClass::GetRelayKeyObj()
+{
+	return m_config.hwsObj;
+}
+
+BOOL ConfigClass::SetRelayKeyObj(UC _value)
+{
+	if( _value != m_config.hwsObj ) {
+    m_config.hwsObj = _value;
+    m_isChanged = true;
+    return true;
+  }
+  return false;
+}
+
+UC ConfigClass::GetTimeLoopKC()
+{
+	return m_config.tmLoopKC;
+}
+
+BOOL ConfigClass::SetTimeLoopKC(UC _value)
+{
+	if( _value != m_config.tmLoopKC ) {
+    m_config.tmLoopKC = _value;
+    m_isChanged = true;
+    return true;
+  }
+  return false;
+}
+
 UC ConfigClass::GetRFPowerLevel()
 {
 	return m_config.rfPowerLevel;
@@ -1129,6 +1160,14 @@ void ConfigClass::showASRSNT()
 	}
 }
 
+BOOL ConfigClass::IsKeyMapItemAvalaible(const UC _code)
+{
+	if( _code < MAX_KEY_MAP_ITEMS ) {
+		return(m_config.keyMap[_code].nid > 0);
+	}
+	return false;
+}
+
 UC ConfigClass::GetKeyMapItem(const UC _key, UC *_subID)
 {
 	if( _key > 0 && _key <= MAX_KEY_MAP_ITEMS ) {
@@ -1165,14 +1204,12 @@ UC ConfigClass::SearchKeyMapItem(const UC _nid, const UC _subID)
 
 bool ConfigClass::IsKeyMatchedItem(const UC _code, const UC _nid, const UC _subID)
 {
-	if( _code < MAX_KEY_MAP_ITEMS ) {
-		if( m_config.keyMap[_code].nid > 0 ) {
-			if( _nid == 0 ) return true;
+	if( IsKeyMapItemAvalaible(_code) ) {
+		if( _nid == 0 ) return true;
 
-			if( m_config.keyMap[_code].nid == _nid || _nid == NODEID_DUMMY ) {
-				if( _subID == 0 ) return true;
-				if( m_config.keyMap[_code].subID & _subID ) return true;
-			}
+		if( m_config.keyMap[_code].nid == _nid || _nid == NODEID_DUMMY ) {
+			if( _subID == 0 ) return true;
+			if( m_config.keyMap[_code].subID & _subID ) return true;
 		}
 	}
 	return false;

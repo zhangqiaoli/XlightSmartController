@@ -340,6 +340,12 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN("     , to change BLE SSID");
       SERIAL_LN("e.g. set blepin <BLEPin>");
       SERIAL_LN("     , to change BLE Pin");
+      SERIAL_LN("e.g. set loopkc [0..%d]", MAX_KEY_MAP_ITEMS);
+      SERIAL_LN("     , to set button loop keycode");
+      SERIAL_LN("e.g. set kcto [0..255]");
+      SERIAL_LN("     , to set loop keycode timeout");
+      SERIAL_LN("e.g. set hwsobj [0|1|2]");
+      SERIAL_LN("     , to set hardware switch object type");
       SERIAL_LN("e.g. set pptpin <PPTPin>");
       SERIAL_LN("     , to change PPT access code");
       SERIAL_LN("e.g. set asrsnt <code scenario_id>");
@@ -503,6 +509,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
     } else if (strnicmp(sTopic, "asrsnt", 6) == 0) {
       theConfig.showASRSNT();
     } else if (strnicmp(sTopic, "keymap", 6) == 0) {
+      SERIAL_LN("HW switch object type: %d, loopkc: %d", theConfig.GetHardwareSwitch(), theSys.GetLoopKeyCode());
       theConfig.showKeyMap();
   	} else if (strnicmp(sTopic, "rf", 2) == 0) {
       theRadio.PrintRFDetails();
@@ -540,6 +547,9 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("maxBaseNetworkDuration = \t%d", theConfig.GetMaxBaseNetworkDur());
       SERIAL_LN("bmrt =   \t\t\t%d", theConfig.GetBcMsgRptTimes());
       SERIAL_LN("nmrt =   \t\t\t%d", theConfig.GetNdMsgRptTimes());
+      SERIAL_LN("loopkc = \t\t\t%d", theConfig.GetRelayKeyObj());
+      SERIAL_LN("loop kcto = \t\t\t%d", theConfig.GetTimeLoopKC());
+      SERIAL_LN("hwsObj = \t\t\t%d", theSys.GetLoopKeyCode());
       SERIAL_LN("PPT Pin = %s\n\r", theConfig.GetPPTAccessCode().c_str());
     } else if (strnicmp(sTopic, "flag", 4) == 0) {
   		SERIAL_LN("m_isRF = \t\t\t%d", theSys.IsRFGood());
@@ -961,6 +971,34 @@ bool SerialConsoleClass::doSet(const char *cmd)
         retVal = true;
       } else {
         SERIAL_LN("Require 4 digits BLE pin\n\r");
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "hwsobj", 6) == 0) {
+      // Relay key object type
+      sParam1 = next();
+      if( sParam1) {
+        theConfig.SetRelayKeyObj(atoi(sParam1));
+        SERIAL_LN("Set HW switch obj: %d\n\r", theConfig.GetRelayKeyObj());
+        CloudOutput("hwsobj:%d", theConfig.GetRelayKeyObj());
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "loopkc", 6) == 0) {
+      // Relay key loop code
+      sParam1 = next();
+      if( sParam1) {
+        if( theSys.SetLoopKeyCode(atoi(sParam1)) ) {
+          SERIAL_LN("Set loop keycode: %d\n\r", theSys.GetLoopKeyCode());
+          CloudOutput("loopkc:%d", theSys.GetLoopKeyCode());
+          retVal = true;
+        }
+      }
+    } else if (strnicmp(sTopic, "kcto", 4) == 0) {
+      // Relay key loop code
+      sParam1 = next();
+      if( sParam1) {
+        theConfig.SetTimeLoopKC(atoi(sParam1));
+        SERIAL_LN("Set loop keycode timeout: %d\n\r", theConfig.GetTimeLoopKC());
+        CloudOutput("kcot:%d", theConfig.GetTimeLoopKC());
         retVal = true;
       }
     } else if (strnicmp(sTopic, "pptpin", 6) == 0) {

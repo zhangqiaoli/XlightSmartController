@@ -27,7 +27,7 @@
 #endif
 
 // Main Version. Must change if Config_t structure is updated
-#define VERSION_CONFIG_DATA       17
+#define VERSION_CONFIG_DATA       18
 
 // Xlight Application Identification
 #define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM
@@ -58,6 +58,7 @@
 #define RTE_TM_HELD_TO_WIFI       15          // Held duration threshold to enter Wi-Fi setup
 #define RTE_TM_HELD_TO_RESET      10          // Held duration threshold to reset
 #define RTE_TM_HELD_TO_BASENW     5           // Held duration threshold to enable Base Network
+#define RTE_TM_LOOP_KEYCODE       3           // Max idle time of changing loop keycode
 
 // Maximum number of rows for any working memory table implimented using ChainClass
 #define MAX_TABLE_SIZE              8

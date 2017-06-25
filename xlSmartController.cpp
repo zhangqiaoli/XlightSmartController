@@ -78,6 +78,8 @@ SmartControllerClass::SmartControllerClass()
 	m_isRF = false;
 	m_isLAN = false;
 	m_isWAN = false;
+	m_loopKeyCode = 0;
+	m_tickLoopKeyCode = 0;
 }
 
 // Primitive initialization before loading configuration
@@ -763,6 +765,60 @@ bool SmartControllerClass::MakeSureHardSwitchOn(UC dev, const UC subID)
 	return true;
 }
 
+bool SmartControllerClass::ToggleLoopHardSwitch()
+{
+	bool bMoveKey = false;
+
+	if( m_loopKeyCode == 0 ) {
+		bMoveKey = ToggleAllHardSwitchs();
+		if( !bMoveKey ) m_tickLoopKeyCode = Time.now();
+	} else if( theConfig.IsKeyMapItemAvalaible(m_loopKeyCode - 1) ) {
+		if(relay_get_key(m_loopKeyCode)) {
+			// On -> Off
+			DevHardSwitch(m_loopKeyCode, false);
+			bMoveKey = true;
+		} else {
+			// Off -> On, stay at current relay key
+			DevHardSwitch(m_loopKeyCode, true);
+			m_tickLoopKeyCode = Time.now();
+		}
+	}
+
+	// Move to next avalaible relay key
+	if( bMoveKey && !IsLoopKeyCodeTimeout() ) {
+		do {
+			m_loopKeyCode++;
+			m_loopKeyCode %= (MAX_KEY_MAP_ITEMS + 1);
+		} while(!SetLoopKeyCode(m_loopKeyCode));
+	}
+
+	return bMoveKey;
+}
+
+bool SmartControllerClass::IsLoopKeyCodeTimeout()
+{
+	if( m_tickLoopKeyCode == 0 ) return true;
+
+	if(theConfig.GetTimeLoopKC() > 0 ) {
+		return((Time.now() - m_tickLoopKeyCode) / 1000 >= theConfig.GetTimeLoopKC());
+	}
+	return false;
+}
+
+bool SmartControllerClass::ToggleAllHardSwitchs()
+{
+	UC _sw = DEVICE_SW_TOGGLE;
+	for( UC _code = 0; _code < MAX_KEY_MAP_ITEMS; _code++ ) {
+		if( theConfig.IsKeyMapItemAvalaible(_code) ) {
+			if( _sw == DEVICE_SW_TOGGLE ) {
+				_sw = relay_get_key(_code + 1);
+			}
+			DevHardSwitch(_code + 1, _sw == false);
+		}
+	}
+	return(_sw == 1);
+}
+
 bool SmartControllerClass::relay_get_key(UC _key)
 {
   bool rc = FALSE;
@@ -1410,6 +1466,12 @@ bool SmartControllerClass::ParseCmdRow(JsonObject& data)
 					theConfig.SetCloudSerialEnabled(data["csc"] > 0);
 				} else if( data.containsKey("asrcmd") && data.containsKey("SNT_id") ) {
 					theConfig.SetASR_SNT((UC)data["asrcmd"], (UC)data["SNT_id"]);
+				} else if( data.containsKey("loopkc") ) {
+					theSys.SetLoopKeyCode((UC)data["loopkc"].as<int>());
+				} else if( data.containsKey("kcto") ) {
+					theConfig.SetTimeLoopKC((UC)data["kcto"].as<int>());
+				} else if( data.containsKey("hwsobj") ) {
+					theConfig.SetRelayKeyObj((UC)data["hwsobj"].as<int>());
 				} else if( data.containsKey("hwsw") ) {
 					theConfig.SetHardwareSwitch(data["hwsw"] > 0);
 				} else if( data.containsKey("km") && data.containsKey("nd") ) {
@@ -2412,7 +2474,21 @@ US SmartControllerClass::GetDevCCT(UC _nodeID)
 	} else {
 		_cct = (US)thePanel.GetCCTValue(false);
 	}
- return _cct;
+	return _cct;
+}
+
+UC SmartControllerClass::GetLoopKeyCode()
+{
+	return m_loopKeyCode;
+}
+
+bool SmartControllerClass::SetLoopKeyCode(const UC _key)
+{
+	if( _key > 0 ) {
+		if( !theConfig.IsKeyMapItemAvalaible(_key - 1) ) return false;
+	}
+	m_loopKeyCode = _key;
+	return true;
 }
 
 US SmartControllerClass::VerifyDevicePresence(UC *_assoDev, UC _nodeID, UC _devType, uint64_t _identity)

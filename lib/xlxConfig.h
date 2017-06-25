@@ -72,7 +72,8 @@ typedef struct
   char Organization[20];                    // Organization name
   UC bcMsgRtpTimes            :4;           // Broadcast message repeat times
   UC ndMsgRtpTimes            :4;           // Node message repeat times
-  UC Reserved_UC1[3];
+  UC tmLoopKC;                              // Loop Keycode timeout
+  UC Reserved_UC1[2];
   char ProductName[20];                     // Product name
   UC subDevID;                              // SubID for main device
   UC Reserved_UC2[3];
@@ -86,7 +87,8 @@ typedef struct
   UC rfPowerLevel             :2;           // RF Power Level 0..3
   BOOL stWiFi                 :1;           // Wi-Fi status: On / Off
   BOOL enHWSwitch             :1;           // Whether use Hardware Switch as default
-  UC Reserved1                :4;           // Reserved bits
+  UC hwsObj                   :3;           // Hardware Switch Object
+  UC Reserved1                :1;           // Reserved bits
   US maxBaseNetworkDuration;
   UC useCloud;                              // How to depend on the Cloud
   UC mainDevID;                             // NodeID for main device
@@ -427,6 +429,12 @@ public:
   BOOL GetHardwareSwitch();
   BOOL SetHardwareSwitch(BOOL _sw);
 
+  UC GetRelayKeyObj();
+  BOOL SetRelayKeyObj(UC _value);
+
+  UC GetTimeLoopKC();
+  BOOL SetTimeLoopKC(UC _value);
+
   UC GetRFPowerLevel();
   BOOL SetRFPowerLevel(UC level);
 
@@ -443,6 +451,7 @@ public:
   UC GetKeyMapItem(const UC _key, UC *_subID = NULL);
   BOOL SetKeyMapItem(const UC _key, const UC _nid, const UC _subID = 0);
   UC SearchKeyMapItem(const UC _nid, const UC _subID = 0);
+  BOOL IsKeyMapItemAvalaible(const UC _code);
   bool IsKeyMatchedItem(const UC _code, const UC _nid, const UC _subID = 0);
   void showKeyMap();
 

@@ -25,6 +25,8 @@ private:
   BOOL m_isRF;
   BOOL m_isLAN;
   BOOL m_isWAN;
+  UC m_loopKeyCode;
+  UL m_tickLoopKeyCode;
 
   String hue_to_string(Hue_t hue);
   bool updateDevStatusRow(MyMessage msg);
@@ -70,6 +72,8 @@ public:
   int DevSoftSwitch(UC sw, UC dev = 0, const UC subID = 0);
   int DevHardSwitch(UC key, UC sw);
   bool MakeSureHardSwitchOn(UC dev = 0, const UC subID = 0);
+  bool ToggleAllHardSwitchs();
+  bool ToggleLoopHardSwitch();
   bool relay_set_key(UC _key, bool _on);
   bool relay_get_key(UC _key);
 
@@ -129,6 +133,9 @@ public:
   UC GetDevOnOff(UC _nodeID);
   UC GetDevBrightness(UC _nodeID);
   US GetDevCCT(UC _nodeID);
+  UC GetLoopKeyCode();
+  bool SetLoopKeyCode(const UC _key = 0);
+  bool IsLoopKeyCodeTimeout();
 
   US VerifyDevicePresence(UC *_assoDev, UC _nodeID, UC _devType, uint64_t _identity);
   BOOL ToggleLampOnOff(UC _nodeID = NODEID_MAINDEVICE, const UC subID = 0);
