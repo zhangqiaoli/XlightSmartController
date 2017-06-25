@@ -647,7 +647,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 			case C_REQ:
 				if( msgType == V_STATUS || msgType == V_PERCENTAGE || msgType == V_LEVEL
 					  || msgType == V_RGBW || msgType == V_DISTANCE || msgType == V_VAR1
-					  || msgType == V_RELAY_ON || msgType == V_RELAY_OFF ) {
+					  || msgType == V_RELAY_ON || msgType == V_RELAY_OFF || msgType == V_RELAY_MAP ) {
 					//transTo = (msg.getDestination() == getAddress() ? _sensor : msg.getDestination());
 					transTo = msg.getDestination();
 					BOOL bDataChanged = false;
@@ -699,7 +699,12 @@ bool RF24ServerClass::ProcessReceiveMQ()
 							// Publish Relay Status
 							strTemp = String::format("{'nd':%d,'k_%s':'%c'}", replyTo, msgType == V_RELAY_ON ? "on" : "off", payload[0]);
 							theSys.PublishDeviceStatus(strTemp.c_str());
-							bDataChanged = true;
+							//bDataChanged = true;
+						} else if( msgType == V_RELAY_MAP ) {
+							// Publish Relay Status
+							strTemp = String::format("{'nd':%d,'km':%d}", payload[0]);
+							theSys.PublishDeviceStatus(strTemp.c_str());
+							//bDataChanged = true;
 						}
 
 						// If data changed, new status must broadcast to all end points
