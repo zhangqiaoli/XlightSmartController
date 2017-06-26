@@ -800,7 +800,7 @@ bool SmartControllerClass::IsLoopKeyCodeTimeout()
 	if( m_tickLoopKeyCode == 0 ) return true;
 
 	if(theConfig.GetTimeLoopKC() > 0 ) {
-		return((Time.now() - m_tickLoopKeyCode) / 1000 >= theConfig.GetTimeLoopKC());
+		return(Time.now() - m_tickLoopKeyCode >= theConfig.GetTimeLoopKC());
 	}
 	return false;
 }

@@ -998,7 +998,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
       if( sParam1) {
         theConfig.SetTimeLoopKC(atoi(sParam1));
         SERIAL_LN("Set loop keycode timeout: %d\n\r", theConfig.GetTimeLoopKC());
-        CloudOutput("kcot:%d", theConfig.GetTimeLoopKC());
+        CloudOutput("kcto:%d", theConfig.GetTimeLoopKC());
         retVal = true;
       }
     } else if (strnicmp(sTopic, "pptpin", 6) == 0) {
