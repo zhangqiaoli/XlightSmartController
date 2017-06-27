@@ -23,6 +23,7 @@
  * 1.
 **/
 
+#include "xliCommon.h"
 #include "xlxCloudObj.h"
 #include "xlxLogger.h"
 #include "xlxBLEInterface.h"
