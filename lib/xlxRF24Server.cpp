@@ -758,7 +758,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 									lv_skip = theSys.DeviceSwitch(DEVICE_SW_OFF, 1, transTo, _sensor);
 								} else {
 									lv_skip = theSys.DevSoftSwitch(DEVICE_SW_ON, transTo, _sensor);
-									if( lv_skip ) theSys.HardConfirmOnOff(transTo, _sensor);
+									if( lv_skip ) theSys.HardConfirmOnOff(transTo, _sensor, DEVICE_SW_ON);
 								}
 							} else {
 								theSys.MakeSureHardSwitchOn(transTo, _sensor);

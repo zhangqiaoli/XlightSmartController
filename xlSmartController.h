@@ -71,7 +71,7 @@ public:
   int DeviceSwitch(UC sw, UC hwsw = 2, UC dev = 0, const UC subID = 0);
   int DevSoftSwitch(UC sw, UC dev = 0, const UC subID = 0);
   int DevHardSwitch(UC key, UC sw);
-  bool HardConfirmOnOff(UC dev, const UC subID = 0);
+  bool HardConfirmOnOff(UC dev, const UC subID = 0, const UC _st = 0);
   bool MakeSureHardSwitchOn(UC dev = 0, const UC subID = 0);
   bool ToggleAllHardSwitchs();
   bool ToggleLoopHardSwitch();
