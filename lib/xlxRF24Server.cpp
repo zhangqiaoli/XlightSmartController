@@ -141,6 +141,7 @@ bool RF24ServerClass::ProcessSend(const UC _node, const UC _msgID, String &strPa
 		// Serail format to MySensors message structure
 		bMsgReady = serialMsgParser.parse(lv_msg, strBuffer);
 		if (bMsgReady) {
+			if( _sensor > 0 ) lv_msg.setSensor(_sensor);
 			SERIAL("Now sending message...");
 		}
 		break;

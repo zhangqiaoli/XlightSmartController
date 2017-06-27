@@ -125,7 +125,7 @@ public:
   BOOL UpdateGas(uint8_t nid, uint16_t value);
   BOOL UpdateDust(uint8_t nid, uint16_t value);
   BOOL UpdateSmoke(uint8_t nid, uint16_t value);
-  BOOL UpdateSound(uint8_t nid, bool value);
+  BOOL UpdateSound(uint8_t nid, uint8_t value);
   BOOL UpdateNoise(uint8_t nid, uint16_t value);
 
   BOOL PublishLog(const char *msg);
