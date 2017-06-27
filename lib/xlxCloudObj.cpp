@@ -294,7 +294,7 @@ BOOL CloudObjClass::UpdateSmoke(uint8_t nid, uint16_t value)
   return false;
 }
 
-BOOL CloudObjClass::UpdateSound(uint8_t nid, bool value)
+BOOL CloudObjClass::UpdateSound(uint8_t nid, uint8_t value)
 {
   if( m_sound.data != value || m_sound.node_id != nid ) {
     m_sound.node_id = nid;

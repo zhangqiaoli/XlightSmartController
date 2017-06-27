@@ -102,7 +102,7 @@ public:
   nd_us_t m_gas;
   nd_us_t m_dust;
   nd_us_t m_smoke;
-  nd_bool_t m_sound;
+  nd_uc_t m_sound;
   nd_us_t m_noise;
 
 public:
