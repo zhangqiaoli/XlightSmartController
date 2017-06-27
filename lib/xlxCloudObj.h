@@ -98,6 +98,7 @@ public:
   nd_float_t m_humidity;
   nd_us_t m_brightness;
   nd_bool_t m_motion;
+  nd_bool_t m_irKey;
   nd_us_t m_gas;
   nd_us_t m_dust;
   nd_us_t m_smoke;
@@ -120,7 +121,7 @@ public:
 
   BOOL UpdateDHT(uint8_t nid, float _temp, float _humi);
   BOOL UpdateBrightness(uint8_t nid, uint8_t value);
-  BOOL UpdateMotion(uint8_t nid, bool value);
+  BOOL UpdateMotion(uint8_t nid, uint8_t sensor, bool value);
   BOOL UpdateGas(uint8_t nid, uint16_t value);
   BOOL UpdateDust(uint8_t nid, uint16_t value);
   BOOL UpdateSmoke(uint8_t nid, uint16_t value);
