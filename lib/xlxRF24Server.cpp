@@ -605,7 +605,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 					if (DevStatusRowPtr) theSys.ConfirmLampPresent(DevStatusRowPtr, true);
 					if( _sensor == S_MOTION || _sensor == S_IR ) {
 						if( msgType == V_STATUS) { // PIR
-							theSys.UpdateMotion(replyTo, _sensor, msg.getByte()!=DEVICE_SW_OFF);
+							theSys.UpdateMotion(replyTo, _sensor, msg.getByte());
 						}
 					} else if( _sensor == S_LIGHT_LEVEL ) {
 						if( msgType == V_LIGHT_LEVEL) { // ALS

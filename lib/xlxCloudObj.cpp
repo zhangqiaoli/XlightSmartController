@@ -23,7 +23,7 @@
  * 1.
 **/
 
-#include "xliCommon.h"
+#include "MyMessage.h"
 #include "xlxCloudObj.h"
 #include "xlxLogger.h"
 #include "xlxBLEInterface.h"
@@ -211,21 +211,22 @@ BOOL CloudObjClass::UpdateBrightness(uint8_t nid, uint8_t value)
   return false;
 }
 
-BOOL CloudObjClass::UpdateMotion(uint8_t nid, uint8_t sensor, bool value)
+BOOL CloudObjClass::UpdateMotion(uint8_t nid, uint8_t sensor, uint8_t value)
 {
-  if( sensor == S_MOTION ) {
-    if( m_motion.data != value || m_motion.node_id != nid ) {
-      m_motion.node_id = nid;
-      m_motion.data = value;
-      OnSensorDataChanged(sensorPIR, nid);
+  if( sensor == S_MOTION || sensor == S_IR ) {
+    if( sensor == S_MOTION ) {
+      if( m_motion.data != value || m_motion.node_id != nid ) {
+        m_motion.node_id = nid;
+        m_motion.data = value;
+        OnSensorDataChanged(sensorPIR, nid);
+      }
+    } else if( sensor == S_IR ) {
+      if( m_irKey.data != value || m_irKey.node_id != nid ) {
+        m_irKey.node_id = nid;
+        m_irKey.data = value;
+        OnSensorDataChanged(sensorIRKey, nid);
+      }
     }
-  } else if( sensor == S_IR ) {
-    if( m_irKey.data != value || m_irKey.node_id != nid ) {
-      m_irKey.node_id = nid;
-      m_irKey.data = value;
-      OnSensorDataChanged(sensorIRKey, nid);
-    }
-  }
 
 #ifdef USE_PARTICLE_CLOUD
     // Publis right away
