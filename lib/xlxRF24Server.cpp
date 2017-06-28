@@ -750,8 +750,8 @@ bool RF24ServerClass::ProcessReceiveMQ()
 					if( transTo > 0 ) {
 						bool lv_skip = false;
 						// Remote turns on or set scene: make sure hardswitch is on
-						if( (msgType == V_SCENE_ON || msgType == V_STATUS) && !IS_NOT_REMOTE_NODEID(replyTo) ) {
-							if( msgType == V_STATUS && theConfig.GetHardwareSwitch() ) {
+						if( msgType == V_STATUS && !IS_NOT_REMOTE_NODEID(replyTo) ) {
+							if( theConfig.GetHardwareSwitch() ) {
 								_bValue = payload[0];
 								if( _bValue == DEVICE_SW_TOGGLE ) _bValue = 1 - theSys.GetDevOnOff(transTo);
 								if( _bValue == DEVICE_SW_OFF ) {
