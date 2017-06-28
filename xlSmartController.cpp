@@ -2605,70 +2605,70 @@ BOOL SmartControllerClass::ChangeBR_CCT(UC _nodeID, UC _br, US _cct, const UC su
 
 BOOL SmartControllerClass::ChangeLampScenario(UC _nodeID, UC _scenarioID, UC _replyTo, const UC _sensor)
 {
-	// Find node object
-	ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
-	if (DevStatusRowPtr == NULL)
-	{
-		LOGW(LOGTAG_MSG, "Failed to execte CMD_SCENARIO, wrong node_id %d", _nodeID);
-	}
+	BOOL _findIt = false;
+	if( _nodeID < 255 || _scenarioID < 64 ) {
+		// Find node object
+		ListNode<DevStatusRow_t> *DevStatusRowPtr = SearchDevStatus(_nodeID);
+		if (DevStatusRowPtr == NULL)
+		{
+			LOGW(LOGTAG_MSG, "Failed to execte CMD_SCENARIO, wrong node_id %d", _nodeID);
+		}
 
-	// Find hue data of the 3 rings
-	BOOL _findIt;
-	ListNode<ScenarioRow_t> *rowptr = SearchScenario(_scenarioID);
-	if (rowptr)
-	{
-		_findIt = true;
-		String strCmd;
-		if( rowptr->data.sw != DEVICE_SW_DUMMY ) {
-			strCmd = String::format("%d:7:%d", _nodeID, rowptr->data.sw);
-			theRadio.ProcessSend(strCmd, _replyTo, _sensor);
-		} else {
-			UC lv_type = devtypCRing3;
-			if( DevStatusRowPtr ) lv_type = DevStatusRowPtr->data.type;
-			if(IS_SUNNY(lv_type)) {
-				if( rowptr->data.ring[0].State == DEVICE_SW_OFF ) {
-					strCmd = String::format("%d:7:0", _nodeID);
-				} else {
-					strCmd = String::format("%d:13:%d:%d", _nodeID, rowptr->data.ring[0].BR, rowptr->data.ring[0].CCT);
-				}
+		// Find hue data of the 3 rings
+		ListNode<ScenarioRow_t> *rowptr = SearchScenario(_scenarioID);
+		if (rowptr)
+		{
+			_findIt = true;
+			String strCmd;
+			if( rowptr->data.sw != DEVICE_SW_DUMMY ) {
+				strCmd = String::format("%d:7:%d", _nodeID, rowptr->data.sw);
 				theRadio.ProcessSend(strCmd, _replyTo, _sensor);
-			} else { // Rainbow and Migrage
-				MyMessage tmpMsg;
-				UC payl_buf[MAX_PAYLOAD];
-				UC payl_len;
-
-				// All rings same settings
-				bool bAllRings = (rowptr->data.ring[1].CCT == 256);
-
-				for( UC idx = 0; idx < MAX_RING_NUM; idx++ ) {
-					if( !bAllRings || idx == 0 ) {
-						payl_len = CreateColorPayload(payl_buf, bAllRings ? RING_ID_ALL : idx + 1, rowptr->data.ring[idx].State,
-												rowptr->data.ring[idx].BR, rowptr->data.ring[idx].CCT % 256, rowptr->data.ring[idx].R, rowptr->data.ring[idx].G, rowptr->data.ring[idx].B);
-						tmpMsg.build(_replyTo, _nodeID, _sensor, C_SET, V_RGBW, true);
-						tmpMsg.set((void *)payl_buf, payl_len);
-						theRadio.ProcessSend(&tmpMsg);
+			} else {
+				UC lv_type = devtypCRing3;
+				if( DevStatusRowPtr ) lv_type = DevStatusRowPtr->data.type;
+				if(IS_SUNNY(lv_type)) {
+					if( rowptr->data.ring[0].State == DEVICE_SW_OFF ) {
+						strCmd = String::format("%d:7:0", _nodeID);
+					} else {
+						strCmd = String::format("%d:13:%d:%d", _nodeID, rowptr->data.ring[0].BR, rowptr->data.ring[0].CCT);
 					}
-					if( IS_MIRAGE(lv_type) ) {
-						// ToDo: construct mirage message
-						//tmpMsg.build(_replyTo, _nodeID, _sensor, C_SET, V_DISTANCE, true);
-						//tmpMsg.set((void *)payl_buf, payl_len);
-						//theRadio.ProcessSend(&tmpMsg);
+					theRadio.ProcessSend(strCmd, _replyTo, _sensor);
+				} else { // Rainbow and Migrage
+					MyMessage tmpMsg;
+					UC payl_buf[MAX_PAYLOAD];
+					UC payl_len;
+
+					// All rings same settings
+					bool bAllRings = (rowptr->data.ring[1].CCT == 256);
+
+					for( UC idx = 0; idx < MAX_RING_NUM; idx++ ) {
+						if( !bAllRings || idx == 0 ) {
+							payl_len = CreateColorPayload(payl_buf, bAllRings ? RING_ID_ALL : idx + 1, rowptr->data.ring[idx].State,
+													rowptr->data.ring[idx].BR, rowptr->data.ring[idx].CCT % 256, rowptr->data.ring[idx].R, rowptr->data.ring[idx].G, rowptr->data.ring[idx].B);
+							tmpMsg.build(_replyTo, _nodeID, _sensor, C_SET, V_RGBW, true);
+							tmpMsg.set((void *)payl_buf, payl_len);
+							theRadio.ProcessSend(&tmpMsg);
+						}
+						if( IS_MIRAGE(lv_type) ) {
+							// ToDo: construct mirage message
+							//tmpMsg.build(_replyTo, _nodeID, _sensor, C_SET, V_DISTANCE, true);
+							//tmpMsg.set((void *)payl_buf, payl_len);
+							//theRadio.ProcessSend(&tmpMsg);
+						}
 					}
 				}
 			}
+			rowptr->data.run_flag = EXECUTED;
+			theConfig.SetSNTChanged(true);
 		}
-		rowptr->data.run_flag = EXECUTED;
-		theConfig.SetSNTChanged(true);
-	}
-	else
-	{
-		_findIt = false;
-		LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenario %d not found", _nodeID, _scenarioID);
+		else
+		{
+			LOGE(LOGTAG_MSG, "Could not change node:%d light's color, scenario %d not found", _nodeID, _scenarioID);
+		}
 	}
 
 	// Publish Device-Scenario-Change message
-	String strTemp = String::format("{'nd':%d,'SNT_uid':%d,'found':%d}",
-			 _nodeID, _scenarioID, _findIt);
+	String strTemp = String::format("{'nd':%d,'sid':%d,'SNT_uid':%d,'found':%d}", _nodeID, _sensor, _scenarioID, _findIt);
 	PublishDeviceStatus(strTemp.c_str());
 
 	return _findIt;
