@@ -736,21 +736,31 @@ int SmartControllerClass::DevHardSwitch(UC key, UC sw)
 	// Confirm On/Off
 	UC nID, subID;
 	nID = theConfig.GetKeyMapItem(key, &subID);
-	if( nID > 0 ) {
-		if( !ConfirmLampOnOff(nID, _st) ) {
-			// Set panel ring on or off
-			if( IS_CURRENT_DEVICE(nID) || (nID == NODEID_DUMMY && (subID == 0 || subID == CURRENT_SUBDEVICE)) ) {
-				thePanel.SetRingOnOff(_st);
-			}
+	HardConfirmOnOff(nID, subID, _st);
 
-			// Publish device status event
-			String strTemp;
-			if( subID > 0 ) strTemp = String::format("{'nd':%d,'sid':%d,'State':%d}", nID, subID, _st);
-			else strTemp = String::format("{'nd':%d,'State':%d}", nID, _st);
-			PublishDeviceStatus(strTemp.c_str());
-		}
-	}
 	return 1;
+}
+
+bool SmartControllerClass::HardConfirmOnOff(UC dev, const UC subID, const UC _st)
+{
+	if( dev > 0 ) {
+		if( !IS_NOT_DEVICE_NODEID(dev) ) {
+				ConfirmLampOnOff(dev, _st);
+		}
+
+		// Set panel ring on or off
+		if( IS_CURRENT_DEVICE(dev) || (dev == NODEID_DUMMY && (subID == 0 || subID == CURRENT_SUBDEVICE)) ) {
+			thePanel.SetRingOnOff(_st);
+		}
+
+		// Publish device status event
+		String strTemp;
+		if( subID > 0 ) strTemp = String::format("{'nd':%d,'sid':%d,'State':%d}", dev, subID, _st);
+		else strTemp = String::format("{'nd':%d,'State':%d}", dev, _st);
+		PublishDeviceStatus(strTemp.c_str());
+		return true;
+	}
+	return false;
 }
 
 bool SmartControllerClass::MakeSureHardSwitchOn(UC dev, const UC subID)
