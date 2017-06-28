@@ -736,12 +736,12 @@ int SmartControllerClass::DevHardSwitch(UC key, UC sw)
 	// Confirm On/Off
 	UC nID, subID;
 	nID = theConfig.GetKeyMapItem(key, &subID);
-	HardConfirmOnOff(nID, subID);
+	HardConfirmOnOff(nID, subID, sw);
 
 	return 1;
 }
 
-bool SmartControllerClass::HardConfirmOnOff(UC dev, const UC subID)
+bool SmartControllerClass::HardConfirmOnOff(UC dev, const UC subID, const UC _st)
 {
 	if( dev > 0 ) {
 		if( !IS_NOT_DEVICE_NODEID(dev) ) {
