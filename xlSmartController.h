@@ -77,6 +77,7 @@ public:
   bool ToggleLoopHardSwitch();
   bool relay_set_key(UC _key, bool _on);
   bool relay_get_key(UC _key);
+  void relay_restore_keystate();
 
   // High speed system timer process
   void FastProcess();

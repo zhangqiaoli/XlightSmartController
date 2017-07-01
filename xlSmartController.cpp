@@ -259,10 +259,8 @@ void SmartControllerClass::InitCloudObj()
 // Get the controller started
 BOOL SmartControllerClass::Start()
 {
-	// Turn on all relay keys
-	for( UC _code = 0; _code < MAX_KEY_MAP_ITEMS; _code++ ) {
-		relay_set_key(_code + 1, true);
-	}
+	// Restore relay key to previous state
+	relay_restore_keystate();
 
 	FindCurrentDevice();
 
@@ -838,7 +836,7 @@ bool SmartControllerClass::relay_get_key(UC _key)
 	else if( _key >= 1 && _key <= 8 ) keyID = _key;
 
 	if( keyID > 0 ) {
-    rc = BITTEST(relay_key_value, keyID - 1);
+    rc = theConfig.GetRelayKey(keyID - 1);
   }
 
   return rc;
@@ -857,8 +855,7 @@ bool SmartControllerClass::relay_set_key(UC _key, bool _on)
 		// Trigger Relay PIN
 		digitalWrite(PIN_SOFT_KEY_1, _on ? HIGH : LOW);
 		// Update bitmap
-		if( _on ) relay_key_value = BITSET(relay_key_value, keyID - 1);
-		else relay_key_value = BITUNSET(relay_key_value, keyID - 1);
+		theConfig.SetRelayKey(keyID - 1, _on);
 		rc = TRUE;
 #endif
 	} else if( keyID == 2 ) {
@@ -866,8 +863,7 @@ bool SmartControllerClass::relay_set_key(UC _key, bool _on)
 		// Trigger Relay PIN
 		digitalWrite(PIN_SOFT_KEY_2, _on ? HIGH : LOW);
 		// Update bitmap
-		if( _on ) relay_key_value = BITSET(relay_key_value, keyID - 1);
-		else relay_key_value = BITUNSET(relay_key_value, keyID - 1);
+		theConfig.SetRelayKey(keyID - 1, _on);
 		rc = TRUE;
 #endif
 	} else if( keyID == 3 ) {
@@ -875,8 +871,7 @@ bool SmartControllerClass::relay_set_key(UC _key, bool _on)
 		// Trigger Relay PIN
 		digitalWrite(PIN_SOFT_KEY_3, _on ? HIGH : LOW);
 		// Update bitmap
-		if( _on ) relay_key_value = BITSET(relay_key_value, keyID - 1);
-		else relay_key_value = BITUNSET(relay_key_value, keyID - 1);
+		theConfig.SetRelayKey(keyID - 1, _on);
 		rc = TRUE;
 #endif
 	} else if( keyID == 4 ) {
@@ -884,8 +879,7 @@ bool SmartControllerClass::relay_set_key(UC _key, bool _on)
 		// Trigger Relay PIN
 		digitalWrite(PIN_SOFT_KEY_4, _on ? HIGH : LOW);
 		// Update bitmap
-		if( _on ) relay_key_value = BITSET(relay_key_value, keyID - 1);
-		else relay_key_value = BITUNSET(relay_key_value, keyID - 1);
+		theConfig.SetRelayKey(keyID - 1, _on);
 		rc = TRUE;
 #endif
 	}
@@ -896,6 +890,14 @@ bool SmartControllerClass::relay_set_key(UC _key, bool _on)
 	}
 
   return rc;
+}
+
+// Restore relay key to previous state
+void SmartControllerClass::relay_restore_keystate()
+{
+	for( UC _code = 0; _code < MAX_KEY_MAP_ITEMS; _code++ ) {
+		relay_set_key(_code + 1, relay_get_key(_code + 1));
+	}
 }
 
 // High speed system timer process
