@@ -1161,6 +1161,21 @@ void ConfigClass::showASRSNT()
 	}
 }
 
+UC ConfigClass::GetRelayKeys()
+{
+	return(m_config.relay_key_value);
+}
+
+BOOL ConfigClass::SetRelayKeys(const UC _keys)
+{
+	if( m_config.relay_key_value != _keys ) {
+		m_config.relay_key_value = _keys;
+		m_isChanged = true;
+		return true;
+	}
+	return false;
+}
+
 UC ConfigClass::GetRelayKey(const UC _code)
 {
 	return(BITTEST(m_config.relay_key_value, _code));

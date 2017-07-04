@@ -259,8 +259,7 @@ void SmartControllerClass::InitCloudObj()
 // Get the controller started
 BOOL SmartControllerClass::Start()
 {
-	// Restore relay key to previous state
-	relay_restore_keystate();
+	UC pre_relay_keys = theConfig.GetRelayKeys();
 
 	FindCurrentDevice();
 
@@ -292,6 +291,10 @@ BOOL SmartControllerClass::Start()
 			// ToDo: set RGBW
 		}
 	}
+
+	// Restore relay key to previous state
+	theConfig.SetRelayKeys(pre_relay_keys);
+	relay_restore_keystate();
 
 	// Publish local the main device status
 	if( Particle.connected() == true ) {
@@ -749,6 +752,15 @@ bool SmartControllerClass::HardConfirmOnOff(UC dev, const UC subID, const UC _st
 		// Set panel ring on or off
 		if( IS_CURRENT_DEVICE(dev) || (dev == NODEID_DUMMY && (subID == 0 || subID == CURRENT_SUBDEVICE)) ) {
 			thePanel.SetRingOnOff(_st);
+			if( m_pMainDev ) {
+				m_pMainDev->data.ring[0].State = _st;
+				m_pMainDev->data.ring[1].State = _st;
+				m_pMainDev->data.ring[2].State = _st;
+				m_pMainDev->data.run_flag = EXECUTED;
+				m_pMainDev->data.flash_flag = UNSAVED;
+				m_pMainDev->data.op_flag = POST;
+				theConfig.SetDSTChanged(true);
+			}
 		}
 
 		// Publish device status event
@@ -896,7 +908,7 @@ bool SmartControllerClass::relay_set_key(UC _key, bool _on)
 void SmartControllerClass::relay_restore_keystate()
 {
 	for( UC _code = 0; _code < MAX_KEY_MAP_ITEMS; _code++ ) {
-		relay_set_key(_code + 1, relay_get_key(_code + 1));
+		relay_set_key(_code + 1, theConfig.GetRelayKey(_code));
 	}
 }
 
