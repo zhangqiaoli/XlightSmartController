@@ -3,8 +3,22 @@
 #ifndef xliConfig_h
 #define xliConfig_h
 
+//==============================================================
 // Product Edition
 //#define XLIGHT_HOME_EDITION
+#define XLIGHT_CLASSROOM_EDITION
+//#define XLIGHT_OFFICE_EDITION
+
+// Module configuration for different editions
+#ifdef XLIGHT_OFFICE_EDITION
+#define DISABLE_ASR
+#endif
+
+#ifdef XLIGHT_CLASSROOM_EDITION
+#define DISABLE_ASR
+#define DISABLE_BLE
+#endif
+//==============================================================
 
 /*** USER DEFINES:  ***/
 #define FAILURE_HANDLING
@@ -30,7 +44,7 @@
 #endif
 
 // Main Version. Must change if Config_t structure is updated
-#define VERSION_CONFIG_DATA       21
+#define VERSION_CONFIG_DATA       22
 
 // Xlight Application Identification
 #define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM

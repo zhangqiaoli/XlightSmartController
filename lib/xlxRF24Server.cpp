@@ -733,12 +733,14 @@ bool RF24ServerClass::ProcessReceiveMQ()
 				if( transTo == NODEID_PROJECTOR ) {
 					// PPT control
 					if( msgType == V_STATUS ) {
+#ifndef DISABLE_BLE
 						// Keep payload unchanged
 						msg.build(replyTo, transTo, _sensor, C_SET, msgType, _needAck, _bIsAck, true);
 						// Convert to serial format
 						memset(strDisplay, 0x00, sizeof(strDisplay));
 						msg.getSerialString(strDisplay);
 						if( theBLE.isGood() ) theBLE.sendCommand(strDisplay);
+#endif						
 					}
 				} else if( transTo == NODEID_KEYSIMULATOR ) {
 					// Transfer message to Key Simuluator, use _sensor to identify subID

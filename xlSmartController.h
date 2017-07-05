@@ -81,6 +81,7 @@ public:
 
   // High speed system timer process
   void FastProcess();
+  void ExtButtonProcess();
 
   // Cloud interface implementation
   int CldSetTimeZone(String tzStr);

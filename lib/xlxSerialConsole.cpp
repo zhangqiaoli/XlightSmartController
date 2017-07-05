@@ -234,6 +234,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
     SERIAL_LN("   remote:  show remotes");
     SERIAL_LN("   asrsnt:  show ASR command scenario table");
     SERIAL_LN("   keymap:  show hardware key map table");
+    SERIAL_LN("   extbtn:  show extended button table");
     SERIAL_LN("   version: show firmware version");
     SERIAL_LN("e.g. show rf\n\r");
     //CloudOutput("show ble|debug|dev|flag|net|node|rf|time|var|table|version");
@@ -352,6 +353,8 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
       SERIAL_LN("     , to set scenario for ASR command");
       SERIAL_LN("e.g. set keymap <key nid subID>");
       SERIAL_LN("     , to set keymap item");
+      SERIAL_LN("e.g. set extbtn <button operation action keymap>");
+      SERIAL_LN("     , to define extbtn action");
       SERIAL_LN("e.g. set debug [log:level]");
       SERIAL_LN("     , where log is [serial|flash|syslog|cloud|all");
       SERIAL_LN("     and level is [none|alter|critical|error|warn|notice|info|debug]\n\r");
@@ -448,7 +451,12 @@ bool SerialConsoleClass::doCheck(const char *cmd)
       CloudOutput("c_flash:%lu-%lu", System.freeMemory(), EEPROM.length());
     } else if (strnicmp(sTopic, "ble", 3) == 0) {
       // Send test command and check received message
+#ifndef DISABLE_BLE
       theBLE.config();
+#else
+      SERIAL_LN("** Not support BLE Module on this device **");
+      CloudOutput("No BLE module");
+#endif
       //SERIAL_LN("** BLE Module is %s **", theBLE.isGood() ? "good" : "error");
     } else {
       retVal = false;
@@ -511,14 +519,21 @@ bool SerialConsoleClass::doShow(const char *cmd)
     } else if (strnicmp(sTopic, "keymap", 6) == 0) {
       SERIAL_LN("HW switch object type: %d, loopkc: %d", theConfig.GetHardwareSwitch(), theSys.GetLoopKeyCode());
       theConfig.showKeyMap();
+    } else if (strnicmp(sTopic, "extbtn", 6) == 0) {
+      theConfig.showButtonActions();
   	} else if (strnicmp(sTopic, "rf", 2) == 0) {
       theRadio.PrintRFDetails();
       SERIAL_LN("");
     } else if (strnicmp(sTopic, "ble", 3) == 0) {
+#ifndef DISABLE_BLE
       SERIAL_LN("** BLE Module is %s **", theBLE.isGood() ? "good" : "error");
       SERIAL_LN("  Name:%s, PIN:%s", theBLE.getName().c_str(), theBLE.getPin().c_str());
       SERIAL_LN("  Speed: %d, State: %d, AT Mode: %d", theBLE.getSpeed(), theBLE.getState(), theBLE.isATMode());
       CloudOutput("s_ble:%d-%s-%d-%d", theBLE.isGood(), theBLE.getName().c_str(), theBLE.getState(), theBLE.getSpeed());
+#else
+      SERIAL_LN("** Not support BLE Module on this device **");
+      CloudOutput("No BLE module");
+#endif
   	} else if (strnicmp(sTopic, "time", 4) == 0) {
       time_t time = Time.now();
       SERIAL_LN("Now is %s, %s\n\r", Time.format(time, TIME_FORMAT_ISO8601_FULL).c_str(), theSys.m_tzString.c_str());
@@ -692,6 +707,7 @@ bool SerialConsoleClass::doTest(const char *cmd)
         theRadio.ProcessSend(strMsg);
         retVal = true;
       }
+#ifndef DISABLE_ASR
     } else if (strnicmp(sTopic, "asr", 3) == 0) {
       sParam = next();
       if( strlen(sParam) > 0 ) {
@@ -699,6 +715,7 @@ bool SerialConsoleClass::doTest(const char *cmd)
         theASR.sendCommand(atoi(sParam));
         retVal = true;
       }
+#endif
     } else if (strnicmp(sTopic, "keymap", 6) == 0) {
       sParam = next();
       if( sParam ) {
@@ -711,6 +728,7 @@ bool SerialConsoleClass::doTest(const char *cmd)
           retVal = true;
         }
       }
+#ifndef DISABLE_BLE
     } else if (strnicmp(sTopic, "ble", 3) == 0) {
       sParam = next();
       if( strlen(sParam) >= 3 ) {
@@ -721,6 +739,7 @@ bool SerialConsoleClass::doTest(const char *cmd)
         theBLE.sendCommand(strMsg);
         retVal = true;
       }
+#endif
     }
   }
 
@@ -752,7 +771,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
   bool retVal = false;
 
   char *sTopic = next();
-  char *sParam1, *sParam2, *sParam3;
+  char *sParam1, *sParam2, *sParam3, *sParam4;
   if( sTopic ) {
     if (strnicmp(sTopic, "tz", 2) == 0) {
       sParam1 = next();
@@ -1028,7 +1047,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
         retVal = true;
       }
     } else if (strnicmp(sTopic, "keymap", 6) == 0) {
-      // ASR command scenario
+      // Keymap item
       sParam1 = next();     // Get key
       if( sParam1) {
         sParam2 = next();   // Get nodeID
@@ -1046,6 +1065,36 @@ bool SerialConsoleClass::doSet(const char *cmd)
         }
       } else {
         SERIAL_LN("Require a valid keyID (1 to %d)\n\r", MAX_KEY_MAP_ITEMS);
+        retVal = true;
+      }
+    } else if (strnicmp(sTopic, "extbtn", 6) == 0) {
+      // Change action of ext. button
+      sParam1 = next();     // Get button key (0 based)
+      if( sParam1) {
+        sParam2 = next();   // Get operation ID
+        if( sParam2 ) {
+          sParam3 = next();   // Get action ID
+          if( sParam3 ) {
+            sParam4 = next();   // Get keymap
+            if( sParam4 ) {
+              theConfig.SetExtBtnAction((UC)atoi(sParam1), (UC)atoi(sParam2), (UC)atoi(sParam3), (UC)atoi(sParam4));
+              SERIAL_LN("extbtn%s(%s) maps to %s-%s\n\r", sParam1, sParam2, sParam3, sParam4);
+              CloudOutput("extbtn%s(%s):%s-%s", sParam1, sParam2, sParam3, sParam4);
+              retVal = true;
+            } else {
+              SERIAL_LN("Require keymap\n\r");
+              retVal = true;
+            }
+          } else {
+            SERIAL_LN("Require a valid action id (0, 1 or 2)\n\r");
+            retVal = true;
+          }
+        } else {
+          SERIAL_LN("Require a valid operation id (0 to %d)\n\r", MAX_BTN_OP_TYPE - 1);
+          retVal = true;
+        }
+      } else {
+        SERIAL_LN("Require a valid button id (0 to %d)\n\r", MAX_NUM_BUTTONS - 1);
         retVal = true;
       }
     } else if (strnicmp(sTopic, "debug", 5) == 0) {
