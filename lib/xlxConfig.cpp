@@ -1292,8 +1292,9 @@ BOOL ConfigClass::ExecuteBtnAction(const UC _btn, const UC _opt)
 			for( UC idx = 0; idx < 8; idx++ ) {
 				// Check key map
 				if( BITTEST(m_config.btnAction[_btn][_opt].keyMap, idx) ) {
-					_key = idx + '1';
+					_key = idx + 1;
 					_st = (m_config.btnAction[_btn][_opt].action == DEVICE_SW_TOGGLE ? !(theSys.relay_get_key(_key)) : m_config.btnAction[_btn][_opt].action == DEVICE_SW_ON);
+					//SERIAL_LN("test: btn:%d opt:%d set key:%d to %d", _btn, _opt, _key, _st);
 					theSys.relay_set_key(_key, _st);
 				}
 			}
