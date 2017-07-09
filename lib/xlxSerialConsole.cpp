@@ -517,7 +517,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
     } else if (strnicmp(sTopic, "asrsnt", 6) == 0) {
       theConfig.showASRSNT();
     } else if (strnicmp(sTopic, "keymap", 6) == 0) {
-      SERIAL_LN("HW switch object type: %d, loopkc: %d", theConfig.GetHardwareSwitch(), theSys.GetLoopKeyCode());
+      SERIAL_LN("HW switch object type: %d, loopkc: %d", theConfig.GetRelayKeyObj(), theSys.GetLoopKeyCode());
       theConfig.showKeyMap();
     } else if (strnicmp(sTopic, "extbtn", 6) == 0) {
       theConfig.showButtonActions();
@@ -563,9 +563,9 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("maxBaseNetworkDuration = \t%d", theConfig.GetMaxBaseNetworkDur());
       SERIAL_LN("bmrt =   \t\t\t%d", theConfig.GetBcMsgRptTimes());
       SERIAL_LN("nmrt =   \t\t\t%d", theConfig.GetNdMsgRptTimes());
-      SERIAL_LN("loopkc = \t\t\t%d", theConfig.GetRelayKeyObj());
+      SERIAL_LN("loopkc = \t\t\t%d", theConfig.GetLoopKeyCode());
       SERIAL_LN("loop kcto = \t\t\t%d", theConfig.GetTimeLoopKC());
-      SERIAL_LN("hwsObj = \t\t\t%d", theSys.GetLoopKeyCode());
+      SERIAL_LN("hwsObj = \t\t\t%d", theSys.GetRelayKeyObj());
       SERIAL_LN("PPT Pin = %s\n\r", theConfig.GetPPTAccessCode().c_str());
     } else if (strnicmp(sTopic, "flag", 4) == 0) {
   		SERIAL_LN("m_isRF = \t\t\t%d", theSys.IsRFGood());
