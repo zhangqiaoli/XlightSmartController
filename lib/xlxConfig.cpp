@@ -379,9 +379,13 @@ void ConfigClass::InitConfig()
 	m_config.stWiFi = 1;
 	m_config.bcMsgRtpTimes = 3;
 	m_config.ndMsgRtpTimes = 1;
+	m_config.relay_key_value = 0xff;
 	m_config.tmLoopKC = RTE_TM_LOOP_KEYCODE;
 	memset(m_config.asrSNT, 0x00, MAX_ASR_SNT_ITEMS);
 	memset(m_config.keyMap, 0x00, MAX_KEY_MAP_ITEMS * sizeof(HardKeyMap_t));
+	for(UC _btn = 0; _btn < MAX_NUM_BUTTONS; _btn++ ) {
+		SetExtBtnAction(_btn, 0, DEVICE_SW_TOGGLE, 0x01 << _btn);
+	}
 }
 
 BOOL ConfigClass::InitDevStatus(UC nodeID)
@@ -709,10 +713,12 @@ String ConfigClass::GetBLEName()
 
 void ConfigClass::SetBLEName(const char *strName)
 {
+#ifndef DISABLE_BLE
 	if( theBLE.setName(strName) ) {
 		strncpy(m_config.bleName, strName, sizeof(m_config.bleName) - 1);
 	  m_isChanged = true;
 	}
+#endif
 }
 
 String ConfigClass::GetBLEPin()
@@ -723,10 +729,12 @@ String ConfigClass::GetBLEPin()
 
 void ConfigClass::SetBLEPin(const char *strPin)
 {
+#ifndef DISABLE_BLE
 	if( theBLE.setPin(strPin) ) {
 		strncpy(m_config.blePin, strPin, sizeof(m_config.blePin) - 1);
 	  m_isChanged = true;
 	}
+#endif
 }
 
 String ConfigClass::GetPPTAccessCode()
@@ -1160,6 +1168,40 @@ void ConfigClass::showASRSNT()
 	}
 }
 
+UC ConfigClass::GetRelayKeys()
+{
+	return(m_config.relay_key_value);
+}
+
+BOOL ConfigClass::SetRelayKeys(const UC _keys)
+{
+	if( m_config.relay_key_value != _keys ) {
+		m_config.relay_key_value = _keys;
+		m_isChanged = true;
+		return true;
+	}
+	return false;
+}
+
+UC ConfigClass::GetRelayKey(const UC _code)
+{
+	return(BITTEST(m_config.relay_key_value, _code));
+}
+
+BOOL ConfigClass::SetRelayKey(const UC _code, const UC _on)
+{
+	UC newValue;
+	if( _on ) newValue = BITSET(m_config.relay_key_value, _code);
+	else newValue = BITUNSET(m_config.relay_key_value, _code);
+
+	if( newValue != m_config.relay_key_value ) {
+		m_config.relay_key_value = newValue;
+		m_isChanged = true;
+		return true;
+	}
+	return false;
+}
+
 BOOL ConfigClass::IsKeyMapItemAvalaible(const UC _code)
 {
 	if( _code < MAX_KEY_MAP_ITEMS ) {
@@ -1223,6 +1265,56 @@ void ConfigClass::showKeyMap()
 			SERIAL_LN("Key%d: %d-%d %s", _code + 1, m_config.keyMap[_code].nid,
 					m_config.keyMap[_code].subID,
 					theSys.relay_get_key(_code + 1) ? "on" : "off");
+		}
+	}
+}
+
+BOOL ConfigClass::SetExtBtnAction(const UC _btn, const UC _opt, const UC _act, const UC _keymap)
+{
+	if( _btn < MAX_NUM_BUTTONS && _opt < MAX_BTN_OP_TYPE ) {
+		if( m_config.btnAction[_btn][_opt].action != _act || m_config.btnAction[_btn][_opt].keyMap != _keymap ) {
+			m_config.btnAction[_btn][_opt].action = _act;
+			m_config.btnAction[_btn][_opt].keyMap = _keymap;
+			m_isChanged = true;
+			return true;
+		}
+	}
+	return false;
+}
+
+BOOL ConfigClass::ExecuteBtnAction(const UC _btn, const UC _opt)
+{
+	UC _key;
+	bool _st;
+	if( _btn < MAX_NUM_BUTTONS && _opt < MAX_BTN_OP_TYPE ) {
+		if( m_config.btnAction[_btn][_opt].keyMap > 0 ) {
+			// scan key map and act on keys one by one
+			for( UC idx = 0; idx < 8; idx++ ) {
+				// Check key map
+				if( BITTEST(m_config.btnAction[_btn][_opt].keyMap, idx) ) {
+					_key = idx + 1;
+					_st = (m_config.btnAction[_btn][_opt].action == DEVICE_SW_TOGGLE ? !(theSys.relay_get_key(_key)) : m_config.btnAction[_btn][_opt].action == DEVICE_SW_ON);
+					//SERIAL_LN("test: btn:%d opt:%d set key:%d to %d", _btn, _opt, _key, _st);
+					theSys.relay_set_key(_key, _st);
+				}
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void ConfigClass::showButtonActions()
+{
+	SERIAL_LN("\n\r**Ext Buttons**");
+	for( UC _btn = 0; _btn < MAX_NUM_BUTTONS; _btn++ ) {
+		for( UC _opt = 0; _opt < MAX_BTN_OP_TYPE; _opt++ ) {
+			if( m_config.btnAction[_btn][_opt].keyMap > 0 ) {
+				SERIAL_LN("btn%d(%d): 0x%02X-0x%02X", _btn, _opt,
+						m_config.btnAction[_btn][_opt].action,
+						m_config.btnAction[_btn][_opt].keyMap);
+			}
 		}
 	}
 }

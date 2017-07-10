@@ -28,6 +28,8 @@
 
 // Maximum items in Hardware Key Map
 #define MAX_KEY_MAP_ITEMS           4
+#define MAX_NUM_BUTTONS             4
+#define MAX_BTN_OP_TYPE             2
 
 //------------------------------------------------------------------
 // Xlight Configuration Data Structures
@@ -44,6 +46,12 @@ typedef struct
   UC nid;                                   // NodeID
   UC subID;                                 // SubID
 } HardKeyMap_t;
+
+typedef struct
+{
+  UC action;                                // Type of action
+  UC keyMap;                                // Button Key Map: 8 bits for each button, one bit corresponds to one relay key
+} Button_Action_t;
 
 typedef struct
 #ifdef PACK
@@ -76,7 +84,8 @@ typedef struct
   UC Reserved_UC1[2];
   char ProductName[20];                     // Product name
   UC subDevID;                              // SubID for main device
-  UC Reserved_UC2[3];
+  UC relay_key_value;
+  UC Reserved_UC2[2];
   char Token[64];                           // Token
   BOOL enableCloudSerialCmd   :1;           // Whether enable cloud serial command
   BOOL enableDailyTimeSync    :1;           // Whether enable daily time synchronization
@@ -97,6 +106,7 @@ typedef struct
   char pptAccessCode[8];
   UC asrSNT[MAX_ASR_SNT_ITEMS];
   HardKeyMap_t keyMap[MAX_KEY_MAP_ITEMS];
+  Button_Action_t btnAction[MAX_NUM_BUTTONS][MAX_BTN_OP_TYPE];  // 0: press, 1: long press
 } Config_t;
 
 //------------------------------------------------------------------
@@ -448,12 +458,21 @@ public:
   BOOL SetASR_SNT(const UC _code, const UC _snt = 0);
   void showASRSNT();
 
+  UC GetRelayKeys();
+  BOOL SetRelayKeys(const UC _keys);
+  UC GetRelayKey(const UC _code);
+  BOOL SetRelayKey(const UC _code, const UC _on);
+
   UC GetKeyMapItem(const UC _key, UC *_subID = NULL);
   BOOL SetKeyMapItem(const UC _key, const UC _nid, const UC _subID = 0);
   UC SearchKeyMapItem(const UC _nid, const UC _subID = 0);
   BOOL IsKeyMapItemAvalaible(const UC _code);
   bool IsKeyMatchedItem(const UC _code, const UC _nid, const UC _subID = 0);
   void showKeyMap();
+
+  BOOL SetExtBtnAction(const UC _btn, const UC _opt, const UC _act, const UC _keymap);
+  BOOL ExecuteBtnAction(const UC _btn, const UC _opt);
+  void showButtonActions();
 
   NodeListClass lstNodes;
   RemoteStatus_t m_stMainRemote;

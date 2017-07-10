@@ -27,6 +27,7 @@ private:
   BOOL m_isWAN;
   UC m_loopKeyCode;
   UL m_tickLoopKeyCode;
+  UC m_relaykeyflag;
 
   String hue_to_string(Hue_t hue);
   bool updateDevStatusRow(MyMessage msg);
@@ -77,9 +78,11 @@ public:
   bool ToggleLoopHardSwitch();
   bool relay_set_key(UC _key, bool _on);
   bool relay_get_key(UC _key);
+  void relay_restore_keystate();
 
   // High speed system timer process
   void FastProcess();
+  void ExtButtonProcess();
 
   // Cloud interface implementation
   int CldSetTimeZone(String tzStr);
@@ -158,6 +161,8 @@ public:
 
   // Utils
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure
+  void SetRelayKeyFlag(const UC _code, const bool _on);
+  void PublishRelayKeyFlag();
 };
 
 //------------------------------------------------------------------
