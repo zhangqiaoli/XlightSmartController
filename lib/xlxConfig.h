@@ -69,6 +69,51 @@ typedef struct
   UC L3                       :8;           // Length of thread 3
 } Hue_t;
 
+#if VERSION_CONFIG_DATA > 24
+typedef struct
+{
+  // Static & status parameters
+  UC version                  :8;           // Data version, other than 0xFF
+  UC indBrightness            :8;           // Indicator of brightness
+  UC relay_key_value;
+  char Organization[20];                    // Organization name
+  char ProductName[20];                     // Product name
+
+  // Configurable parameters
+  UC mainDevID;                             // NodeID for main device
+  UC subDevID;                              // SubID for main device
+  UC typeMainDevice           :8;           // Type of the main lamp
+  UC rfChannel;                             // RF Channel: [0..127]
+  UC rfPowerLevel             :2;           // RF Power Level 0..3
+  UC rfDataRate               :2;           // RF Data Rate [0..2], 0 for 1Mbps, or 1 for 2Mbps, 2 for 250kbs
+  BOOL enableCloudSerialCmd   :1;           // Whether enable cloud serial command
+  BOOL enableDailyTimeSync    :1;           // Whether enable daily time synchronization
+  BOOL enableSpeaker          :1;           // Whether enable speaker
+  BOOL fixedNID               :1;           // Whether fixed Node ID
+  UC bcMsgRtpTimes            :4;           // Broadcast message repeat times
+  UC ndMsgRtpTimes            :4;           // Node message repeat times
+  BOOL stWiFi                 :1;           // Wi-Fi status: On / Off
+  BOOL enHWSwitch             :1;           // Whether use Hardware Switch as default
+  UC hwsObj                   :3;           // Hardware Switch Object
+  UC useCloud                 :2;           // How to depend on the Cloud
+  BOOL Reserved_bool          :1;           // Reserved for boolean flags
+  US sensorBitmap             :16;          // Sensor enable bitmap
+  UC numDevices               :8;           // Number of devices
+  UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
+  Timezone_t timeZone;                      // Time zone
+  US maxBaseNetworkDuration;
+  UC tmLoopKC;                              // Loop Keycode timeout
+  UC Reserved_UC1[2];
+  char Token[64];                           // Token
+  char bleName[24];
+  char blePin[6];
+  char pptAccessCode[8];
+  UC asrSNT[MAX_ASR_SNT_ITEMS];
+  HardKeyMap_t keyMap[MAX_KEY_MAP_ITEMS];
+  Button_Action_t btnAction[MAX_NUM_BUTTONS][MAX_BTN_OP_TYPE];  // 0: press, 1: long press
+} Config_t;
+
+#else
 typedef struct
 {
   UC version                  :8;           // Data version, other than 0xFF
@@ -108,6 +153,8 @@ typedef struct
   HardKeyMap_t keyMap[MAX_KEY_MAP_ITEMS];
   Button_Action_t btnAction[MAX_NUM_BUTTONS][MAX_BTN_OP_TYPE];  // 0: press, 1: long press
 } Config_t;
+
+#endif
 
 //------------------------------------------------------------------
 // Xlight Device Status Table Structures
