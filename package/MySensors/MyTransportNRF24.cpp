@@ -19,11 +19,13 @@
 
 #include "MyTransportNRF24.h"
 
-MyTransportNRF24::MyTransportNRF24(uint8_t ce, uint8_t cs, uint8_t paLevel)
+MyTransportNRF24::MyTransportNRF24(uint8_t ce, uint8_t cs, uint8_t channel, uint8_t paLevel, uint8_t dataRate)
 	:
 	MyTransport(),
 	rf24(ce, cs),
-	_paLevel(paLevel)
+	_channel(channel),
+	_paLevel(paLevel),
+	_dataRate(dataRate)
 {
 	// SBS added 2016-06-28
 	_myNetworkID = 0;
@@ -45,9 +47,9 @@ bool MyTransportNRF24::init() {
 	//rf24.setAutoAck(BROADCAST_PIPE,false); // Turn off auto ack for broadcast
 
 	rf24.enableAckPayload();
-	rf24.setChannel(RF24_CHANNEL);
+	rf24.setChannel(_channel);
 	rf24.setPALevel(_paLevel);
-	rf24.setDataRate(RF24_DATARATE);
+	rf24.setDataRate((rf24_datarate_e)_dataRate);
 	rf24.setRetries(5,15);
 	rf24.setCRCLength(RF24_CRC_16);
 	rf24.enableDynamicPayloads(false);
@@ -211,6 +213,22 @@ void MyTransportNRF24::powerDown() {
 	rf24.powerDown();
 }
 
+uint8_t MyTransportNRF24::getChannel(bool read)
+{
+	if( read ) {
+		_channel = rf24.getChannel();
+	}
+	return _channel;
+}
+
+void MyTransportNRF24::setChannel(uint8_t channel)
+{
+	if( _channel != channel )	{
+		_channel = channel;
+		rf24.setChannel(channel);
+	}
+}
+
 uint8_t MyTransportNRF24::getPALevel(bool read)
 {
 	if( read ) {
@@ -225,4 +243,21 @@ void MyTransportNRF24::setPALevel(uint8_t level)
 		_paLevel = level;
 		rf24.setPALevel(level);
 	}
+}
+
+uint8_t MyTransportNRF24::getDataRate(bool read)
+{
+	if( read ) {
+		_dataRate = (uint8_t)rf24.getDataRate();
+	}
+	return _dataRate;
+}
+
+bool MyTransportNRF24::setDataRate(uint8_t speed)
+{
+	if( _dataRate != speed )	{
+		_dataRate = speed;
+		return rf24.setDataRate((rf24_datarate_e)speed);
+	}
+	return true;
 }

@@ -287,7 +287,7 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
         //CloudOutput("set flag csc|cdts|fnid|hwsw");
       } else if (strnicmp(sObj, "var", 3) == 0) {
         SERIAL_LN("--- Command: set var <var name> <value> ---");
-        SERIAL_LN("<var name>: senmap, devst, bmrt, nmrt, rfpl");
+        SERIAL_LN("<var name>: senmap, devst, bmrt, nmrt, rfch, rfpl, rfdr");
         SERIAL_LN("e.g. set var senmap 23");
         SERIAL_LN("     , set Sensor Bitmap to 0x17");
         SERIAL_LN("e.g. set var devst 5");
@@ -296,9 +296,13 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
         SERIAL_LN("     , set Bcast Msg Repeat Times");
         SERIAL_LN("e.g. set var nmrt [0..15]");
         SERIAL_LN("     , set Node Msg Repeat Times");
+        SERIAL_LN("e.g. set var rfch [0..127]");
+        SERIAL_LN("     , set RF Channel");
         SERIAL_LN("e.g. set var rfpl [0..3]");
         SERIAL_LN("     , set RF Power Level to min(0), low(1), high(2) or max(3)");
-        //CloudOutput("set var senmap|devst|rfpl");
+        SERIAL_LN("e.g. set var rfdr [0..2]");
+        SERIAL_LN("     , set RF Datarate to 1MBPS(0), 2MBPS(1) or 250KBPS(2)");
+        //CloudOutput("set var senmap|devst|rfch|rfpl|rfdr");
       } else if (strnicmp(sObj, "spkr", 4) == 0) {
         SERIAL_LN("--- Command: set spkr [0|1] ---");
         SERIAL_LN("To disable or enable speaker");
@@ -892,10 +896,20 @@ bool SerialConsoleClass::doSet(const char *cmd)
             SERIAL_LN("Node Msg Repeat Times: %d\n\r", theConfig.GetNdMsgRptTimes());
             CloudOutput("v_nmrt:%d", theConfig.GetNdMsgRptTimes());
             retVal = true;
+          } else if (strnicmp(sParam1, "rfch", 4) == 0) {
+            theConfig.SetRFChannel((UC)atoi(sParam2));
+            SERIAL_LN("RF Channel: %d\n\r", theRadio.getChannel(false));
+            CloudOutput("v_rfch:%d", theRadio.getChannel(false));
+            retVal = true;
           } else if (strnicmp(sParam1, "rfpl", 4) == 0) {
             theConfig.SetRFPowerLevel((UC)atoi(sParam2));
             SERIAL_LN("RF PowerLevel: %d\n\r", theRadio.getPALevel(false));
             CloudOutput("v_rfpl:%d", theRadio.getPALevel(false));
+            retVal = true;
+          } else if (strnicmp(sParam1, "rfdr", 4) == 0) {
+            theConfig.SetRFDataRate((UC)atoi(sParam2));
+            SERIAL_LN("RF Speed: %d\n\r", theRadio.getDataRate(false));
+            CloudOutput("v_rfdr:%d", theRadio.getDataRate(false));
             retVal = true;
           }
         } else {

@@ -359,7 +359,9 @@ void ConfigClass::InitConfig()
 	SetSensorEnabled(sensorPIR);
   strcpy(m_config.Organization, XLA_ORGANIZATION);
   strcpy(m_config.ProductName, XLA_PRODUCT_NAME);
+#if VERSION_CONFIG_DATA <= 24
   strcpy(m_config.Token, XLA_TOKEN);
+#endif
 	strcpy(m_config.bleName, XLIGHT_BLE_SSID);
 	strcpy(m_config.blePin, XLIGHT_BLE_PIN);
 	strcpy(m_config.pptAccessCode, XLIGHT_BLE_PIN);
@@ -373,7 +375,9 @@ void ConfigClass::InitConfig()
 	m_config.enableSpeaker = false;
 	m_config.fixedNID = true;
 	m_config.enableDailyTimeSync = true;
+	m_config.rfChannel = RF24_CHANNEL;
 	m_config.rfPowerLevel = RF24_PA_LEVEL_GW;
+	m_config.rfDataRate = RF24_DATARATE;
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
 	m_config.useCloud = CLOUD_ENABLE;
 	m_config.stWiFi = 1;
@@ -693,6 +697,7 @@ void ConfigClass::SetProductName(const char *strName)
   m_isChanged = true;
 }
 
+#if VERSION_CONFIG_DATA <= 24
 String ConfigClass::GetToken()
 {
   String strName = m_config.Token;
@@ -704,6 +709,7 @@ void ConfigClass::SetToken(const char *strName)
   strncpy(m_config.Token, strName, sizeof(m_config.Token) - 1);
   m_isChanged = true;
 }
+#endif
 
 String ConfigClass::GetBLEName()
 {
@@ -1091,6 +1097,40 @@ BOOL ConfigClass::SetTimeLoopKC(UC _value)
   return false;
 }
 
+UC ConfigClass::GetRFChannel()
+{
+	return m_config.rfChannel;
+}
+
+BOOL ConfigClass::SetRFChannel(UC channel)
+{
+	if( channel > 127 ) channel = RF24_CHANNEL;
+	if( channel != m_config.rfChannel ) {
+		m_config.rfChannel = channel;
+		theRadio.setChannel(channel);
+		m_isChanged = true;
+		return true;
+	}
+	return false;
+}
+
+UC ConfigClass::GetRFDataRate()
+{
+	return m_config.rfDataRate;
+}
+
+BOOL ConfigClass::SetRFDataRate(UC dataRate)
+{
+	if( dataRate > RF24_250KBPS ) dataRate = RF24_DATARATE;
+	if( dataRate != m_config.rfDataRate ) {
+		m_config.rfDataRate = dataRate;
+		theRadio.setDataRate(dataRate);
+		m_isChanged = true;
+		return true;
+	}
+	return false;
+}
+
 UC ConfigClass::GetRFPowerLevel()
 {
 	return m_config.rfPowerLevel;
@@ -1098,7 +1138,7 @@ UC ConfigClass::GetRFPowerLevel()
 
 BOOL ConfigClass::SetRFPowerLevel(UC level)
 {
-	if( level > RF24_PA_MAX ) level = RF24_PA_MAX;
+	if( level > RF24_PA_MAX ) level = RF24_PA_LEVEL_GW;
 	if( level != m_config.rfPowerLevel ) {
 		m_config.rfPowerLevel = level;
 		theRadio.setPALevel(level);

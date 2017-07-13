@@ -104,7 +104,6 @@ typedef struct
   US maxBaseNetworkDuration;
   UC tmLoopKC;                              // Loop Keycode timeout
   UC Reserved_UC1[2];
-  char Token[64];                           // Token
   char bleName[24];
   char blePin[6];
   char pptAccessCode[8];
@@ -126,7 +125,8 @@ typedef struct
   UC bcMsgRtpTimes            :4;           // Broadcast message repeat times
   UC ndMsgRtpTimes            :4;           // Node message repeat times
   UC tmLoopKC;                              // Loop Keycode timeout
-  UC Reserved_UC1[2];
+  UC rfChannel;                             // RF Channel: [0..127]
+  UC Reserved_UC1;
   char ProductName[20];                     // Product name
   UC subDevID;                              // SubID for main device
   UC relay_key_value;
@@ -136,7 +136,8 @@ typedef struct
   BOOL enableDailyTimeSync    :1;           // Whether enable daily time synchronization
   BOOL enableSpeaker          :1;           // Whether enable speaker
   BOOL fixedNID               :1;           // Whether fixed Node ID
-  BOOL Reserved_bool          :4;           // Reserved for boolean flags
+  UC rfDataRate               :2;           // RF Data Rate [0..2], 0 for 1Mbps, or 1 for 2Mbps, 2 for 250kbs
+  BOOL Reserved_bool          :2;           // Reserved for boolean flags
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
   UC rfPowerLevel             :2;           // RF Power Level 0..3
   BOOL stWiFi                 :1;           // Wi-Fi status: On / Off
@@ -423,8 +424,10 @@ public:
   String GetProductName();
   void SetProductName(const char *strName);
 
+#if VERSION_CONFIG_DATA <= 24
   String GetToken();
   void SetToken(const char *strName);
+#endif
 
   String GetBLEName();
   void SetBLEName(const char *strName);
@@ -491,6 +494,12 @@ public:
 
   UC GetTimeLoopKC();
   BOOL SetTimeLoopKC(UC _value);
+
+  UC GetRFChannel();
+  BOOL SetRFChannel(UC channel);
+
+  UC GetRFDataRate();
+  BOOL SetRFDataRate(UC dataRate);
 
   UC GetRFPowerLevel();
   BOOL SetRFPowerLevel(UC level);
