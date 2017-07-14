@@ -5,8 +5,8 @@
 
 //==============================================================
 // Product Edition
-//#define XLIGHT_HOME_EDITION
-#define XLIGHT_CLASSROOM_EDITION
+#define XLIGHT_HOME_EDITION
+//#define XLIGHT_CLASSROOM_EDITION
 //#define XLIGHT_OFFICE_EDITION
 
 // Module configuration for different editions
