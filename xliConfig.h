@@ -141,6 +141,7 @@
 #define NODEID_SMARTPHONE       139
 #define NODEID_MIN_GROUP        192
 #define NODEID_MAX_GROUP        223
+#define NODEID_RF_SCANNER       250
 #define NODEID_DUMMY            255
 
 #define BR_MIN_VALUE            1
