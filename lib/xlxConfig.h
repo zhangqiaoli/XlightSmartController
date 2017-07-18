@@ -315,11 +315,36 @@ typedef struct
   UC sw                   : 2; // Main Switch: Switch value for set power command
 	Hue_t ring[MAX_RING_NUM];
 	UC filter		            : 4;
-  UC reserverd            : 4;
+  UC reserved             : 4;
 } ScenarioRow_t;
 
 #define SNT_ROW_SIZE	sizeof(ScenarioRow_t)
 #define MAX_SNT_ROWS	64
+
+//------------------------------------------------------------------
+// Xlight Node Config Table Structures
+//------------------------------------------------------------------
+typedef struct
+{
+  OP_FLAG op_flag			    : 2;
+  FLASH_FLAG flash_flag		: 1;
+  RUN_FLAG run_flag			  : 1;
+	UC uid			            : 8;
+  UL cid;                 // Config ID
+  UC type			            : 8;
+  UC len			            : 8;
+  UC reserved[8];
+} NodeConfig_head_t;
+
+typedef struct
+{
+  NodeConfig_head_t header;
+  UC data[240];
+} NodeConfig_t;
+
+#define NCT_HEAD_SIZE	    sizeof(NodeConfig_head_t)
+#define NCT_ROW_SIZE	    sizeof(NodeConfig_t)
+#define MAX_NCT_ROWS	    (int)(MEM_NODECONFIG_LEN / NCT_ROW_SIZE)
 
 // Node List Class
 class NodeListClass : public OrderdList<NodeIdRow_t>

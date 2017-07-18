@@ -58,8 +58,17 @@
 #define MEM_REPORT_OFFSET         (MEM_OFFLINE_DATA_OFFSET + MEM_OFFLINE_DATA_LEN)
 #define MEM_REPORT_LEN            0x010000
 
+//-------------------------------
 // Miscellaneous
 #define MEM_MISC_OFFSET           (MEM_REPORT_OFFSET + MEM_REPORT_LEN)
 #define MEM_MISC_LEN              0x080000
+
+// Node config data (16384 bytes = 64 * 256 bytes)
+/// 1 - 12: standard config template
+/// 13 - 64: user defined config
+#define MEM_NODECONFIG_OFFSET     MEM_MISC_OFFSET
+#define MEM_NODECONFIG_LEN        0x004000
+
+//-------------------------------
 
 #endif /* xliMemoryMap_h */
