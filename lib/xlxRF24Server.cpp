@@ -824,7 +824,11 @@ bool RF24ServerClass::ProcessSendMQ()
 				// Determine pipe
 				if( lv_msg.getCommand() == C_INTERNAL && lv_msg.getType() == I_ID_RESPONSE && lv_msg.isAck() ) {
 					pipe = CURRENT_NODE_PIPE;
-				} else {
+				} else if(lv_msg.getType() == I_GET_NONCE_RESPONSE && lv_msg.getDestination() == NODEID_RF_SCANNER)
+				{
+					pipe = CURRENT_NODE_PIPE;
+				}else
+				{
 					pipe = PRIVATE_NET_PIPE;
 				}
 
@@ -865,18 +869,17 @@ bool RF24ServerClass::MsgScanner_ProbeAck()
 	// Common payload
 	uint8_t playdata[26] = {0};
 	playdata[0] = SCANNER_PROBE;
-	memcpy(playdata + 1, 0, 8);
+	uint8_t mac[6];
+  WiFi.macAddress(mac);
+	memcpy(playdata + 1, mac, sizeof(mac));
   playdata[payl_len++] = theConfig.GetVersion();
 	playdata[payl_len++] = 0; //type ignore
 	playdata[payl_len++] = NODEID_GATEWAY;
 	playdata[payl_len++] = 0; //subid ignore
 	playdata[payl_len++] = theConfig.GetRFChannel();
 	playdata[payl_len++] = theConfig.GetRFDataRate()<< 2 + theConfig.GetRFPowerLevel();
-	/*for(uint8_t i=0;i<6;i++)
-	{
-		playdata[payl_len++] =
-	}*/
-	memcpy(playdata + payl_len, (uint8_t*)theRadio.getCurrentNetworkID(), 6);
+	uint64_t networkid =  theRadio.getCurrentNetworkID();
+	memcpy(playdata + payl_len, (uint8_t *)&networkid, 6);
 	payl_len += 6;
   lv_msg.set(playdata,payl_len);
 	return ProcessSend(&lv_msg);
@@ -887,7 +890,7 @@ void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
 	{
 		if(theConfig.GetRFChannel() != (*rfData))
 		{
-			theConfig.SetRFChannel(*rfData);
+			theConfig.SetRFChannel(*rfData++);
 		}
 	}
 	if(rflen > 1 &&(*rfData)>=RF24_1MBPS && (*rfData)<= RF24_250KBPS)
