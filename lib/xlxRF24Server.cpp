@@ -740,7 +740,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						memset(strDisplay, 0x00, sizeof(strDisplay));
 						msg.getSerialString(strDisplay);
 						if( theBLE.isGood() ) theBLE.sendCommand(strDisplay);
-#endif						
+#endif
 					}
 				} else if( transTo == NODEID_KEYSIMULATOR ) {
 					// Transfer message to Key Simuluator, use _sensor to identify subID

@@ -29,7 +29,7 @@
 #define MEM_SCHEDULE_OFFSET       (MEM_CONFIG_OFFSET + MEM_CONFIG_LEN)
 #define MEM_SCHEDULE_LEN          0x0100
 
-// Node ID List (64*12bytes)
+// Node ID List (48*16bytes)
 #define MEM_NODELIST_OFFSET       (MEM_SCHEDULE_OFFSET + MEM_SCHEDULE_LEN)
 #define MEM_NODELIST_LEN          0x0300
 

@@ -217,35 +217,44 @@ typedef struct
 //------------------------------------------------------------------
 // Xlight NodeID List
 //------------------------------------------------------------------
-#define LEN_NODE_IDENTITY     6
-typedef struct    // Exact 12 bytes
+#define LEN_NODE_IDENTITY     8
+typedef struct    // Exact 16 bytes
 	__attribute__((packed))
 {
 	UC nid;
 	UC device;       // Associated device (node id)
   UC identity[LEN_NODE_IDENTITY];
   UL recentActive;
+  UC sid;         // SubID
+  UC cfgPos;      // Config storage position
 } NodeIdRow_t;
 
-inline BOOL isIdentityEmpty(UC *pId)
-{ return(!(pId[0] | pId[1] | pId[2] | pId[3] | pId[4] | pId[5])); };
+inline BOOL isIdentityEmpty(UC *pId, UC nLen = LEN_NODE_IDENTITY)
+{
+  for( int i = 0; i < nLen; i++ ) { if(pId[i] > 0) return FALSE; }
+  return TRUE;
+};
 
 inline void copyIdentity(UC *pId, uint64_t *pData)
-{ memcpy(pId, pData, LEN_NODE_IDENTITY); };
-
-inline void resetIdentity(UC *pId)
-{ memset(pId, 0x00, LEN_NODE_IDENTITY); };
-
-inline BOOL isIdentityEqual(UC *pId1, UC *pId2)
 {
-  for( int i = 0; i < LEN_NODE_IDENTITY; i++ ) { if(pId1[i] != pId2[i]) return false; }
+  UC nLen = min(LEN_NODE_IDENTITY, sizeof(uint64_t));
+  memcpy(pId, pData, nLen);
+};
+
+inline void resetIdentity(UC *pId, UC nLen = LEN_NODE_IDENTITY)
+{ memset(pId, 0x00, nLen); };
+
+inline BOOL isIdentityEqual(UC *pId1, UC *pId2, UC nLen = LEN_NODE_IDENTITY)
+{
+  for( int i = 0; i < nLen; i++ ) { if(pId1[i] != pId2[i]) return false; }
   return true;
 };
 
 inline BOOL isIdentityEqual(UC *pId1, uint64_t *pData)
 {
+  UC nLen = min(LEN_NODE_IDENTITY, sizeof(uint64_t));
   UC pId2[LEN_NODE_IDENTITY]; copyIdentity(pId2, pData);
-  return isIdentityEqual(pId1, pId2);
+  return isIdentityEqual(pId1, pId2, nLen);
 };
 
 //------------------------------------------------------------------
