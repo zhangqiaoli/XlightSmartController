@@ -575,19 +575,18 @@ bool RF24ServerClass::ProcessReceiveMQ()
 					}
 				}
 				else if( msgType == I_GET_NONCE ) {
-      // RF Scanner Probe
-        if( replyTo == NODEID_RF_SCANNER ) {
-          if( payload[0] == SCANNER_PROBE ) {
-            MsgScanner_ProbeAck();
-          } else if( payload[0] == SCANNER_SETUP_RF ) {
-            Process_SetupRF(payload + 1,payl_len-1);
-          }
-					else if( payload[0] == SCANNER_SETUPDEV_RF ) {
-						Process_SetupRF(payload + 1 + 8,payl_len -1 - 8);
-          }
-          return 1;
-        }
-      }
+      		// RF Scanner Probe
+        	if( replyTo == NODEID_RF_SCANNER ) {
+          	if( payload[0] == SCANNER_PROBE ) {
+            	MsgScanner_ProbeAck();
+          	} else if( payload[0] == SCANNER_SETUP_RF ) {
+            	Process_SetupRF(payload + 1, payl_len - 1);
+          	} else if( payload[0] == SCANNER_SETUPDEV_RF ) {
+							Process_SetupRF(payload + 1 + LEN_NODE_IDENTITY, payl_len - 1 - LEN_NODE_IDENTITY);
+          	}
+          	return 1;
+        	}
+      	}
 	      break;
 
 			case C_PRESENTATION:
@@ -824,11 +823,9 @@ bool RF24ServerClass::ProcessSendMQ()
 				// Determine pipe
 				if( lv_msg.getCommand() == C_INTERNAL && lv_msg.getType() == I_ID_RESPONSE && lv_msg.isAck() ) {
 					pipe = CURRENT_NODE_PIPE;
-				} else if(lv_msg.getType() == I_GET_NONCE_RESPONSE && lv_msg.getDestination() == NODEID_RF_SCANNER)
-				{
+				} else if(lv_msg.getType() == I_GET_NONCE_RESPONSE && lv_msg.getDestination() == NODEID_RF_SCANNER)	{
 					pipe = CURRENT_NODE_PIPE;
-				}else
-				{
+				} else {
 					pipe = PRIVATE_NET_PIPE;
 				}
 
@@ -864,26 +861,27 @@ bool RF24ServerClass::ProcessSendMQ()
 bool RF24ServerClass::MsgScanner_ProbeAck()
 {
 	MyMessage lv_msg;
-	lv_msg.build(NODEID_GATEWAY, NODEID_RF_SCANNER, 0x00, C_INTERNAL, I_GET_NONCE_RESPONSE, false,true);
-	uint8_t payl_len = 8 + 1;
+	lv_msg.build(NODEID_GATEWAY, NODEID_RF_SCANNER, 0x00, C_INTERNAL, I_GET_NONCE_RESPONSE, false, true);
+	uint8_t payl_len = LEN_NODE_IDENTITY + 1;
 	// Common payload
-	uint8_t playdata[26] = {0};
+	uint8_t playdata[MAX_PAYLOAD + 1] = {0};
 	playdata[0] = SCANNER_PROBE;
 	uint8_t mac[6];
   WiFi.macAddress(mac);
 	memcpy(playdata + 1, mac, sizeof(mac));
   playdata[payl_len++] = theConfig.GetVersion();
-	playdata[payl_len++] = 0; //type ignore
+	playdata[payl_len++] = XLIGHT_EDITION_ID; // type
 	playdata[payl_len++] = NODEID_GATEWAY;
-	playdata[payl_len++] = 0; //subid ignore
+	playdata[payl_len++] = 0; // subid ignore
 	playdata[payl_len++] = theConfig.GetRFChannel();
-	playdata[payl_len++] = theConfig.GetRFDataRate()<< 2 + theConfig.GetRFPowerLevel();
-	uint64_t networkid =  theRadio.getCurrentNetworkID();
+	playdata[payl_len++] = theConfig.GetRFDataRate() << 2 + theConfig.GetRFPowerLevel();
+	uint64_t networkid = theRadio.getCurrentNetworkID();
 	memcpy(playdata + payl_len, (uint8_t *)&networkid, 6);
 	payl_len += 6;
-  lv_msg.set(playdata,payl_len);
+  lv_msg.set(playdata, payl_len);
 	return ProcessSend(&lv_msg);
 }
+
 void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
 {
   if(rflen > 0 &&(*rfData)>=0 && (*rfData)<=127)
@@ -916,4 +914,6 @@ void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
 			theRadio.setAddress(0,networkid);
 		}
 	}
+	// Apply new settings
+	theSys.CheckRF();
 }
