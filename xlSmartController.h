@@ -163,6 +163,7 @@ public:
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure
   void SetRelayKeyFlag(const UC _code, const bool _on);
   void PublishRelayKeyFlag();
+
 };
 
 //------------------------------------------------------------------

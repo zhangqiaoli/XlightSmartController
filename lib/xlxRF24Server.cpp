@@ -574,6 +574,20 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						msgReady = true;
 					}
 				}
+				else if( msgType == I_GET_NONCE ) {
+      // RF Scanner Probe
+        if( replyTo == NODEID_RF_SCANNER ) {
+          if( payload[0] == SCANNER_PROBE ) {
+            MsgScanner_ProbeAck();
+          } else if( payload[0] == SCANNER_SETUP_RF ) {
+            Process_SetupRF(payload + 1,payl_len-1);
+          }
+					else if( payload[0] == SCANNER_SETUPDEV_RF ) {
+						Process_SetupRF(payload + 1 + 8,payl_len -1 - 8);
+          }
+          return 1;
+        }
+      }
 	      break;
 
 			case C_PRESENTATION:
@@ -740,7 +754,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						memset(strDisplay, 0x00, sizeof(strDisplay));
 						msg.getSerialString(strDisplay);
 						if( theBLE.isGood() ) theBLE.sendCommand(strDisplay);
-#endif						
+#endif
 					}
 				} else if( transTo == NODEID_KEYSIMULATOR ) {
 					// Transfer message to Key Simuluator, use _sensor to identify subID
@@ -839,4 +853,64 @@ bool RF24ServerClass::ProcessSendMQ()
 	}
 
 	return true;
+}
+
+
+//////////////////rfscanner//////////////////////////
+bool RF24ServerClass::MsgScanner_ProbeAck()
+{
+	MyMessage lv_msg;
+	lv_msg.build(NODEID_GATEWAY, NODEID_RF_SCANNER, 0x00, C_INTERNAL, I_GET_NONCE_RESPONSE, false,true);
+	uint8_t payl_len = 8 + 1;
+	// Common payload
+	uint8_t playdata[26] = {0};
+	playdata[0] = SCANNER_PROBE;
+	memcpy(playdata + 1, 0, 8);
+  playdata[payl_len++] = theConfig.GetVersion();
+	playdata[payl_len++] = 0; //type ignore
+	playdata[payl_len++] = NODEID_GATEWAY;
+	playdata[payl_len++] = 0; //subid ignore
+	playdata[payl_len++] = theConfig.GetRFChannel();
+	playdata[payl_len++] = theConfig.GetRFDataRate()<< 2 + theConfig.GetRFPowerLevel();
+	/*for(uint8_t i=0;i<6;i++)
+	{
+		playdata[payl_len++] =
+	}*/
+	memcpy(playdata + payl_len, (uint8_t*)theRadio.getCurrentNetworkID(), 6);
+	payl_len += 6;
+  lv_msg.set(playdata,payl_len);
+	return ProcessSend(&lv_msg);
+}
+void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
+{
+  if(rflen > 0 &&(*rfData)>=0 && (*rfData)<=127)
+	{
+		if(theConfig.GetRFChannel() != (*rfData))
+		{
+			theConfig.SetRFChannel(*rfData);
+		}
+	}
+	if(rflen > 1 &&(*rfData)>=RF24_1MBPS && (*rfData)<= RF24_250KBPS)
+	{
+		if(theConfig.GetRFDataRate() != (*rfData))
+		{
+		  theConfig.SetRFDataRate(*rfData++);
+		}
+	}
+	if(rflen > 2 &&(*rfData)>=RF24_PA_MIN && (*rfData)<= RF24_PA_ERROR)
+	{
+		if(theConfig.GetRFPowerLevel() != (*rfData))
+		{
+			theConfig.SetRFPowerLevel(*rfData++);
+		}
+	}
+	if(rflen > 8)
+	{
+		uint64_t networkid = *(uint64_t*)rfData;
+		LOGW(LOGTAG_DATA, "networkid=%llu",networkid);
+		if(networkid != theRadio.getCurrentNetworkID())
+		{
+			theRadio.setAddress(0,networkid);
+		}
+	}
 }

@@ -24,6 +24,11 @@ public:
   bool SendNodeConfig(UC _node, UC _ncf, unsigned int _value);
   bool SendNodeConfig(UC _node, UC _ncf, UC *_data, const UC _len);
 
+  //////////////////rfscanner//////////////////////////
+  bool MsgScanner_ProbeAck();
+  void Process_SetupRF(const UC *rfData,uint8_t rflen);
+  /////////////////rfscanner//////////////////////////
+
   bool ProcessMQ();
   bool ProcessSendMQ();
   bool ProcessReceiveMQ();
