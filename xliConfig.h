@@ -5,19 +5,27 @@
 
 //==============================================================
 // Product Edition
-#define XLIGHT_HOME_EDITION
-//#define XLIGHT_CLASSROOM_EDITION
-//#define XLIGHT_OFFICE_EDITION
+#define XLIGHT_HOME_EDITION           0
+#define XLIGHT_CLASSROOM_EDITION      1
+#define XLIGHT_OFFICE_EDITION         2
+
+// Important: set product edition
+//#define XLIGHT_EDITION_ID             XLIGHT_HOME_EDITION
+#define XLIGHT_EDITION_ID             XLIGHT_CLASSROOM_EDITION
+//#define XLIGHT_EDITION_ID             XLIGHT_OFFICE_EDITION
 
 // Module configuration for different editions
-#ifdef XLIGHT_OFFICE_EDITION
+#if XLIGHT_EDITION_ID == XLIGHT_OFFICE_EDITION
+#define XLIGHT_EDITION_ID       1
 #define DISABLE_ASR
 #endif
 
-#ifdef XLIGHT_CLASSROOM_EDITION
+#if XLIGHT_EDITION_ID == XLIGHT_CLASSROOM_EDITION
+#define XLIGHT_EDITION_ID       2
 #define DISABLE_ASR
 #define DISABLE_BLE
 #endif
+
 //==============================================================
 
 /*** USER DEFINES:  ***/
@@ -44,7 +52,7 @@
 #endif
 
 // Main Version. Must change if Config_t structure is updated
-#define VERSION_CONFIG_DATA       22
+#define VERSION_CONFIG_DATA       26
 
 // Xlight Application Identification
 #define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM
@@ -81,17 +89,17 @@
 #define MAX_TABLE_SIZE              8
 
 // Maximum number of device associated to one controller
-#ifdef XLIGHT_HOME_EDITION
+#if XLIGHT_EDITION_ID == XLIGHT_HOME_EDITION
 #define MAX_DEVICE_PER_CONTROLLER   8
 #else
-#define MAX_DEVICE_PER_CONTROLLER   20
+#define MAX_DEVICE_PER_CONTROLLER   16
 #endif
 
 // Maximum number of nodes under one controller
-#ifdef XLIGHT_HOME_EDITION
-#define MAX_NODE_PER_CONTROLLER     16
+#if XLIGHT_EDITION_ID == XLIGHT_HOME_EDITION
+#define MAX_NODE_PER_CONTROLLER     12
 #else
-#define MAX_NODE_PER_CONTROLLER     64
+#define MAX_NODE_PER_CONTROLLER     48
 #endif
 
 // Maximum conditions within a rule
@@ -105,7 +113,7 @@
 #define SENSORDATA_JSON_SIZE		196
 
 // Maximum RF messages buffered
-#ifdef XLIGHT_HOME_EDITION
+#if XLIGHT_EDITION_ID == XLIGHT_HOME_EDITION
 #define MQ_MAX_RF_RCVMSG        3
 #define MQ_MAX_RF_SNDMSG        5
 #else
@@ -114,7 +122,7 @@
 #endif
 
 // Maximum Cloud Command messages buffered
-#ifdef XLIGHT_HOME_EDITION
+#if XLIGHT_EDITION_ID == XLIGHT_HOME_EDITION
 #define MQ_MAX_CLOUD_MSG        5
 #else
 #define MQ_MAX_CLOUD_MSG        12

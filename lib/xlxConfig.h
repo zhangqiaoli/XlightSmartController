@@ -217,35 +217,44 @@ typedef struct
 //------------------------------------------------------------------
 // Xlight NodeID List
 //------------------------------------------------------------------
-#define LEN_NODE_IDENTITY     6
-typedef struct    // Exact 12 bytes
+#define LEN_NODE_IDENTITY     8
+typedef struct    // Exact 16 bytes
 	__attribute__((packed))
 {
 	UC nid;
 	UC device;       // Associated device (node id)
   UC identity[LEN_NODE_IDENTITY];
   UL recentActive;
+  UC sid;         // SubID
+  UC cfgPos;      // Config storage position
 } NodeIdRow_t;
 
-inline BOOL isIdentityEmpty(UC *pId)
-{ return(!(pId[0] | pId[1] | pId[2] | pId[3] | pId[4] | pId[5])); };
+inline BOOL isIdentityEmpty(UC *pId, UC nLen = LEN_NODE_IDENTITY)
+{
+  for( int i = 0; i < nLen; i++ ) { if(pId[i] > 0) return FALSE; }
+  return TRUE;
+};
 
 inline void copyIdentity(UC *pId, uint64_t *pData)
-{ memcpy(pId, pData, LEN_NODE_IDENTITY); };
-
-inline void resetIdentity(UC *pId)
-{ memset(pId, 0x00, LEN_NODE_IDENTITY); };
-
-inline BOOL isIdentityEqual(UC *pId1, UC *pId2)
 {
-  for( int i = 0; i < LEN_NODE_IDENTITY; i++ ) { if(pId1[i] != pId2[i]) return false; }
+  UC nLen = min(LEN_NODE_IDENTITY, sizeof(uint64_t));
+  memcpy(pId, pData, nLen);
+};
+
+inline void resetIdentity(UC *pId, UC nLen = LEN_NODE_IDENTITY)
+{ memset(pId, 0x00, nLen); };
+
+inline BOOL isIdentityEqual(UC *pId1, UC *pId2, UC nLen = LEN_NODE_IDENTITY)
+{
+  for( int i = 0; i < nLen; i++ ) { if(pId1[i] != pId2[i]) return false; }
   return true;
 };
 
 inline BOOL isIdentityEqual(UC *pId1, uint64_t *pData)
 {
+  UC nLen = min(LEN_NODE_IDENTITY, sizeof(uint64_t));
   UC pId2[LEN_NODE_IDENTITY]; copyIdentity(pId2, pData);
-  return isIdentityEqual(pId1, pId2);
+  return isIdentityEqual(pId1, pId2, nLen);
 };
 
 //------------------------------------------------------------------
@@ -306,11 +315,36 @@ typedef struct
   UC sw                   : 2; // Main Switch: Switch value for set power command
 	Hue_t ring[MAX_RING_NUM];
 	UC filter		            : 4;
-  UC reserverd            : 4;
+  UC reserved             : 4;
 } ScenarioRow_t;
 
 #define SNT_ROW_SIZE	sizeof(ScenarioRow_t)
 #define MAX_SNT_ROWS	64
+
+//------------------------------------------------------------------
+// Xlight Node Config Table Structures
+//------------------------------------------------------------------
+typedef struct
+{
+  OP_FLAG op_flag			    : 2;
+  FLASH_FLAG flash_flag		: 1;
+  RUN_FLAG run_flag			  : 1;
+	UC uid			            : 8;
+  UL cid;                 // Config ID
+  UC type			            : 8;
+  UC len			            : 8;
+  UC reserved[8];
+} NodeConfig_head_t;
+
+typedef struct
+{
+  NodeConfig_head_t header;
+  UC data[240];
+} NodeConfig_t;
+
+#define NCT_HEAD_SIZE	    sizeof(NodeConfig_head_t)
+#define NCT_ROW_SIZE	    sizeof(NodeConfig_t)
+#define MAX_NCT_ROWS	    (int)(MEM_NODECONFIG_LEN / NCT_ROW_SIZE)
 
 // Node List Class
 class NodeListClass : public OrderdList<NodeIdRow_t>
