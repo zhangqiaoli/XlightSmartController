@@ -483,6 +483,10 @@ bool RF24ServerClass::PeekMessage()
 
 	while (available(&to, &pipe)) {
 		len = receive(lv_pData);
+		if( getAddress() == GATEWAY_ADDRESS && !isBaseNetworkEnabled() ) {
+			// Discard device message due to disabled BaseNetwork expect rfscanner
+			if(lv_pData[1] != NODEID_RF_SCANNER) return false;
+		}
 
 		// rough check
 	  if( len < HEADER_SIZE )
@@ -580,12 +584,16 @@ bool RF24ServerClass::ProcessReceiveMQ()
           if( payload[0] == SCANNER_PROBE ) {
             MsgScanner_ProbeAck();
           } else if( payload[0] == SCANNER_SETUP_RF ) {
-            Process_SetupRF(payload + 1,payl_len-1);
+						transTo = msg.getDestination();
+						if(transTo != NODEID_GATEWAY)
+              Process_SetupRF(payload + 1,payl_len-1);
           }
 					else if( payload[0] == SCANNER_SETUPDEV_RF ) {
-						Process_SetupRF(payload + 1 + 8,payl_len -1 - 8);
+						uint8_t mac[6] = {0};
+						WiFi.macAddress(mac);
+						if(isIdentityEqual(payload + 1,mac))
+						  Process_SetupRF(payload + 1 + 8,payl_len -1 - 8);
           }
-          return 1;
         }
       }
 	      break;
@@ -907,7 +915,7 @@ void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
 			theConfig.SetRFPowerLevel(*rfData++);
 		}
 	}
-	if(rflen > 8)
+	/*if(rflen > 8)
 	{
 		uint64_t networkid = *(uint64_t*)rfData;
 		LOGW(LOGTAG_DATA, "networkid=%llu",networkid);
@@ -915,5 +923,5 @@ void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
 		{
 			theRadio.setAddress(0,networkid);
 		}
-	}
+	}*/
 }

@@ -159,7 +159,7 @@ bool MyTransportNRF24::send(uint8_t to, const void* data, uint8_t len, uint8_t p
 	rf24.powerUp();
 	rf24.stopListening();
 	if( _address == GATEWAY_ADDRESS && pipe == CURRENT_NODE_PIPE ) {
-		if( !_bBaseNetworkEnabled ) {
+		if( !_bBaseNetworkEnabled && to != NODEID_RF_SCANNER) {
 			rf24.startListening();
 			return false;
 		}
@@ -190,9 +190,10 @@ bool MyTransportNRF24::available(uint8_t *to, uint8_t *pipe) {
 		*to = _address;
 		if( _address == GATEWAY_ADDRESS && !_bBaseNetworkEnabled ) {
 			// Discard message due to disabled BaseNetwork
-			UC lv_pData[MAX_MESSAGE_LENGTH];
-			receive(lv_pData);
-			return false;
+			//UC lv_pData[MAX_MESSAGE_LENGTH];
+			//receive(lv_pData);
+			//if(lv_pData[1] == NODEID_RF_SCANNER) return true;
+			return true;
 		}
 	}
 	else if(lv_pipe == PRIVATE_NET_PIPE)
