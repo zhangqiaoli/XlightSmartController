@@ -585,13 +585,13 @@ bool RF24ServerClass::ProcessReceiveMQ()
             MsgScanner_ProbeAck();
           } else if( payload[0] == SCANNER_SETUP_RF ) {
 						transTo = msg.getDestination();
-						if(transTo != NODEID_GATEWAY)
+						if(transTo == NODEID_GATEWAY)
               Process_SetupRF(payload + 1,payl_len-1);
           }
 					else if( payload[0] == SCANNER_SETUPDEV_RF ) {
 						uint8_t mac[6] = {0};
 						WiFi.macAddress(mac);
-						if(isIdentityEqual(payload + 1,mac))
+						if(isIdentityEqual(payload + 1,mac,sizeof(mac)))
 						  Process_SetupRF(payload + 1 + LEN_NODE_IDENTITY, payl_len - 1 - LEN_NODE_IDENTITY);
           }
         }
@@ -883,7 +883,7 @@ bool RF24ServerClass::MsgScanner_ProbeAck()
 	playdata[payl_len++] = NODEID_GATEWAY;
 	playdata[payl_len++] = 0; // subid ignore
 	playdata[payl_len++] = theConfig.GetRFChannel();
-	playdata[payl_len++] = theConfig.GetRFDataRate() << 2 + theConfig.GetRFPowerLevel();
+	playdata[payl_len++] = (theConfig.GetRFDataRate() << 2) + theConfig.GetRFPowerLevel();
 	uint64_t networkid = theRadio.getCurrentNetworkID();
 	memcpy(playdata + payl_len, (uint8_t *)&networkid, 6);
 	payl_len += 6;
@@ -897,21 +897,24 @@ void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
 	{
 		if(theConfig.GetRFChannel() != (*rfData))
 		{
-			theConfig.SetRFChannel(*rfData++);
+			theConfig.SetRFChannel(*rfData);
 		}
 	}
+	rfData++;
 	if(rflen > 1 &&(*rfData)>=RF24_1MBPS && (*rfData)<= RF24_250KBPS)
 	{
 		if(theConfig.GetRFDataRate() != (*rfData))
 		{
-		  theConfig.SetRFDataRate(*rfData++);
+		  theConfig.SetRFDataRate(*rfData);
 		}
 	}
+	rfData++;
 	if(rflen > 2 &&(*rfData)>=RF24_PA_MIN && (*rfData)<= RF24_PA_ERROR)
 	{
+
 		if(theConfig.GetRFPowerLevel() != (*rfData))
 		{
-			theConfig.SetRFPowerLevel(*rfData++);
+			theConfig.SetRFPowerLevel(*rfData);
 		}
 	}
 	/*if(rflen > 8)

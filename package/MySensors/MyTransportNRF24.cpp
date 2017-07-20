@@ -185,6 +185,8 @@ bool MyTransportNRF24::available(uint8_t *to, uint8_t *pipe) {
 	//(void)avail; //until somebody makes use of 'avail'
 	// SBS added 2016-07-21
 	if( pipe ) *pipe = lv_pipe;
+	//if(lv_pipe != 255)
+	//  Serial.printf("avai data pipe = %d\r\n",lv_pipe);
 	if (lv_pipe == CURRENT_NODE_PIPE)
 	{
 		*to = _address;
@@ -193,7 +195,7 @@ bool MyTransportNRF24::available(uint8_t *to, uint8_t *pipe) {
 			//UC lv_pData[MAX_MESSAGE_LENGTH];
 			//receive(lv_pData);
 			//if(lv_pData[1] == NODEID_RF_SCANNER) return true;
-			return true;
+			//return false;
 		}
 	}
 	else if(lv_pipe == PRIVATE_NET_PIPE)

@@ -462,7 +462,7 @@ BOOL ConfigClass::LoadConfig()
 		 	|| m_config.useCloud > CLOUD_MUST_CONNECT
 		 	|| (IS_NOT_DEVICE_NODEID(m_config.mainDevID) && m_config.mainDevID != NODEID_DUMMY) )
     {
-
+      InitConfig();
       m_isChanged = true;
       LOGW(LOGTAG_MSG, "Sysconfig is empty, use default settings.");
       SaveConfig();
