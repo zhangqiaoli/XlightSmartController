@@ -927,5 +927,10 @@ void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
 		}
 	}*/
 	// Apply new settings
-	theSys.CheckRF();
+	if( theSys.CheckRF() ) {
+		switch2BaseNetwork();
+		delay(10);
+		switch2MyNetwork();
+		LOGN(LOGTAG_MSG, "RF24 config changed.");
+	}
 }
