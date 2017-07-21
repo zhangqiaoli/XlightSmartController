@@ -483,9 +483,9 @@ bool RF24ServerClass::PeekMessage()
 
 	while (available(&to, &pipe)) {
 		len = receive(lv_pData);
-		if( getAddress() == GATEWAY_ADDRESS && !isBaseNetworkEnabled() ) {
+		if( to == BASESERVICE_ADDRESS && !isBaseNetworkEnabled() ) {
 			// Discard device message due to disabled BaseNetwork expect rfscanner
-			if(lv_pData[1] != NODEID_RF_SCANNER) return false;
+			if( lv_pData[1] != NODEID_RF_SCANNER ) continue;
 		}
 
 		// rough check

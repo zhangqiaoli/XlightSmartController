@@ -197,14 +197,14 @@ bool MyTransportNRF24::available(uint8_t *to, uint8_t *pipe) {
 	//  Serial.printf("avai data pipe = %d\r\n",lv_pipe);
 	if (lv_pipe == CURRENT_NODE_PIPE)
 	{
-		*to = _address;
-		if( _address == GATEWAY_ADDRESS && !_bBaseNetworkEnabled ) {
+		*to = BASESERVICE_ADDRESS;
+		//if( _address == GATEWAY_ADDRESS && !_bBaseNetworkEnabled ) {
 			// Discard message due to disabled BaseNetwork
 			//UC lv_pData[MAX_MESSAGE_LENGTH];
 			//receive(lv_pData);
 			//if(lv_pData[1] == NODEID_RF_SCANNER) return true;
 			//return false;
-		}
+		//}
 	}
 	else if(lv_pipe == PRIVATE_NET_PIPE)
 		*to = _address;
