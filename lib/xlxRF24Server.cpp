@@ -485,7 +485,7 @@ bool RF24ServerClass::PeekMessage()
 		len = receive(lv_pData);
 		if( to == BASESERVICE_ADDRESS && !isBaseNetworkEnabled() ) {
 			// Discard device message due to disabled BaseNetwork expect rfscanner
-			if( lv_pData[1] != NODEID_RF_SCANNER ) continue;
+			if( lv_msg.getSender() != NODEID_RF_SCANNER ) continue;
 		}
 
 		// rough check
