@@ -131,8 +131,8 @@ bool MyTransportNRF24::isValid() {
 
 bool MyTransportNRF24::CheckConfig()
 {
-	if( rf24.getChannel() != RF24_CHANNEL ) return false;
-	if( rf24.getDataRate() != RF24_DATARATE ) return false;
+	if( rf24.getChannel() > 127 ) return false;
+	if( rf24.getDataRate() > RF24_2MBPS ) return false;
 	if( rf24.getCRCLength() != RF24_CRC_16 ) return false;
 	return true;
 }
