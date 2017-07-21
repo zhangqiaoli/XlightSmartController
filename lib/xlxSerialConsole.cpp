@@ -898,7 +898,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
             retVal = true;
           } else if (strnicmp(sParam1, "rfch", 4) == 0) {
             theConfig.SetRFChannel((UC)atoi(sParam2));
-            SERIAL_LN("RF Channel: %d\n\r", theRadio.getChannel(false));
+            SERIAL_LN("RF Channel: %d    \n\r", theRadio.getChannel(false));
             CloudOutput("v_rfch:%d", theRadio.getChannel(false));
             retVal = true;
           } else if (strnicmp(sParam1, "rfpl", 4) == 0) {
@@ -908,7 +908,7 @@ bool SerialConsoleClass::doSet(const char *cmd)
             retVal = true;
           } else if (strnicmp(sParam1, "rfdr", 4) == 0) {
             theConfig.SetRFDataRate((UC)atoi(sParam2));
-            SERIAL_LN("RF Speed: %d\n\r", theRadio.getDataRate(false));
+            SERIAL_LN("RF Speed: %d      \n\r", theRadio.getDataRate(false));
             CloudOutput("v_rfdr:%d", theRadio.getDataRate(false));
             retVal = true;
           }

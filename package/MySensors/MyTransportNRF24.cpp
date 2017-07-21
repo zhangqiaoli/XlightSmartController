@@ -63,6 +63,13 @@ bool MyTransportNRF24::init() {
 	return true;
 }
 
+bool MyTransportNRF24::init(uint8_t channel, uint8_t paLevel, uint8_t dataRate) {
+	_channel = channel;
+	_paLevel = paLevel;
+	_dataRate = dataRate;
+	return init();
+}
+
 void MyTransportNRF24::setAddress(uint8_t address, uint64_t network) {
 	// SBS added 2016-06-28
 	if( _address == address && _currentNetworkID == network )
@@ -131,8 +138,9 @@ bool MyTransportNRF24::isValid() {
 
 bool MyTransportNRF24::CheckConfig()
 {
-	if( rf24.getChannel() > 127 ) return false;
-	if( rf24.getDataRate() > RF24_2MBPS ) return false;
+	if( rf24.getChannel() != _channel ) return false;
+	if( rf24.getDataRate() != _dataRate ) return false;
+	if( rf24.getPALevel() != _paLevel ) return false;
 	if( rf24.getCRCLength() != RF24_CRC_16 ) return false;
 	return true;
 }

@@ -421,12 +421,12 @@ void SmartControllerClass::ResetSerialPort()
 BOOL SmartControllerClass::CheckRF()
 {
 	// RF Server begins
-	m_isRF = theRadio.ServerBegin();
+	m_isRF = theRadio.ServerBegin(theConfig.GetRFChannel(), theConfig.GetRFPowerLevel(), theConfig.GetRFDataRate());
 	if( m_isRF ) {
 		// Change it if setting is not default value
-		theRadio.setChannel(theConfig.GetRFChannel());
-		theRadio.setPALevel(theConfig.GetRFPowerLevel());
-		theRadio.setDataRate(theConfig.GetRFDataRate());
+		//theRadio.setChannel(theConfig.GetRFChannel());
+		//theRadio.setPALevel(theConfig.GetRFPowerLevel());
+		//theRadio.setDataRate(theConfig.GetRFDataRate());
 		m_isRF = theRadio.CheckConfig();
 	}
 	return m_isRF;
