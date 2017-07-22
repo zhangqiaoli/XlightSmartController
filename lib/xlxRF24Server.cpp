@@ -62,10 +62,10 @@ RF24ServerClass::RF24ServerClass(uint8_t ce, uint8_t cs, uint8_t paLevel)
 	_received = 0;
 }
 
-bool RF24ServerClass::ServerBegin()
+bool RF24ServerClass::ServerBegin(uint8_t channel, uint8_t paLevel, uint8_t dataRate)
 {
   // Initialize RF module
-	if( !init() ) {
+	if( !init(channel, paLevel, dataRate) ) {
     LOGC(LOGTAG_MSG, "RF24 module is not valid!");
 		return false;
 	}
@@ -483,9 +483,9 @@ bool RF24ServerClass::PeekMessage()
 
 	while (available(&to, &pipe)) {
 		len = receive(lv_pData);
-		if( getAddress() == GATEWAY_ADDRESS && !isBaseNetworkEnabled() ) {
+		if( to == BASESERVICE_ADDRESS && !isBaseNetworkEnabled() ) {
 			// Discard device message due to disabled BaseNetwork expect rfscanner
-			if(lv_pData[1] != NODEID_RF_SCANNER) return false;
+			if( lv_msg.getSender() != NODEID_RF_SCANNER ) continue;
 		}
 
 		// rough check
@@ -927,10 +927,12 @@ void RF24ServerClass::Process_SetupRF(const UC *rfData,uint8_t rflen)
 		}
 	}*/
 	// Apply new settings
+	/*
 	if( theSys.CheckRF() ) {
 		switch2BaseNetwork();
 		delay(10);
 		switch2MyNetwork();
 		LOGN(LOGTAG_MSG, "RF24 config changed.");
 	}
+	*/
 }

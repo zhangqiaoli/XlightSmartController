@@ -41,6 +41,7 @@ class MyTransportNRF24 : public MyTransport
 public:
 	MyTransportNRF24(uint8_t ce=RF24_CE_PIN, uint8_t cs=RF24_CS_PIN, uint8_t channel=RF24_CHANNEL, uint8_t paLevel=RF24_PA_LEVEL, uint8_t dataRate=RF24_DATARATE);
 	bool init();
+	bool init(uint8_t channel, uint8_t paLevel, uint8_t dataRate);
 	void setAddress(uint8_t address, uint64_t network);
 	uint8_t getAddress();
 	bool send(uint8_t to, const void* data, uint8_t len, uint8_t pipe = 255);

@@ -123,7 +123,7 @@ void NodeListClass::publishNode(NodeIdRow_t _node)
 
 	UL lv_now = Time.now();
 	strTemp = String::format("{'nd':%d,'mac':'%s','device':%d,'recent':%d}", _node.nid,
-			PrintMacAddress(strDisplay, _node.identity), _node.device,
+			PrintMacAddress(strDisplay, _node.identity, false), _node.device,
 			(_node.recentActive > 0 ? lv_now - _node.recentActive : -1));
 	theSys.PublishDeviceConfig(strTemp.c_str());
 }
@@ -157,7 +157,7 @@ void NodeListClass::showList(BOOL toCloud, UC nid)
 			} else {
 				SERIAL_LN("%cNo.%d - NodeID: %d (%s) actived %ds ago associated device: %d",
 						_pItems[i].nid == CURRENT_DEVICE ? '*' : ' ', i,
-				    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identity),
+				    _pItems[i].nid, PrintMacAddress(strDisplay, _pItems[i].identity, false),
 						(_pItems[i].recentActive > 0 ? lv_now - _pItems[i].recentActive : -1),
 					  _pItems[i].device);
 			}
