@@ -324,7 +324,7 @@ bool RF24ServerClass::ProcessSend(String &strMsg, MyMessage &my_msg, const UC _r
 {
 	int nPos;
 	int nPos2;
-	uint8_t lv_nNodeID, lv_nSubID;
+	uint8_t lv_nNodeID = 0, lv_nSubID;
 	uint8_t lv_nMsgID;
 	String lv_sPayload = "";
 
@@ -570,9 +570,9 @@ bool RF24ServerClass::ProcessReceiveMQ()
 					}
 				} else if( msgType == I_REBOOT ) {
 					// Reboot node
+					transTo = msg.getDestination();
 					ListNode<DevStatusRow_t> *DevStatusRowPtr = theSys.SearchDevStatus(transTo);
 					if( DevStatusRowPtr ) {
-						transTo = msg.getDestination();
 						msg.build(replyTo, transTo, _sensor, C_INTERNAL, I_REBOOT, false);
 						msg.set((unsigned int)DevStatusRowPtr->data.token);
 						msgReady = true;

@@ -238,14 +238,12 @@ UC NodeListClass::getAvailableNodeId(UC preferID, UC defaultID, UC minID, UC max
 {
 	UC oldestNode = 0;
 	UL oldestTime = Time.now();
-	BOOL bFound = false;
 	NodeIdRow_t lv_Node;
 
 	// Stage 1: Check preferID
 	if( preferID > 0 && preferID < NODEID_DUMMY ) {
 		lv_Node.nid = preferID;
 		if( get(&lv_Node) >= 0 ) {
-			bFound = true;
 			// preferID is found and matched, reuse it
 			if( lv_Node.recentActive == 0 || isIdentityEmpty(lv_Node.identity) || isIdentityEqual(lv_Node.identity, &identity) ) {
 				return preferID;

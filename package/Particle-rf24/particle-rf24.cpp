@@ -348,10 +348,10 @@ void RF24::printDetails(void)
   print_byte_register("CONFIG\t",CONFIG);
   print_byte_register("DYNPD/FEATURE",DYNPD,2);
 
-  SERIAL("Data Rate\t = %s\r\n",pgm_read_word(&rf24_datarate_e_str_P[getDataRate()]));
-  SERIAL("Model\t\t = %s\r\n",pgm_read_word(&rf24_model_e_str_P[isPVariant()]));
-  SERIAL("CRC Length\t = %s\r\n",pgm_read_word(&rf24_crclength_e_str_P[getCRCLength()]));
-  SERIAL("PA Power\t = %s\r\n",pgm_read_word(&rf24_pa_dbm_e_str_P[getPALevel()]));
+  SERIAL("Data Rate\t = %s\r\n",rf24_datarate_e_str_P[getDataRate()]);
+  SERIAL("Model\t\t = %s\r\n",rf24_model_e_str_P[isPVariant()]);
+  SERIAL("CRC Length\t = %s\r\n",rf24_crclength_e_str_P[getCRCLength()]);
+  SERIAL("PA Power\t = %s\r\n",rf24_pa_dbm_e_str_P[getPALevel()]);
 
 }
 /****************************************************************************/

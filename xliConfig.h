@@ -16,12 +16,10 @@
 
 // Module configuration for different editions
 #if XLIGHT_EDITION_ID == XLIGHT_OFFICE_EDITION
-#define XLIGHT_EDITION_ID       1
 #define DISABLE_ASR
 #endif
 
 #if XLIGHT_EDITION_ID == XLIGHT_CLASSROOM_EDITION
-#define XLIGHT_EDITION_ID       2
 #define DISABLE_ASR
 #define DISABLE_BLE
 #endif
@@ -38,7 +36,9 @@
 /**********************/
 
 #define PRIPSTR "%s"
-#define pgm_read_word(p) (*(p))
+#ifndef pgm_read_word
+  #define pgm_read_word(p) (*(p))
+#endif
 #ifdef SERIAL_DEBUG
   #define IF_SERIAL_DEBUG(x) ({x;})
 #else
