@@ -80,24 +80,26 @@ void SysteTimerCB()
   	theSys.FastProcess();
 	}
 
-	// Timeout interuption of Cloud connecting
+	if( !theConfig.GetDisableWiFi() ) {
+		// Timeout interuption of Cloud connecting
 //#ifndef SYS_SERIAL_DEBUG
-	if( WiFi.listening() ) {
-		if (++slowTick > RTE_TICK_SLOWPROCESS) {
-			slowTick = 0;
-			//SERIAL_LN("Wi-Fi in listening mode...");
-			// Get Wi-Fi credential from BLE
-			theSys.ProcessLocalCommands();
-			/*if( WiFi.hasCredentials() ) {
-				//WiFi.listen(false);
-				//theSys.ResetSerialPort();
-				SERIAL_LN("will connect Wi-Fi in system thread");
-				//theSys.connectWiFi();
-			}*/
+		if( WiFi.listening() ) {
+			if (++slowTick > RTE_TICK_SLOWPROCESS) {
+				slowTick = 0;
+				//SERIAL_LN("Wi-Fi in listening mode...");
+				// Get Wi-Fi credential from BLE
+				theSys.ProcessLocalCommands();
+				/*if( WiFi.hasCredentials() ) {
+					//WiFi.listen(false);
+					//theSys.ResetSerialPort();
+					SERIAL_LN("will connect Wi-Fi in system thread");
+					//theSys.connectWiFi();
+				}*/
+			}
+			// Reset?
 		}
-		// Reset?
-	}
 //#endif
+	}
 }
 
 // Set "manual" mode
@@ -106,6 +108,9 @@ SYSTEM_THREAD(ENABLED);
 
 void setup()
 {
+	WiFi.on();
+	WiFi.listen(false);
+
   // System Initialization
   theSys.Init();
 
@@ -114,10 +119,7 @@ void setup()
 
 	// Open Wi-Fi
 	if( theConfig.GetDisableWiFi() ) {
-		WiFi.off();
-	} else {
-		WiFi.on();
-		WiFi.listen(false);
+		WiFi.disconnect();
 	}
 
 	// Initiaze Cloud Variables & Functions
