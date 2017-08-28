@@ -52,7 +52,7 @@
 #endif
 
 // Main Version. Must change if Config_t structure is updated
-#define VERSION_CONFIG_DATA       26
+#define VERSION_CONFIG_DATA       27
 
 // Xlight Application Identification
 #define XLA_ORGANIZATION          "xlight.ca"               // Default value. Read from EEPROM
@@ -73,6 +73,7 @@
 
 // Number of ticks on System Timer
 #define RTE_TICK_FASTPROCESS			1						// Pace of execution of FastProcess
+#define RTE_TICK_SLOWPROCESS			10					// Pace of execution of slow process
 
 // Keep alive message timeout
 #define RTE_TM_KEEP_ALIVE         16

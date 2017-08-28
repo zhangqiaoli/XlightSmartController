@@ -437,18 +437,26 @@ bool SerialConsoleClass::doCheck(const char *cmd)
       }
       CloudOutput("c_rf:%d, succ_r:%.2f", theRadio.isValid(), succ_r);
     } else if (wal_strnicmp(sTopic, "wifi", 4) == 0) {
-      SERIAL("**Wi-Fi module is %s, ", (WiFi.ready() ? "ready" : "not ready!"));
-      int lv_RSSI = WiFi.RSSI();
-      if( lv_RSSI < 0 ) {
-        SERIAL_LN("RSSI=%ddB\n\r", WiFi.RSSI());
-      } else if( lv_RSSI == 1 ) {
-        SERIAL_LN("Wi-Fi chip error\n\r");
+      if( !theConfig.GetDisableWiFi() ) {
+        SERIAL("**Wi-Fi module is %s, ", (WiFi.ready() ? "ready" : "not ready!"));
+        int lv_RSSI = WiFi.RSSI();
+        if( lv_RSSI < 0 ) {
+          SERIAL_LN("RSSI=%ddB\n\r", WiFi.RSSI());
+        } else if( lv_RSSI == 1 ) {
+          SERIAL_LN("Wi-Fi chip error\n\r");
+        } else {
+          SERIAL_LN("time-out\n\r");
+        }
+        CloudOutput("c_wifi:%d-%ddB", WiFi.ready(), lv_RSSI);
       } else {
-        SERIAL_LN("time-out\n\r");
+        SERIAL("**Wi-Fi module is disabled\n\r");
       }
-      CloudOutput("c_wifi:%d-%ddB", WiFi.ready(), lv_RSSI);
     } else if (wal_strnicmp(sTopic, "wlan", 4) == 0) {
-      SERIAL_LN("**Resolving IP for www.google.com...%s\n\r", (WiFi.resolve("www.google.com") ? "OK" : "failed!"));
+      if( !theConfig.GetDisableWiFi() ) {
+        SERIAL_LN("**Resolving IP for www.google.com...%s\n\r", (WiFi.resolve("www.google.com") ? "OK" : "failed!"));
+      } else {
+        SERIAL("**Wi-Fi module is disabled\n\r");
+      }
       //CloudOutput("c_wlan:1");
     } else if (wal_strnicmp(sTopic, "flash", 5) == 0) {
       SERIAL_LN("** Free memory: %lu bytes, total EEPROM space: %lu bytes\n\r", System.freeMemory(), EEPROM.length());
@@ -490,15 +498,17 @@ bool SerialConsoleClass::doShow(const char *cmd)
       uint8_t mac[6];
       WiFi.macAddress(mac);
       SERIAL_LN("  MAC address: %s", PrintMacAddress(strDisplay, mac));
-      if( WiFi.ready() ) {
-        SERIAL("  IP Address: ");
-        TheSerial.println(WiFi.localIP());
-        SERIAL("  Subnet Mask: ");
-        TheSerial.println(WiFi.subnetMask());
-        SERIAL("  Gateway IP: ");
-        TheSerial.println(WiFi.gatewayIP());
-        SERIAL_LN("  SSID: %s", WiFi.SSID());
-        SERIAL_LN("  Cloud %s", Particle.connected() ? "connected" : "disconnected");
+      if( !theConfig.GetDisableWiFi() ) {
+        if( WiFi.ready() ) {
+          SERIAL("  IP Address: ");
+          TheSerial.println(WiFi.localIP());
+          SERIAL("  Subnet Mask: ");
+          TheSerial.println(WiFi.subnetMask());
+          SERIAL("  Gateway IP: ");
+          TheSerial.println(WiFi.gatewayIP());
+          SERIAL_LN("  SSID: %s", WiFi.SSID());
+          SERIAL_LN("  Cloud %s", Particle.connected() ? "connected" : "disconnected");
+        }
       }
       SERIAL_LN("");
       //CloudOutput("RF NetworkID %s, MAC %s, SSID %s",
@@ -572,6 +582,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("hwsObj = \t\t\t%d", theConfig.GetRelayKeyObj());
       SERIAL_LN("PPT Pin = %s\n\r", theConfig.GetPPTAccessCode().c_str());
     } else if (wal_strnicmp(sTopic, "flag", 4) == 0) {
+      SERIAL_LN("WAN Chip: \t\t\t%s", theConfig.GetDisableWiFi() ? "diabled" : "enabled");
   		SERIAL_LN("m_isRF = \t\t\t%d", theSys.IsRFGood());
   		SERIAL_LN("m_isBLE = \t\t\t%d", theSys.IsBLEGood());
   		SERIAL_LN("m_isLAN = \t\t\t%d", theSys.IsLANGood());
@@ -859,6 +870,9 @@ bool SerialConsoleClass::doSet(const char *cmd)
             theConfig.SetHardwareSwitch(atoi(sParam2) > 0);
             SERIAL_LN("Default use %s switch\n\r", (theConfig.GetHardwareSwitch() ? "Hardware" : "Software"));
             CloudOutput("hwsw:%d", theConfig.GetHardwareSwitch());
+            retVal = true;
+          } else if (wal_strnicmp(sParam1, "wifi", 4) == 0) {
+            theConfig.SetDisableWiFi(atoi(sParam2) == 0);
             retVal = true;
           }
         } else {
@@ -1173,6 +1187,7 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
       System.dfu();
     }
     else if (wal_strnicmp(sTopic, "listen", 6) == 0) {
+      theConfig.SetDisableWiFi(false);
       SERIAL_LN("System is about to enter listening mode...");
       CloudOutput("Will enter listening mode");
       delay(1000);
@@ -1332,6 +1347,7 @@ void SerialConsoleClass::UpdateWiFiCredential()
 
 bool SerialConsoleClass::SetWiFiCredential(const char *cmd)
 {
+  theConfig.SetDisableWiFi(false);
   UpdateWiFiCredential();
   SERIAL("Wi-Fi credential saved");
   WiFi.listen(false);
@@ -1342,9 +1358,13 @@ bool SerialConsoleClass::SetWiFiCredential(const char *cmd)
 
 bool SerialConsoleClass::PingAddress(const char *sAddress)
 {
+  if( theConfig.GetDisableWiFi() ) {
+    SERIAL_LN("Wi-Fi is disable!");
+    return false;
+  }
+
   if( !WiFi.ready() ) {
     SERIAL_LN("Wi-Fi is not ready!");
-    CloudOutput("Wi-Fi is not ready");
     return false;
   }
 

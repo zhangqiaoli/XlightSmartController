@@ -377,6 +377,7 @@ void ConfigClass::InitConfig()
 	m_config.rfPowerLevel = RF24_PA_LEVEL_GW;
 	m_config.rfDataRate = RF24_DATARATE;
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
+	m_config.disableWiFi = 0;
 	m_config.useCloud = CLOUD_ENABLE;
 	m_config.stWiFi = 1;
 	m_config.bcMsgRtpTimes = 3;
@@ -1016,6 +1017,27 @@ BOOL ConfigClass::SetMaxBaseNetworkDur(US dur)
 		return true;
 	}
 	return false;
+}
+
+BOOL ConfigClass::GetDisableWiFi()
+{
+  return m_config.disableWiFi;
+}
+
+BOOL ConfigClass::SetDisableWiFi(BOOL _st)
+{
+  if( _st != m_config.disableWiFi ) {
+    m_config.disableWiFi = _st;
+    m_isChanged = true;
+		LOGW(LOGTAG_STATUS, "Wi-Fi chip %s", _st ? "diabled" : "enabled");
+		if( _st ) {
+			WiFi.off();
+		} else {
+			WiFi.on();
+		}
+    return true;
+  }
+  return false;
 }
 
 UC ConfigClass::GetUseCloud()
