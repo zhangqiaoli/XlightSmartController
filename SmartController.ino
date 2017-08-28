@@ -120,6 +120,7 @@ void setup()
 	// Open Wi-Fi
 	if( theConfig.GetDisableWiFi() ) {
 		WiFi.disconnect();
+		WiFi.off();
 	}
 
 	// Initiaze Cloud Variables & Functions
