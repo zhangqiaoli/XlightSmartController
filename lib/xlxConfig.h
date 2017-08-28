@@ -96,7 +96,7 @@ typedef struct
   BOOL enHWSwitch             :1;           // Whether use Hardware Switch as default
   UC hwsObj                   :3;           // Hardware Switch Object
   UC useCloud                 :2;           // How to depend on the Cloud
-  BOOL Reserved_bool          :1;           // Reserved for boolean flags
+  BOOL disableWiFi            :1;           // Disable Wi-Fi Chip
   US sensorBitmap             :16;          // Sensor enable bitmap
   UC numDevices               :8;           // Number of devices
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
@@ -137,7 +137,8 @@ typedef struct
   BOOL enableSpeaker          :1;           // Whether enable speaker
   BOOL fixedNID               :1;           // Whether fixed Node ID
   UC rfDataRate               :2;           // RF Data Rate [0..2], 0 for 1Mbps, or 1 for 2Mbps, 2 for 250kbs
-  BOOL Reserved_bool          :2;           // Reserved for boolean flags
+  BOOL disableWiFi            :1;           // Disable Wi-Fi Chip
+  BOOL Reserved_bool          :1;           // Reserved for boolean flags
   UC numNodes;                              // Number of Nodes (include device, remote control, etc.)
   UC rfPowerLevel             :2;           // RF Power Level 0..3
   BOOL stWiFi                 :1;           // Wi-Fi status: On / Off
@@ -513,6 +514,9 @@ public:
 
   US GetMaxBaseNetworkDur();
   BOOL SetMaxBaseNetworkDur(US dur);
+
+  BOOL GetDisableWiFi();
+  BOOL SetDisableWiFi(BOOL _st);
 
   UC GetUseCloud();
   BOOL SetUseCloud(UC opt);

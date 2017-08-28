@@ -397,6 +397,8 @@ BOOL SmartControllerClass::connectCloud()
 // Connect Wi-Fi
 BOOL SmartControllerClass::connectWiFi()
 {
+	if( theConfig.GetDisableWiFi() ) return false;
+
 	BOOL retVal = WiFi.ready();
 	if( !retVal ) {
 		if( WiFi.hasCredentials() ) {
@@ -435,6 +437,8 @@ BOOL SmartControllerClass::CheckRF()
 // Check Wi-Fi module and connection
 BOOL SmartControllerClass::CheckWiFi()
 {
+	if( theConfig.GetDisableWiFi() ) return false;
+
 	if( WiFi.RSSI() > 0 ) {
 		m_isWAN = false;
 		m_isLAN = false;
@@ -521,39 +525,41 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 		}
 
 		// Check Network
-		if( theConfig.GetWiFiStatus() ) {
-			if( !IsWANGood() || tickAcitveCheck % 5 == 0 || GetStatus() == STATUS_DIS ) {
-				InitNetwork();
-			}
+		if( !theConfig.GetDisableWiFi() ) {
+			if( theConfig.GetWiFiStatus() ) {
+				if( !IsWANGood() || tickAcitveCheck % 5 == 0 || GetStatus() == STATUS_DIS ) {
+					InitNetwork();
+				}
 
-			if( IsWANGood() ) { // WLAN is good
-				tickWiFiOff = 0;
-				if( !Particle.connected() ) {
-					// Cloud disconnected, try to recover
-					if( theConfig.GetUseCloud() != CLOUD_DISABLE ) {
-						connectCloud();
-					}
-				} else {
-					if( theConfig.GetUseCloud() == CLOUD_DISABLE ) {
-						Particle.disconnect();
-					}
-				}
-			} else { // WLAN is wrong
-				if( ++tickWiFiOff > 5 ) {
-					theConfig.SetWiFiStatus(false);
-					if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
-						SERIAL_LN("System is about to reset due to lost of network...");
-						Restart();
+				if( IsWANGood() ) { // WLAN is good
+					tickWiFiOff = 0;
+					if( !Particle.connected() ) {
+						// Cloud disconnected, try to recover
+						if( theConfig.GetUseCloud() != CLOUD_DISABLE ) {
+							connectCloud();
+						}
 					} else {
-						// Avoid keeping trying
-						LOGE(LOGTAG_MSG, "Turn off WiFi!");
-						WiFi.disconnect();
-						WiFi.off();	// In order to resume Wi-Fi, restart the application
+						if( theConfig.GetUseCloud() == CLOUD_DISABLE ) {
+							Particle.disconnect();
+						}
+					}
+				} else { // WLAN is wrong
+					if( ++tickWiFiOff > 5 ) {
+						theConfig.SetWiFiStatus(false);
+						if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
+							SERIAL_LN("System is about to reset due to lost of network...");
+							Restart();
+						} else {
+							// Avoid keeping trying
+							LOGE(LOGTAG_MSG, "Turn off WiFi!");
+							WiFi.disconnect();
+							WiFi.off();	// In order to resume Wi-Fi, restart the application
+						}
 					}
 				}
+			} else if( WiFi.ready() ) {
+				theConfig.SetWiFiStatus(true);
 			}
-		} else if( WiFi.ready() ) {
-			theConfig.SetWiFiStatus(true);
 		}
 
 		// Daily Cloud Synchronization
