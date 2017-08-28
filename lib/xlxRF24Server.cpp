@@ -82,6 +82,7 @@ uint64_t RF24ServerClass::GetNetworkID(bool _full)
 
   byte mac[6];
   WiFi.macAddress(mac);
+  theSys.SetMac((uint8_t*)mac);
 	int i = (_full ? 0 : 2);
   for (; i<6; i++) {
     netID += mac[i];
@@ -590,7 +591,8 @@ bool RF24ServerClass::ProcessReceiveMQ()
           }
 					else if( payload[0] == SCANNER_SETUPDEV_RF ) {
 						uint8_t mac[6] = {0};
-						WiFi.macAddress(mac);
+						//WiFi.macAddress(mac);
+						theSys.GetMac(mac);
 						if(isIdentityEqual(payload + 1,mac,sizeof(mac)))
 						  Process_SetupRF(payload + 1 + LEN_NODE_IDENTITY, payl_len - 1 - LEN_NODE_IDENTITY);
           }
@@ -876,7 +878,8 @@ bool RF24ServerClass::MsgScanner_ProbeAck()
 	uint8_t playdata[MAX_PAYLOAD + 1] = {0};
 	playdata[0] = SCANNER_PROBE;
 	uint8_t mac[6];
-  WiFi.macAddress(mac);
+    //WiFi.macAddress(mac);
+	theSys.GetMac(mac);
 	memcpy(playdata + 1, mac, sizeof(mac));
   playdata[payl_len++] = theConfig.GetVersion();
 	playdata[payl_len++] = XLIGHT_EDITION_ID; // type

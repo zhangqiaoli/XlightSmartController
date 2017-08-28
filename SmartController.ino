@@ -116,7 +116,8 @@ void setup()
 
   // Load Configuration
   theConfig.LoadConfig();
-
+	// Initialization Radio Interfaces
+	theSys.InitRadio();
 	// Open Wi-Fi
 	if( theConfig.GetDisableWiFi() ) {
 		WiFi.disconnect();
@@ -131,12 +132,8 @@ void setup()
   // Initialize Pins
   theSys.InitPins();
 
-	// Initialization Radio Interfaces
-	theSys.InitRadio();
-
 	// Initialize Serial Console
   theConsole.Init();
-
   // Start system timer: callback every n * 0.5ms using hmSec timescale
   //Use TIMER6 to retain PWM capabilities on all pins
   sysTimer.begin(SysteTimerCB, RTE_DELAY_SYSTIMER, hmSec, TIMER6);

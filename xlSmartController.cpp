@@ -380,6 +380,16 @@ BOOL SmartControllerClass::SetStatus(UC st)
 	return true;
 }
 
+void SmartControllerClass::GetMac(uint8_t *mac)
+{
+	memcpy(mac,m_mac,sizeof(m_mac));
+}
+
+void SmartControllerClass::SetMac(uint8_t *mac)
+{
+	memcpy(m_mac,mac,sizeof(m_mac));
+}
+
 // Connect to the Cloud
 BOOL SmartControllerClass::connectCloud()
 {
