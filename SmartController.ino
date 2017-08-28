@@ -121,11 +121,12 @@ void setup()
 	if( theConfig.GetDisableWiFi() ) {
 		WiFi.disconnect();
 		WiFi.off();
-	}
+	} else {
 
-	// Initiaze Cloud Variables & Functions
-	///It is fine to call this function when the cloud is disconnected - Objects will be registered next time the cloud is connected
-  theSys.InitCloudObj();
+		// Initiaze Cloud Variables & Functions
+		///It is fine to call this function when the cloud is disconnected - Objects will be registered next time the cloud is connected
+	  theSys.InitCloudObj();
+	}
 
   // Initialize Pins
   theSys.InitPins();
@@ -227,10 +228,12 @@ void loop()
   // Self-test & alarm trigger, also insert delay between each loop
   IF_MAINLOOP_TIMER( theSys.SelfCheck(RTE_DELAY_SELFCHECK), "SelfCheck" );
 
-	// Process Could Messages
-  if( Particle.connected() == true ) {
-    IF_MAINLOOP_TIMER( Particle.process(), "ProcessCloud" );
-  }
+	if( !theConfig.GetDisableWiFi() ) {
+		// Process Could Messages
+	  if( Particle.connected() == true ) {
+	    IF_MAINLOOP_TIMER( Particle.process(), "ProcessCloud" );
+	  }
+	}
 }
 
 #endif
