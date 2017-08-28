@@ -1029,12 +1029,14 @@ BOOL ConfigClass::SetDisableWiFi(BOOL _st)
   if( _st != m_config.disableWiFi ) {
     m_config.disableWiFi = _st;
     m_isChanged = true;
-		LOGW(LOGTAG_STATUS, "Wi-Fi chip %s", _st ? "diabled" : "enabled");
+		SERIAL_LN("Wi-Fi chip %s", _st ? "disabled" : "enabled");
+		/*
 		if( _st ) {
 			WiFi.off();
 		} else {
 			WiFi.on();
 		}
+		*/
     return true;
   }
   return false;

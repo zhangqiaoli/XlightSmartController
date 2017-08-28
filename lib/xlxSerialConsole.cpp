@@ -582,7 +582,7 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("hwsObj = \t\t\t%d", theConfig.GetRelayKeyObj());
       SERIAL_LN("PPT Pin = %s\n\r", theConfig.GetPPTAccessCode().c_str());
     } else if (wal_strnicmp(sTopic, "flag", 4) == 0) {
-      SERIAL_LN("WAN Chip: \t\t\t%s", theConfig.GetDisableWiFi() ? "diabled" : "enabled");
+      SERIAL_LN("WAN Chip: \t\t\t%s", theConfig.GetDisableWiFi() ? "disabled" : "enabled");
   		SERIAL_LN("m_isRF = \t\t\t%d", theSys.IsRFGood());
   		SERIAL_LN("m_isBLE = \t\t\t%d", theSys.IsBLEGood());
   		SERIAL_LN("m_isLAN = \t\t\t%d", theSys.IsLANGood());
