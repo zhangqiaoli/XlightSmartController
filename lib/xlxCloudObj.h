@@ -11,8 +11,6 @@
 // Comment it off if we don't use Particle public cloud
 /// Notes:
 /// Currently, Particle public cloud supports up to 20 variables and 15 functions.
-/// In general situation, we should use publish/subscribe or MQTT.
-#define USE_PARTICLE_CLOUD
 
 // Notes: Variable name max length is 12 characters long.
 // Cloud variables
@@ -138,7 +136,7 @@ protected:
   void InitCloudObj();
 
   JsonObject *m_jpCldCmd;
-	
+
   LinkedList<String> m_cmdList;
   LinkedList<String> m_configList;
 };
