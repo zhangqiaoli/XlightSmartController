@@ -80,10 +80,10 @@ void SysteTimerCB()
   	theSys.FastProcess();
 	}
 
-	if( !theConfig.GetDisableWiFi() ) {
+	//if( !theConfig.GetDisableWiFi() ) {
 		// Timeout interuption of Cloud connecting
 //#ifndef SYS_SERIAL_DEBUG
-		if( WiFi.listening() ) {
+		//if( WiFi.listening() ) {
 			if (++slowTick > RTE_TICK_SLOWPROCESS) {
 				slowTick = 0;
 				//SERIAL_LN("Wi-Fi in listening mode...");
@@ -97,9 +97,9 @@ void SysteTimerCB()
 				}*/
 			}
 			// Reset?
-		}
+		//}
 //#endif
-	}
+	//}
 }
 
 // Set "manual" mode

@@ -105,6 +105,7 @@ SmartControllerClass::SmartControllerClass()
 	m_loopKeyCode = 0;
 	m_tickLoopKeyCode = 0;
 	m_relaykeyflag = 0x00;
+	memset(m_mac,0,sizeof(m_mac));
 }
 
 // Primitive initialization before loading configuration
@@ -635,7 +636,7 @@ void SmartControllerClass::ProcessLocalCommands() {
 	theRadio.ProcessMQ();
 
 	// Process Console Command
-  theConsole.processCommand();
+    theConsole.processCommand();
 
 #ifndef DISABLE_BLE
 	// Process BLE commands
@@ -647,7 +648,7 @@ void SmartControllerClass::ProcessLocalCommands() {
 void SmartControllerClass::ProcessCommands()
 {
 	// Process Local Bridge Commands
-	ProcessLocalCommands();
+	//ProcessLocalCommands();
 
 #ifndef DISABLE_ASR
 	// Process ASR Command
