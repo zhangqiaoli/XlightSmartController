@@ -496,7 +496,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("  Private RF NetworkID: %s", PrintUint64(strDisplay, theRadio.getMyNetworkID()));
       SERIAL_LN("  Base RF Network is %s", (theRadio.isBaseNetworkEnabled() ? "enabled" : "disabled"));
       uint8_t mac[6];
-      WiFi.macAddress(mac);
+      //WiFi.macAddress(mac);
+	    theSys.GetMac(mac);
       SERIAL_LN("  MAC address: %s", PrintMacAddress(strDisplay, mac));
       if( !theConfig.GetDisableWiFi() ) {
         if( WiFi.ready() ) {
