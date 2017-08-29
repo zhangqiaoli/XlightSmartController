@@ -116,21 +116,22 @@ void setup()
 
   // Load Configuration
   theConfig.LoadConfig();
+
+	// Initialize Pins
+  theSys.InitPins();
+
 	// Initialization Radio Interfaces
 	theSys.InitRadio();
+
 	// Open Wi-Fi
 	if( theConfig.GetDisableWiFi() ) {
 		WiFi.disconnect();
 		WiFi.off();
 	} else {
-
 		// Initiaze Cloud Variables & Functions
 		///It is fine to call this function when the cloud is disconnected - Objects will be registered next time the cloud is connected
 	  theSys.InitCloudObj();
 	}
-
-  // Initialize Pins
-  theSys.InitPins();
 
 	// Initialize Serial Console
   theConsole.Init();
