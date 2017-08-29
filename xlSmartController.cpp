@@ -105,6 +105,7 @@ SmartControllerClass::SmartControllerClass()
 	m_loopKeyCode = 0;
 	m_tickLoopKeyCode = 0;
 	m_relaykeyflag = 0x00;
+	memset(m_mac,0,sizeof(m_mac));
 }
 
 // Primitive initialization before loading configuration
@@ -380,6 +381,16 @@ BOOL SmartControllerClass::SetStatus(UC st)
 	return true;
 }
 
+void SmartControllerClass::GetMac(uint8_t *mac)
+{
+	memcpy(mac,m_mac,sizeof(m_mac));
+}
+
+void SmartControllerClass::SetMac(uint8_t *mac)
+{
+	memcpy(m_mac,mac,sizeof(m_mac));
+}
+
 // Connect to the Cloud
 BOOL SmartControllerClass::connectCloud()
 {
@@ -625,7 +636,7 @@ void SmartControllerClass::ProcessLocalCommands() {
 	theRadio.ProcessMQ();
 
 	// Process Console Command
-  theConsole.processCommand();
+    theConsole.processCommand();
 
 #ifndef DISABLE_BLE
 	// Process BLE commands
@@ -637,7 +648,7 @@ void SmartControllerClass::ProcessLocalCommands() {
 void SmartControllerClass::ProcessCommands()
 {
 	// Process Local Bridge Commands
-	ProcessLocalCommands();
+	//ProcessLocalCommands();
 
 #ifndef DISABLE_ASR
 	// Process ASR Command
