@@ -821,13 +821,15 @@ void ConfigClass::DoTimeSync()
 
 BOOL ConfigClass::CloudTimeSync(BOOL _force)
 {
-	if( _force ) {
-		DoTimeSync();
-		return true;
-	} else if( theConfig.IsDailyTimeSyncEnabled() ) {
-		if( (millis() - m_lastTimeSync) / 1000 > SECS_PER_DAY ) {
+	if( Particle.connected() ) {
+		if( _force ) {
 			DoTimeSync();
 			return true;
+		} else if( theConfig.IsDailyTimeSyncEnabled() ) {
+			if( (millis() - m_lastTimeSync) / 1000 > SECS_PER_DAY ) {
+				DoTimeSync();
+				return true;
+			}
 		}
 	}
 	return false;

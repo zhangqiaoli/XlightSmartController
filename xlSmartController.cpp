@@ -504,7 +504,9 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 	}
 
 	// Publish relay key status if changed
-	PublishRelayKeyFlag();
+	if( !theConfig.GetDisableWiFi() ) {
+		if( Particle.connected() ) PublishRelayKeyFlag();
+	}
 
   // Slow Checking: once per 60 seconds
   if (++tickCheckRadio > 60000 / ms) {
@@ -560,11 +562,11 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 			} else if( WiFi.ready() ) {
 				theConfig.SetWiFiStatus(true);
 			}
-		}
 
-		// Daily Cloud Synchronization
-		/// TimeSync
-		theConfig.CloudTimeSync(false);
+			// Daily Cloud Synchronization
+			/// TimeSync
+			theConfig.CloudTimeSync(false);
+		}
   }
 
 	// Check System Status
