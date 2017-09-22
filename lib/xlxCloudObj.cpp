@@ -418,7 +418,7 @@ BOOL CloudObjClass::PublishAlarm(const char *msg)
 /// 0 - string is intact, can be executed
 /// 1 - waiting for more input
 /// -1 - error
-int CloudObjClass::ProcessJSONString(String inStr)
+int CloudObjClass::ProcessJSONString(const String& inStr)
 {
   String strTemp = inStr;
   StaticJsonBuffer<COMMAND_JSON_SIZE * 8> lv_jBuf;
