@@ -111,6 +111,7 @@ bool NodeListClass::loadList()
 
 bool NodeListClass::saveList()
 {
+	bool ret = false;
 	if( m_isChanged ) {
 		m_isChanged = false;
 		/*
@@ -128,18 +129,18 @@ bool NodeListClass::saveList()
 		{
 			if(theConfig.getP1Flash()->write<NodeIdRow_t[MAX_NODE_PER_CONTROLLER]>(lv_buf, MEM_NODELIST_BACKUP_OFFSET))
 			{
-				Serial.println("write nodelist backup success!");
+				LOGN(LOGTAG_MSG, "write nodelist backup success!");
+				ret = true;
 				break;
 			}
 			else
 			{
-				Serial.println("write nodelist backup failed!");
+				LOGW(LOGTAG_MSG,"write nodelist backup failed! tried=%d",attemps);
 			}
-
 		}
 		theConfig.SetNumNodes(count());
 	}
-	return true;
+	return ret;
 }
 
 void NodeListClass::publishNode(NodeIdRow_t _node)
@@ -548,12 +549,19 @@ BOOL ConfigClass::SaveConfig()
   {
     EEPROM.put(MEM_CONFIG_OFFSET, m_config);
     m_isChanged = false;
-    LOGI(LOGTAG_MSG, "Sysconfig saved.");
-	uint8_t attemps = 0;
-	while(++attemps <=3 )
+    //LOGI(LOGTAG_MSG, "Sysconfig saved.");
+	  uint8_t attemps = 0;
+	  while(++attemps <=3 )
     {
-		if(SaveBackupConfig())
-			break;
+		  if(SaveBackupConfig())
+			{
+				LOGN(LOGTAG_MSG, "Sysconfig saved success!");
+				break;
+			}
+			else
+			{
+        LOGW(LOGTAG_MSG, "Sysconfig saved failed,tried %d",attemps);
+			}
     }
   }
 

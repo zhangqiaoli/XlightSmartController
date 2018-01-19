@@ -112,13 +112,12 @@ void setup()
 {
 	WiFi.on();
 	WiFi.listen(false);
-
   // System Initialization
   theSys.Init();
-
+	Particle.connect();
+	waitFor(Particle.connected, 5000);
   // Load Configuration
   theConfig.LoadConfig();
-
 	// Initialize Pins
   theSys.InitPins();
 
