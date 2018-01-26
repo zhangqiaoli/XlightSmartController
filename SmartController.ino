@@ -114,8 +114,11 @@ void setup()
 	WiFi.listen(false);
   // System Initialization
   theSys.Init();
+#ifdef SYS_TEST
+	theSys.InitCloudObj();
 	Particle.connect();
 	waitFor(Particle.connected, 5000);
+#endif
   // Load Configuration
   theConfig.LoadConfig();
 	// Initialize Pins
