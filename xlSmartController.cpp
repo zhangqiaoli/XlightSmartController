@@ -2937,8 +2937,8 @@ BOOL SmartControllerClass::ConfirmLampBrightness(UC _nodeID, UC _st, UC _percent
 					_nodeID, _st, _percentage);
 			}
 			PublishDeviceStatus(strTemp.c_str());
+			rc = true;
 		}
-		rc = true;
 	}
 	return rc;
 }
