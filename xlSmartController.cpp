@@ -546,6 +546,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 				}
 
 				if( IsWANGood() ) { // WLAN is good
+					SERIAL_LN("Wan is good...");
 					tickWiFiOff = 0;
 					if( !Particle.connected() ) {
 						// Cloud disconnected, try to recover
@@ -558,6 +559,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 						}
 					}
 				} else { // WLAN is wrong
+					Serial.printlnf("Wan is wrong...tickwifioff=%d",tickWiFiOff);
 					if( ++tickWiFiOff > 5 ) {
 						theConfig.SetWiFiStatus(false);
 						if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
