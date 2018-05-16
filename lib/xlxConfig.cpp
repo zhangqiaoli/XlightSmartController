@@ -1443,7 +1443,7 @@ BOOL ConfigClass::ExecuteBtnAction(const UC _btn, const UC _opt)
 					if(theConfig.GetDisableLamp())
 					{
 						theSys.relay_set_key(_key, _st);
-						thePanel.SetRingOnOff(_st);
+						thePanel.SetOnOff(_st);
 					}
 					else
 					{

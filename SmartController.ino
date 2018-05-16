@@ -35,10 +35,6 @@
  * 2. Include MQTT lib
 **/
 
-#ifdef UNIT_TEST_ENABLE
-	#include "test.ino"
-#else
-
 //------------------------------------------------------------------
 // Include dependency packages below
 //------------------------------------------------------------------
@@ -79,29 +75,6 @@ void SysteTimerCB()
 		fastTick = 0;
   	theSys.FastProcess();
 	}
-
-	//if( !theConfig.GetDisableWiFi() ) {
-		// Timeout interuption of Cloud connecting
-//#ifndef SYS_SERIAL_DEBUG
-		//if( WiFi.listening() ) {
-			/*if (++slowTick > RTE_TICK_SLOWPROCESS) {
-				slowTick = 0;
-				//SERIAL_LN("Wi-Fi in listening mode...");
-				// Get Wi-Fi credential from BLE
-				//SERIAL_LN("ProcessLocalCommands ...");
-				//theSys.ProcessLocalCommands();
-				//SERIAL_LN("ProcessLocalCommands end");
-				if( WiFi.hasCredentials() ) {
-					//WiFi.listen(false);
-					//theSys.ResetSerialPort();
-					SERIAL_LN("will connect Wi-Fi in system thread");
-					//theSys.connectWiFi();
-				}
-			}*/
-			// Reset?
-		//}
-//#endif
-	//}
 }
 
 // Set "manual" mode
@@ -157,7 +130,6 @@ void setup()
 	}*/
 	if( !theConfig.GetDisableWiFi() ) {
 		while(1) {
-#if XLIGHT_EDITION_ID != XLIGHT_CLASSROOM_EDITION
 			if( !WiFi.hasCredentials() || !theConfig.GetWiFiStatus() ) {
 				if( !theSys.connectWiFi() ) {
 					// get credential from BLE or Serial
@@ -166,7 +138,6 @@ void setup()
 					break;
 				}
 			}
-#endif
 
 			// Connect to Wi-Fi
 			SERIAL_LN("will connect WiFi");
@@ -238,9 +209,6 @@ void loop()
 
   // ToDo: status synchronize
 
-	// Process Panel input
-  IF_MAINLOOP_TIMER( theSys.ProcessPanel(), "ProcessPanel" );
-
   // Self-test & alarm trigger, also insert delay between each loop
   IF_MAINLOOP_TIMER( theSys.SelfCheck(RTE_DELAY_SELFCHECK), "SelfCheck" );
 	//if( !theConfig.GetDisableWiFi() ) {
@@ -251,5 +219,3 @@ void loop()
 	//}
 	//wd.checkin();
 }
-
-#endif

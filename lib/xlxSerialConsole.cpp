@@ -523,8 +523,8 @@ bool SerialConsoleClass::doShow(const char *cmd)
       SERIAL_LN("  System Info: %s-%s\n\r", theSys.GetSysID().c_str(), theSys.GetSysVersion().c_str());
       CloudOutput("s_node:%d-%d", lv_NodeID, theSys.GetStatus());
     } else if (wal_strnicmp(sTopic, "button", 6) == 0) {
-      SERIAL_LN("Knob status - Dimmer:%d, Button:%d, CCT Flag:%d\n\r",  thePanel.GetDimmerValue(), thePanel.GetButtonStatus(), thePanel.GetCCTFlag());
-      CloudOutput("s_button:%d-%d-%d", thePanel.GetDimmerValue(), thePanel.GetButtonStatus(), thePanel.GetCCTFlag());
+      SERIAL_LN("Knob status - Dimmer:%d\n\r",  thePanel.GetDimmerValue());
+      CloudOutput("s_button:%d", thePanel.GetDimmerValue());
     } else if (wal_strnicmp(sTopic, "nlist", 5) == 0) {
       SERIAL_LN("**Node List count:%d, size:%d", theConfig.lstNodes.count(), theConfig.lstNodes.size());
       theConfig.lstNodes.showList();
@@ -707,13 +707,6 @@ bool SerialConsoleClass::doTest(const char *cmd)
     if (wal_strnicmp(sTopic, "ping", 4) == 0) {
       char *sIPaddress = next();
       PingAddress(sIPaddress);
-      retVal = true;
-    } else if (wal_strnicmp(sTopic, "ledring", 7) == 0) {
-      UC testNo = 0;
-      sParam = next();
-      if( sParam) { testNo = (UC)atoi(sParam); }
-      SERIAL("Checking brightness indicator LEDs...");
-      SERIAL_LN("%s\n\r", thePanel.CheckLEDRing(testNo) ? "done" : "error");
       retVal = true;
     } else if (wal_strnicmp(sTopic, "ledrgb", 6) == 0) {
       // ToDo:
