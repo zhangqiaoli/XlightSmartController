@@ -475,7 +475,11 @@ BOOL SmartControllerClass::CheckNetwork()
 	}
 
 	// Check WAN
+#if XLIGHT_EDITION_ID == XLIGHT_CLASSROOM_EDITION
+	m_isWAN = WiFi.resolve("www.baidu.com");
+#else
 	m_isWAN = WiFi.resolve("www.google.com");
+#endif
 
 	// Check LAN if WAN is not OK
 	if( !m_isWAN ) {

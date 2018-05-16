@@ -241,7 +241,11 @@ bool SerialConsoleClass::showThisHelp(String &strTopic)
   } else if(strTopic.equals("ping")) {
     SERIAL_LN("--- Command: ping <address> ---");
     SERIAL_LN("To ping an IP or domain name, default address is 8.8.8.8");
-    SERIAL_LN("e.g. ping www.google.com");
+#if XLIGHT_EDITION_ID == XLIGHT_CLASSROOM_EDITION
+    SERIAL_LN("e.g. ping www.baidu.com");
+#else
+	SERIAL_LN("e.g. ping www.google.com");
+#endif
     SERIAL_LN("e.g. ping 192.168.0.1\n\r");
     //CloudOutput("ping <address>");
   } else if(strTopic.equals("do")) {
@@ -453,7 +457,12 @@ bool SerialConsoleClass::doCheck(const char *cmd)
       }
     } else if (wal_strnicmp(sTopic, "wlan", 4) == 0) {
       if( !theConfig.GetDisableWiFi() ) {
-        SERIAL_LN("**Resolving IP for www.google.com...%s\n\r", (WiFi.resolve("www.google.com") ? "OK" : "failed!"));
+#if XLIGHT_EDITION_ID == XLIGHT_CLASSROOM_EDITION
+		  SERIAL_LN("**Resolving IP for www.baidu.com...%s\n\r", (WiFi.resolve("www.baidu.com") ? "OK" : "failed!"));
+#else
+		  SERIAL_LN("**Resolving IP for www.google.com...%s\n\r", (WiFi.resolve("www.google.com") ? "OK" : "failed!"));
+#endif
+        
       } else {
         SERIAL("**Wi-Fi module is disabled\n\r");
       }
