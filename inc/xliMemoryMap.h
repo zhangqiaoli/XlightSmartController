@@ -75,6 +75,13 @@
 #define MEM_NODELIST_BACKUP_OFFSET  (MEM_CONFIG_BACKUP_OFFSET + MEM_CONFIG_BACKUP_LEN)
 #define MEM_NODELIST_BACKUP_LEN     0x0300
 
+// airconditioning node info
+#define MEM_ACLIST_OFFSET           (MEM_NODELIST_BACKUP_OFFSET + MEM_NODELIST_BACKUP_LEN)
+#define MEM_ACLIST_LEN              0x0300
+
+#define MEM_ACLIST_BACKUP_OFFSET    (MEM_ACLIST_OFFSET + MEM_ACLIST_LEN)
+#define MEM_ACLIST_BACKUP_LEN       0x0300
+
 //-------------------------------
 
 #endif /* xliMemoryMap_h */

@@ -430,6 +430,18 @@ BOOL CloudObjClass::PublishDeviceStatus(const char *msg)
   return rc;
 }
 
+// Publish AC Device status
+BOOL CloudObjClass::PublishACDeviceStatus(const char *msg)
+{
+  BOOL rc = true;
+  if( !theConfig.GetDisableWiFi() ) {
+    if( Particle.connected() ) {
+      rc = Particle.publish(CLT_NAME_ACStatus, msg, CLT_TTL_ACStatus, PRIVATE);
+    }
+  }
+  return rc;
+}
+
 void CloudObjClass::GotNodeConfigAck(const UC _nodeID, const UC *data)
 {
 	String strTemp;

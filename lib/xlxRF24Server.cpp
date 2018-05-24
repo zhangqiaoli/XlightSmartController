@@ -45,6 +45,7 @@
 #include "xlxBLEInterface.h"
 
 #include "MyParserSerial.h"
+#include "xlxAirCondManager.h"
 
 //------------------------------------------------------------------
 // the one and only instance of RF24ServerClass
@@ -635,7 +636,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 							LOGW(LOGTAG_MSG, "Unqualitied device connect attemp received");
 						}
 					}
-				} else {
+				}else {
 					ListNode<DevStatusRow_t> *DevStatusRowPtr = theSys.SearchDevStatus(replyTo);
 					if (DevStatusRowPtr) theSys.ConfirmLampPresent(DevStatusRowPtr, true);
 					if( _sensor == S_MOTION || _sensor == S_IR ) {
@@ -769,6 +770,39 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						msgReady = true;
 					}
 				}
+				/////////////////// add by zql for airconditioning//////////////////////////////////////////////////////////////
+				else if(msgType == V_CURRENT)
+				{
+					if(payl_len >= 2)
+					{ // electric current change msg
+						uint16_t eCurrent = payload[0]*100+ payload[1];
+						UC lv_nNodeID = msg.getSender();
+						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,TRUE);
+					}
+				}
+				else if(msgType == V_KWH)
+				{
+					if(payl_len >= 4)
+					{ // electric current change msg
+						uint16_t eQuantity = payload[0]*100+ payload[1];
+						uint16_t eCurrent = payload[2]*100+ payload[3];
+						UC lv_nNodeID = msg.getSender();
+						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,FALSE,eQuantity);
+					}
+				}
+				else if(msgType == V_HVAC_FLOW_STATE)
+				{
+					if(payl_len >= 4)
+					{ // electric current change msg
+						uint8_t onoff = payload[0];
+						uint8_t mode = payload[1];
+						uint8_t temp = payload[2];
+						uint8_t fanlevel = payload[3];
+						UC lv_nNodeID = msg.getSender();
+						theACManager.UpdateACStatusByNodeid(lv_nNodeID,onoff,mode,temp,fanlevel);
+					}
+				}
+				/////////////////// add by zql for airconditioning end//////////////////////////////////////////////////////////
 				break;
 
 			case C_SET:

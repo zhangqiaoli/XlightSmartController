@@ -53,6 +53,10 @@
 #define CLT_ID_DeviceConfig     5
 #define CLT_NAME_DeviceConfig   "xlc-config-device"
 #define CLT_TTL_DeviceConfig    30
+/// airconditioning status change event
+#define CLT_ID_ACStatus         6
+#define CLT_NAME_ACStatus       "xlc-status-aircond"
+#define CLT_TTL_ACStatus        30
 
 typedef struct
 {
@@ -134,6 +138,7 @@ public:
   BOOL PublishLog(const char *msg);
   BOOL PublishDeviceStatus(const char *msg);
   BOOL PublishDeviceConfig(const char *msg);
+  BOOL PublishACDeviceStatus(const char *msg);
   void GotNodeConfigAck(const UC _nodeID, const UC *data);
   BOOL PublishAlarm(const char *msg);
 

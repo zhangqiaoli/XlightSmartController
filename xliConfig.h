@@ -136,7 +136,9 @@
 #define NODEID_MIN_DEVCIE       8
 #define NODEID_MAX_DEVCIE       63
 #define NODEID_MIN_REMOTE       64
-#define NODEID_MAX_REMOTE       127
+#define NODEID_MAX_REMOTE       71
+#define NODEID_MIN_AC           72
+#define NODEID_MAX_AC           79
 #define NODEID_PROJECTOR        128
 #define NODEID_KEYSIMULATOR     129
 #define NODEID_SUPERSENSOR      130

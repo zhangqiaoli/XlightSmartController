@@ -39,6 +39,7 @@
 //#include "LightSensor.h"
 //#include "MotionSensor.h"
 #include "TimeAlarms.h"
+#include "xlxAirCondManager.h"
 
 //------------------------------------------------------------------
 // Global Data Structures & Variables
@@ -494,9 +495,15 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 	static US tickCheckRadio = 0;				// must be static
 	static UC tickAcitveCheck = 0;
 	static UC tickWiFiOff = 0;
+	static US tickACCheck = 0;
 
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);
+
+	if(++tickACCheck > 60000 / ms)
+	{
+		theACManager.ProcessCheck();
+	}
 
 	// Save config if it was changed
 	if (++tickSaveConfig > 30000 / ms) {	// once per 30 seconds
