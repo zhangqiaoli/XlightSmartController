@@ -16,6 +16,7 @@ xlAirCondManager::~xlAirCondManager()
 bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/*=FALSE*/,uint16_t eq/* = 0*/)
 {
   ACDev_t acNode;
+  memset(&acNode,0x00,sizeof(ACDev_t));
   acNode.nid = nodeid;
   uint32_t now = Time.now();
   if(m_lstACDev.get(&acNode) >=0)
@@ -23,7 +24,7 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
     acNode.m_nElecCurrent = ec;
     acNode.m_nSSLastMsgTime = now;
     uint32_t nLastDay = acNode.m_nEndDay;
-    acNode.m_nEndDay = Time.format(now, "%Y%I%M").toInt();
+    acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
     Serial.printlnf("now is %d",acNode.m_nEndDay);
     ////////////////////update eq////////////////////
     if(acNode.m_nEndDay > nLastDay)
@@ -53,7 +54,7 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
     acNode.m_nElecCurrent = ec;
     acNode.m_nSSLastMsgTime = now;
     acNode.m_nCMLastMsgTime = now;
-    acNode.m_nEndDay = Time.format(now, "%Y%I%M").toInt();
+    acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
   }
   m_lstACDev.add(&acNode);
   m_isChanged = TRUE;
@@ -72,6 +73,7 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
 bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8_t mode,uint8_t temp,uint8_t fanlevel)
 {
   ACDev_t acNode;
+  memset(&acNode,0x00,sizeof(ACDev_t));
   acNode.nid = nodeid;
   uint32_t now = Time.now();
   if(m_lstACDev.get(&acNode) >=0)
@@ -81,6 +83,7 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8
     acNode.m_sLastOp.mode = mode;
     acNode.m_sLastOp.temp = temp;
     acNode.m_sLastOp.fanlevel = fanlevel;
+    Serial.printlnf("UpdateACStatusByNodeid update nodeid:%d",nodeid);
   }
   else
   {// not found,need add
@@ -90,9 +93,13 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8
     acNode.m_sLastOp.mode = mode;
     acNode.m_sLastOp.temp = temp;
     acNode.m_sLastOp.fanlevel = fanlevel;
-    acNode.m_nEndDay = Time.format(now, "%Y%I%M").toInt();
+    acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
   }
   m_lstACDev.add(&acNode);
+  Serial.printlnf("UpdateACStatusByNodeid nodeid:%d,sid:%d,ec:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",acNode.nid,\
+               acNode.sid,acNode.m_nElecCurrent,acNode.m_nSSLastMsgTime,acNode.m_nCMLastMsgTime,\
+               acNode.m_sLastOp.onoff,acNode.m_sLastOp.mode,acNode.m_sLastOp.temp,acNode.m_sLastOp.fanlevel,\
+               acNode.m_nEndDay);
   m_isChanged = TRUE;
   PublishACStatus(acNode);
   return TRUE;
@@ -101,6 +108,7 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8
 bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,AirConditioningStauts_t& acStatus)
 {
   ACDev_t acNode;
+  memset(&acNode,0x00,sizeof(ACDev_t));
   acNode.nid = nodeid;
   uint32_t now = Time.now();
   if(m_lstACDev.get(&acNode) >=0)
@@ -112,7 +120,7 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,AirConditioningStau
   {// not found,need add
     acNode.m_nSSLastMsgTime = now;
     acNode.m_nCMLastMsgTime = now;
-    acNode.m_nEndDay = Time.format(now, "%Y%I%M").toInt();
+    acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
     acNode.m_sLastOp = acStatus;
   }
   m_lstACDev.add(&acNode);
@@ -167,9 +175,13 @@ bool xlAirCondManager::PublishACInfo(ACDev_t& acNode,bool bAllDays/*=FALSE*/)
 void xlAirCondManager::ProcessCheck()
 {
   uint32_t now  = Time.now();
-  uint32_t nLastDay = Time.format(now, "%Y%I%M").toInt();
+  uint32_t nLastDay = Time.format(now, "%Y%m%d").toInt();
   for(uint8_t i = 0;i<m_lstACDev.count();i++)
   {
+    Serial.printf("nodeid:%d,sid:%d,ec:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",m_lstACDev._pItems[i].nid,\
+                 m_lstACDev._pItems[i].sid,m_lstACDev._pItems[i].m_nElecCurrent,m_lstACDev._pItems[i].m_nSSLastMsgTime,m_lstACDev._pItems[i].m_nCMLastMsgTime,\
+                 m_lstACDev._pItems[i].m_sLastOp.onoff,m_lstACDev._pItems[i].m_sLastOp.mode,m_lstACDev._pItems[i].m_sLastOp.temp,m_lstACDev._pItems[i].m_sLastOp.fanlevel,\
+                 m_lstACDev._pItems[i].m_nEndDay);
     if( !IS_NOT_AC_NODEID(m_lstACDev._pItems[i].nid) && now - m_lstACDev._pItems[i].m_nSSLastMsgTime < 3600*HISTORYEQDAYS)
     {
       // TODO timeout check

@@ -28,7 +28,7 @@
 
 /*** USER DEFINES:  ***/
 #define FAILURE_HANDLING
-#define SYS_SERIAL_DEBUG
+//#define SYS_SERIAL_DEBUG
 #define SYS_RELEASE
 //#define SYS_TEST
 //#define SERIAL_DEBUG

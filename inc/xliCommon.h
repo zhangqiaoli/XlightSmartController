@@ -101,6 +101,7 @@ enum COMMAND {CMD_SERIAL, CMD_POWER, CMD_COLOR, CMD_BRIGHTNESS, CMD_SCENARIO, CM
 #define NODE_TYP_GW               'g'
 #define NODE_TYP_LAMP             'l'
 #define NODE_TYP_REMOTE           'r'
+#define NODE_TYP_AC               'a'
 #define NODE_TYP_SYSTEM           's'
 #define NODE_TYP_THIRDPARTY       't'
 
@@ -204,6 +205,7 @@ typedef enum
 #define IS_NOT_DEVICE_NODEID(nID)   ((nID < NODEID_MIN_DEVCIE || nID > NODEID_MAX_DEVCIE) && nID != NODEID_MAINDEVICE)
 #define IS_NOT_REMOTE_NODEID(nID)   (nID < NODEID_MIN_REMOTE || nID > NODEID_MAX_REMOTE)
 #define IS_NOT_AC_NODEID(nID)       (nID < NODEID_MIN_AC || nID > NODEID_MAX_AC)
+#define IS_AC_NODEID(nID)           (nID >= NODEID_MIN_AC && nID <= NODEID_MAX_AC)
 
 // Remote type
 typedef enum

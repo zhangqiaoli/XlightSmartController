@@ -208,7 +208,9 @@ UC NodeListClass::requestNodeID(UC preferID, char type, uint64_t identity)
 		nodeID = preferID;
 	} else if( IS_SPECIAL_NODEID(preferID) && type == NODE_TYP_SYSTEM ) {
 		nodeID = preferID;
-	} else {
+	} else if( IS_AC_NODEID(preferID) && type == NODE_TYP_AC ) {
+		nodeID = preferID;
+	}else {
 		switch( type ) {
 		case NODE_TYP_LAMP:
 			// 1, 8 - 63

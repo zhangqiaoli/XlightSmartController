@@ -502,6 +502,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 
 	if(++tickACCheck > 60000 / ms)
 	{
+		tickACCheck = 0;
 		theACManager.ProcessCheck();
 	}
 
