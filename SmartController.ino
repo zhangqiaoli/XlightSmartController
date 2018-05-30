@@ -175,18 +175,8 @@ void setup()
 					Particle.disconnect();
 				} else {
 					// Connect to the Cloud
-					if( !theSys.connectCloud() ) {
-						if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
-							// Must connect to the Cloud
-							continue;
-						}
+					theSys.connectCloud();
 					}
-				}
-			} else {
-				if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
-					// Must have network
-					continue;
-				}
 			}
 			break;
 		}
@@ -230,7 +220,12 @@ void loop()
 		// Check Max Base RF network enable duration
 		theSys.CheckRFBaseNetEnableDur();
 	}
-
+	// TEST
+	/*static UL lastTESTTick = millis();
+	if( millis() - lastTESTTick >= 5000 ) {
+		lastTESTTick = millis();
+		theSys.connectWiFi(false);
+	}*/
 	// Act on new Rules in Rules chain
 	IF_MAINLOOP_TIMER( theSys.ReadNewRules(), "ReadNewRules" );
 

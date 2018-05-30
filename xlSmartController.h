@@ -60,8 +60,8 @@ public:
   BOOL IsLANGood();
   BOOL IsWANGood();
 
-  BOOL connectWiFi();
-  BOOL connectCloud();
+  BOOL connectWiFi(BOOL bNeedWait=true);
+  BOOL connectCloud(BOOL bNeedWait=true);
 
   // Process all kinds of commands
   void ProcessLocalCommands();

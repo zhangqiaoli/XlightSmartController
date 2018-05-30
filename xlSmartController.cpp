@@ -393,35 +393,47 @@ void SmartControllerClass::SetMac(uint8_t *mac)
 }
 
 // Connect to the Cloud
-BOOL SmartControllerClass::connectCloud()
+BOOL SmartControllerClass::connectCloud(BOOL bNeedWait)
 {
 	BOOL retVal = Particle.connected();
 	if( !retVal ) {
 		SERIAL("Cloud connecting...");
 	  Particle.connect();
-	  waitFor(Particle.connected, RTE_CLOUD_CONN_TIMEOUT);
-	  retVal = Particle.connected();
-		SERIAL_LN("%s", retVal ? "OK" : "Failed");
+		if(bNeedWait)
+		{
+			waitFor(Particle.connected, RTE_CLOUD_CONN_TIMEOUT);
+		  retVal = Particle.connected();
+			SERIAL_LN("%s", retVal ? "OK" : "Failed");
+		}
 	}
   return retVal;
 }
 
 // Connect Wi-Fi
-BOOL SmartControllerClass::connectWiFi()
+BOOL SmartControllerClass::connectWiFi(BOOL bNeedWait)
 {
 	if( theConfig.GetDisableWiFi() ) return false;
 
 	BOOL retVal = WiFi.ready();
+	if(retVal)
+	{
+    SERIAL("Is ready,contintue...");
+		theConfig.SetWiFiStatus(retVal);
+	}
 	if( !retVal ) {
 		if( WiFi.hasCredentials() ) {
 			SERIAL("Wi-Fi connecting...");
 		  WiFi.connect();
-		  waitFor(WiFi.ready, RTE_WIFI_CONN_TIMEOUT);
-		  retVal = WiFi.ready();
-			SERIAL_LN("%s", retVal ? "OK" : "Failed");
+			if(bNeedWait)
+			{
+				SERIAL("need wait for");
+				waitFor(WiFi.ready, RTE_WIFI_CONN_TIMEOUT);
+			  retVal = WiFi.ready();
+				SERIAL_LN("%s", retVal ? "OK" : "Failed");
+				theConfig.SetWiFiStatus(retVal);
+			}
 		}
 	}
-  theConfig.SetWiFiStatus(retVal);
   return retVal;
 }
 
@@ -564,12 +576,23 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 					}
 				} else { // WLAN is wrong
 					Serial.printlnf("Wan is wrong...tickwifioff=%d",tickWiFiOff);
+					if( theConfig.GetUseCloud() == CLOUD_DISABLE ) {
+						Particle.disconnect();
+						Serial.printlnf("cloud disconnect");
+						// wlan is wrong,check lan
+						if(!IsLANGood())
+						{ // lan is not good
+							Serial.printlnf("Lan is wrong...");
+							connectWiFi();
+						}
+					}
 					if( ++tickWiFiOff > 5 ) {
 						theConfig.SetWiFiStatus(false);
 						if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
-							SERIAL_LN("System is about to reset due to lost of network...");
-							Restart();
-						} else {
+							//SERIAL_LN("System is about to reset due to lost of network...");
+							//Restart();
+							connectCloud();
+						} else if(theConfig.GetUseCloud() == CLOUD_ENABLE){
 							// Avoid keeping trying
 							LOGE(LOGTAG_MSG, "Turn off WiFi!");
 							WiFi.disconnect();
