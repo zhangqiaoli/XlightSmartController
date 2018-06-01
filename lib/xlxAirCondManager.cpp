@@ -13,8 +13,9 @@ xlAirCondManager::~xlAirCondManager()
 
 }
 
-bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/*=FALSE*/,uint16_t eq/* = 0*/)
+bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/*=FALSE*/,uint16_t eq/* = 0*/,uint16_t eqindex /* = 0*/)
 {
+  Serial.printlnf("UpdateACByNodeid update nodeid:%d,ec:%d,eq:%d,index:%d",nodeid,ec,eq,eqindex);
   ACDev_t acNode;
   memset(&acNode,0x00,sizeof(ACDev_t));
   acNode.nid = nodeid;
@@ -39,13 +40,23 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
         else
         {
           acNode.m_arrHistoryEQ[0] = 0;
-          acNode.m_arrHistoryEQ[0] += eq;
+          if(eqindex !=0 && eqindex != acNode.m_lastEQIndex)
+          {
+            acNode.m_arrHistoryEQ[0] += eq;
+            Serial.printlnf("today add eq:%d,lastindex=%d,index:%d",eq,acNode.m_lastEQIndex,eqindex);
+            acNode.m_lastEQIndex = eqindex;
+          }
         }
       }
     }
     else
     {
-      acNode.m_arrHistoryEQ[0] += eq;
+      if(eqindex !=0 && eqindex != acNode.m_lastEQIndex)
+      {
+        acNode.m_arrHistoryEQ[0] += eq;
+        Serial.printlnf("today add eq:%d,lastindex=%d,index:%d",eq,acNode.m_lastEQIndex,eqindex);
+        acNode.m_lastEQIndex = eqindex;
+      }
     }
     ////////////////////update eq end////////////////
   }
@@ -54,9 +65,14 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
     acNode.m_nElecCurrent = ec;
     acNode.m_nSSLastMsgTime = now;
     acNode.m_nCMLastMsgTime = now;
+    acNode.m_lastEQIndex = 0;
     acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
   }
   m_lstACDev.add(&acNode);
+  Serial.printlnf("UpdateACByNodeid nodeid:%d,sid:%d,ec:%d,eq:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",acNode.nid,\
+               acNode.sid,acNode.m_nElecCurrent,acNode.m_arrHistoryEQ[0],acNode.m_nSSLastMsgTime,acNode.m_nCMLastMsgTime,\
+               acNode.m_sLastOp.onoff,acNode.m_sLastOp.mode,acNode.m_sLastOp.temp,acNode.m_sLastOp.fanlevel,\
+               acNode.m_nEndDay);
   m_isChanged = TRUE;
   if(bOnlyec)
   {
@@ -157,7 +173,7 @@ bool xlAirCondManager::PublishACInfo(ACDev_t& acNode,bool bAllDays/*=FALSE*/)
   for(uint8_t i=0;i<days;i++)
   {
     strformat += String(acNode.m_arrHistoryEQ[i]);
-    if(i != HISTORYEQDAYS-1)
+    if(i != days-1)
     {
       strformat += ",";
     }
@@ -178,7 +194,7 @@ void xlAirCondManager::ProcessCheck()
   uint32_t nLastDay = Time.format(now, "%Y%m%d").toInt();
   for(uint8_t i = 0;i<m_lstACDev.count();i++)
   {
-    Serial.printf("nodeid:%d,sid:%d,ec:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",m_lstACDev._pItems[i].nid,\
+    Serial.printf("ProcessCheck nodeid:%d,sid:%d,ec:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",m_lstACDev._pItems[i].nid,\
                  m_lstACDev._pItems[i].sid,m_lstACDev._pItems[i].m_nElecCurrent,m_lstACDev._pItems[i].m_nSSLastMsgTime,m_lstACDev._pItems[i].m_nCMLastMsgTime,\
                  m_lstACDev._pItems[i].m_sLastOp.onoff,m_lstACDev._pItems[i].m_sLastOp.mode,m_lstACDev._pItems[i].m_sLastOp.temp,m_lstACDev._pItems[i].m_sLastOp.fanlevel,\
                  m_lstACDev._pItems[i].m_nEndDay);

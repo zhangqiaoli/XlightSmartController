@@ -115,21 +115,10 @@ void setup()
   // Start system timer: callback every n * 0.5ms using hmSec timescale
   //Use TIMER6 to retain PWM capabilities on all pins
   sysTimer.begin(SysteTimerCB, RTE_DELAY_SYSTIMER, uSec, TIMER6);
-  //theConfig.SetWiFiStatus(true);
-	/*BOOL retVal = WiFi.ready();
-  WiFi.connect();
-	SERIAL_LN("ready 1 %d",retVal);
-	while(true)
-	{
-		//System.sleep(20);
-		waitFor(WiFi.ready, 20000);
-		retVal = WiFi.ready();
-		SERIAL_LN("ready 2 %d",retVal);
-		if(retVal)
-		  break;
-	}*/
+
 	if( !theConfig.GetDisableWiFi() ) {
 		while(1) {
+#if XLIGHT_EDITION_ID != XLIGHT_CLASSROOM_EDITION
 			if( !WiFi.hasCredentials() || !theConfig.GetWiFiStatus() ) {
 				if( !theSys.connectWiFi() ) {
 					// get credential from BLE or Serial
@@ -138,6 +127,7 @@ void setup()
 					break;
 				}
 			}
+#endif
 
 			// Connect to Wi-Fi
 			SERIAL_LN("will connect WiFi");
@@ -146,17 +136,7 @@ void setup()
 					Particle.disconnect();
 				} else {
 					// Connect to the Cloud
-					if( !theSys.connectCloud() ) {
-						if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
-							// Must connect to the Cloud
-							continue;
-						}
-					}
-				}
-			} else {
-				if( theConfig.GetUseCloud() == CLOUD_MUST_CONNECT ) {
-					// Must have network
-					continue;
+					theSys.connectCloud();
 				}
 			}
 			break;
@@ -189,7 +169,6 @@ void loop()
 {
 	static UL lastTick = millis();
   static UC tick = 0;
-
   // Process commands
   IF_MAINLOOP_TIMER( theSys.ProcessCommands(), "ProcessCommands" );
 

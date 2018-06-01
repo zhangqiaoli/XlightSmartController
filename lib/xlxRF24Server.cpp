@@ -775,19 +775,22 @@ bool RF24ServerClass::ProcessReceiveMQ()
 				{
 					if(payl_len >= 2)
 					{ // electric current change msg
-						uint16_t eCurrent = payload[0]*100+ payload[1];
+						uint16_t eCurrent = payload[1]<<8 | payload[0];
 						UC lv_nNodeID = msg.getSender();
-						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,TRUE);
+						LOGD(LOGTAG_MSG, "Recv nd:%d current msg:%d",lv_nNodeID,eCurrent);
+						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,TRUE);						
 					}
 				}
 				else if(msgType == V_KWH)
 				{
 					if(payl_len >= 4)
 					{ // electric current change msg
-						uint16_t eQuantity = payload[0]*100+ payload[1];
-						uint16_t eCurrent = payload[2]*100+ payload[3];
+						uint16_t eQuantity = payload[1]<<8 | payload[0];
+						uint16_t eqindex = payload[3]<<8 | payload[2];
+						uint16_t eCurrent = payload[5]<<8 | payload[4];
 						UC lv_nNodeID = msg.getSender();
-						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,FALSE,eQuantity);
+						LOGD(LOGTAG_MSG, "Recv eq msg,nd:%d,eq:%d,index=%d,current:%d",lv_nNodeID,eQuantity,eqindex,eCurrent);
+						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,FALSE,eQuantity,eqindex);
 					}
 				}
 				else if(msgType == V_HVAC_FLOW_STATE)

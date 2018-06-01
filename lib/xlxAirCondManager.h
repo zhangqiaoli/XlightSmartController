@@ -37,6 +37,8 @@ typedef struct
 
   uint16_t m_arrHistoryEQ[HISTORYEQDAYS];
   uint32_t m_nEndDay;
+  // air smartsocket last eq msg index for distinct
+  uint16_t m_lastEQIndex;
 }ACDev_t;
 
 // airconditioning device List Class
@@ -67,7 +69,7 @@ public:
 
   // nodeid search functions
   //ListNode<xlAirConditioning> *SearchAC(UC nodeid);
-  bool UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec=FALSE,uint16_t eq = 0);
+  bool UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec=FALSE,uint16_t eq = 0,uint16_t eqindex = 0);
 
   bool UpdateACStatusByNodeid(uint8_t nodeid,AirConditioningStauts_t& acStatus);
   bool UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8_t mode,uint8_t temp,uint8_t fanlevel);
