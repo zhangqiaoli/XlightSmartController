@@ -620,7 +620,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						UC lv_nNodeID = msg.getSender();
 						UC lv_assoDev;
 						uint64_t nIdentity = msg.getUInt64();
-						if( IS_GROUP_NODEID(lv_nNodeID) || IS_SPECIAL_NODEID(lv_nNodeID) || _sensor == S_ZENSENSOR || _sensor == S_ZENREMOTE ) {
+						if( IS_GROUP_NODEID(lv_nNodeID) || IS_SPECIAL_NODEID(lv_nNodeID) || IS_AC_NODEID(lv_nNodeID) || _sensor == S_ZENSENSOR || _sensor == S_ZENREMOTE ) {
 							token = 6666;
 						} else {
 							token = theSys.VerifyDevicePresence(&lv_assoDev, lv_nNodeID, msgType, nIdentity);
@@ -778,7 +778,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						uint16_t eCurrent = payload[1]<<8 | payload[0];
 						UC lv_nNodeID = msg.getSender();
 						LOGD(LOGTAG_MSG, "Recv nd:%d current msg:%d",lv_nNodeID,eCurrent);
-						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,TRUE);						
+						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,TRUE);
 					}
 				}
 				else if(msgType == V_KWH)
@@ -802,6 +802,7 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						uint8_t temp = payload[2];
 						uint8_t fanlevel = payload[3];
 						UC lv_nNodeID = msg.getSender();
+						LOGD(LOGTAG_MSG, "Recv acstatus msg,nd:%d,onoff:%d,mode=%d,temp:%d,fanlevel:%d",onoff,mode,temp,fanlevel);
 						theACManager.UpdateACStatusByNodeid(lv_nNodeID,onoff,mode,temp,fanlevel);
 					}
 				}

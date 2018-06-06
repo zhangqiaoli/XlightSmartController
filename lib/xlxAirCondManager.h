@@ -76,6 +76,8 @@ public:
   bool PublishACInfo(ACDev_t& acNode,bool bAllDays=FALSE);
   bool PublishACEC(ACDev_t& acNode);
   bool PublishACStatus(ACDev_t& acNode);
+  bool PublishHistoryInfo();
+  bool PublishTimeoutAlarm(uint8_t *arrNodeid,uint8_t size,uint8_t type);
 
   void ProcessCheck();
 

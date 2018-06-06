@@ -77,6 +77,14 @@ void SysteTimerCB()
 	}
 }
 
+void network_status_handler(system_event_t event, int param)
+{
+}
+void cloud_status_handler(system_event_t event, int param)
+{
+	theSys.OnCloudStatusChanged();
+}
+
 // Set "manual" mode
 SYSTEM_MODE(MANUAL);
 SYSTEM_THREAD(ENABLED);
@@ -94,11 +102,16 @@ void setup()
 #endif
   // Load Configuration
   theConfig.LoadConfig();
+  theSys.LoadStatusData();
 	// Initialize Pins
   theSys.InitPins();
 
 	// Initialization Radio Interfaces
 	theSys.InitRadio();
+
+	// register the network_status and cloud_status event
+	System.on(network_status, network_status_handler);
+	System.on(cloud_status, cloud_status_handler);
 
 	// Open Wi-Fi
 	if( theConfig.GetDisableWiFi() ) {

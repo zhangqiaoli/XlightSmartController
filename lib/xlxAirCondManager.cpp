@@ -31,7 +31,7 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
     if(acNode.m_nEndDay > nLastDay)
     { // new day,update m_arrHistoryEQ
       Serial.printlnf("Update day,now is %d",acNode.m_nEndDay);
-      for(int i=HISTORYEQDAYS-1;i>=0;i++)
+      for(int i=HISTORYEQDAYS-1;i>=0;i--)
       {
         if(i>0)
         {
@@ -88,6 +88,7 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
 
 bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8_t mode,uint8_t temp,uint8_t fanlevel)
 {
+  bool statusChanged = FALSE;
   ACDev_t acNode;
   memset(&acNode,0x00,sizeof(ACDev_t));
   acNode.nid = nodeid;
@@ -95,10 +96,26 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8
   if(m_lstACDev.get(&acNode) >=0)
   { // old node,need update
     acNode.m_nCMLastMsgTime = now;
-    acNode.m_sLastOp.onoff = onoff;
-    acNode.m_sLastOp.mode = mode;
-    acNode.m_sLastOp.temp = temp;
-    acNode.m_sLastOp.fanlevel = fanlevel;
+    if(acNode.m_sLastOp.onoff != onoff)
+    {
+      acNode.m_sLastOp.onoff = onoff;
+      statusChanged = TRUE;
+    }
+    if(acNode.m_sLastOp.mode != mode)
+    {
+      acNode.m_sLastOp.mode = mode;
+      statusChanged = TRUE;
+    }
+    if(acNode.m_sLastOp.temp != temp)
+    {
+      acNode.m_sLastOp.temp = temp;
+      statusChanged = TRUE;
+    }
+    if(acNode.m_sLastOp.fanlevel != fanlevel)
+    {
+      acNode.m_sLastOp.fanlevel = fanlevel;
+      statusChanged = TRUE;
+    }
     Serial.printlnf("UpdateACStatusByNodeid update nodeid:%d",nodeid);
   }
   else
@@ -110,6 +127,7 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8
     acNode.m_sLastOp.temp = temp;
     acNode.m_sLastOp.fanlevel = fanlevel;
     acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
+    statusChanged = TRUE;
   }
   m_lstACDev.add(&acNode);
   Serial.printlnf("UpdateACStatusByNodeid nodeid:%d,sid:%d,ec:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",acNode.nid,\
@@ -117,12 +135,16 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8
                acNode.m_sLastOp.onoff,acNode.m_sLastOp.mode,acNode.m_sLastOp.temp,acNode.m_sLastOp.fanlevel,\
                acNode.m_nEndDay);
   m_isChanged = TRUE;
-  PublishACStatus(acNode);
+  if(statusChanged)
+  {
+    PublishACStatus(acNode);
+  }
   return TRUE;
 }
 
 bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,AirConditioningStauts_t& acStatus)
 {
+  bool statusChanged = FALSE;
   ACDev_t acNode;
   memset(&acNode,0x00,sizeof(ACDev_t));
   acNode.nid = nodeid;
@@ -130,7 +152,12 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,AirConditioningStau
   if(m_lstACDev.get(&acNode) >=0)
   { // old node,need update
     acNode.m_nCMLastMsgTime = now;
-    acNode.m_sLastOp = acStatus;
+    if(acNode.m_sLastOp.onoff != acStatus.onoff || acNode.m_sLastOp.mode != acStatus.mode\
+       || acNode.m_sLastOp.temp != acStatus.temp || acNode.m_sLastOp.fanlevel != acStatus.fanlevel)
+    {
+      acNode.m_sLastOp = acStatus;
+      statusChanged = TRUE;
+    }
   }
   else
   {// not found,need add
@@ -138,16 +165,20 @@ bool xlAirCondManager::UpdateACStatusByNodeid(uint8_t nodeid,AirConditioningStau
     acNode.m_nCMLastMsgTime = now;
     acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
     acNode.m_sLastOp = acStatus;
+    statusChanged = TRUE;
   }
   m_lstACDev.add(&acNode);
   m_isChanged = TRUE;
-  PublishACStatus(acNode);
+  if(statusChanged)
+  {
+    PublishACStatus(acNode);
+  }
   return TRUE;
 }
 
 bool xlAirCondManager::PublishACEC(ACDev_t& acNode)
 {
-  String strTemp = String::format("{'nd':%d,'ec':%d}",acNode.nid,acNode.m_nElecCurrent);
+  String strTemp = String::format("{'nd':%d,'ec':%.2f}",acNode.nid,acNode.m_nElecCurrent/100.0);
   theSys.PublishACDeviceStatus(strTemp.c_str());
   return TRUE;
 }
@@ -163,7 +194,7 @@ bool xlAirCondManager::PublishACStatus(ACDev_t& acNode)
 bool xlAirCondManager::PublishACInfo(ACDev_t& acNode,bool bAllDays/*=FALSE*/)
 {
   String strTemp = "";
-  String strformat = "{'nd':%d,'ec':%d,'dt':[%d,%d,%d,%d],'days':%d,";
+  String strformat = "{'nd':%d,'ec':%.2f,'dt':[%d,%d,%d,%d],'days':%d,";
   uint8_t days = 1;
   if(bAllDays)
   {
@@ -172,7 +203,7 @@ bool xlAirCondManager::PublishACInfo(ACDev_t& acNode,bool bAllDays/*=FALSE*/)
   strformat += "'eq':[";
   for(uint8_t i=0;i<days;i++)
   {
-    strformat += String(acNode.m_arrHistoryEQ[i]);
+    strformat += String(acNode.m_arrHistoryEQ[i]/100.0,2);
     if(i != days-1)
     {
       strformat += ",";
@@ -182,30 +213,81 @@ bool xlAirCondManager::PublishACInfo(ACDev_t& acNode,bool bAllDays/*=FALSE*/)
       strformat += "]}";
     }
   }
-  strTemp = String::format(strformat,acNode.nid,acNode.m_nElecCurrent,acNode.m_sLastOp.onoff,\
+  strTemp = String::format(strformat,acNode.nid,acNode.m_nElecCurrent/100.0,acNode.m_sLastOp.onoff,\
                            acNode.m_sLastOp.mode,acNode.m_sLastOp.temp,acNode.m_sLastOp.fanlevel,days);
 	theSys.PublishACDeviceStatus(strTemp.c_str());
 	return TRUE;
+}
+
+bool xlAirCondManager::PublishHistoryInfo()
+{
+  for(uint8_t i = 0;i<m_lstACDev.count();i++)
+  {
+    Serial.printlnf("PublishHistoryInfo nodeid:%d,sid:%d,ec:%.2f,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",m_lstACDev._pItems[i].nid,\
+                 m_lstACDev._pItems[i].sid,m_lstACDev._pItems[i].m_nElecCurrent/100.0,m_lstACDev._pItems[i].m_nSSLastMsgTime,m_lstACDev._pItems[i].m_nCMLastMsgTime,\
+                 m_lstACDev._pItems[i].m_sLastOp.onoff,m_lstACDev._pItems[i].m_sLastOp.mode,m_lstACDev._pItems[i].m_sLastOp.temp,m_lstACDev._pItems[i].m_sLastOp.fanlevel,\
+                 m_lstACDev._pItems[i].m_nEndDay);
+    if( !IS_NOT_AC_NODEID(m_lstACDev._pItems[i].nid))
+    {
+      PublishACInfo(m_lstACDev._pItems[i],TRUE);
+    }
+  }
+}
+
+bool xlAirCondManager::PublishTimeoutAlarm(uint8_t *arrNodeid,uint8_t size,uint8_t type)
+{
+  StaticJsonBuffer<255> jsonBuffer;
+
+  JsonObject& root = jsonBuffer.createObject();
+  root["name"] = "Offline";
+  root["devname"] = "";
+  root["tag"] = type;
+
+  JsonArray& arrnd = root.createNestedArray("nd");
+  for(int i = 0 ;i<size;i++ )
+  {
+    arrnd.add(*(arrNodeid+i));
+  }
+  char msg[255];
+  memset(msg,0x00,sizeof(msg));
+  root.printTo(msg,255);
+  theSys.PublishAlarm(msg);
 }
 
 void xlAirCondManager::ProcessCheck()
 {
   uint32_t now  = Time.now();
   uint32_t nLastDay = Time.format(now, "%Y%m%d").toInt();
+  uint8_t arrSSNode[MAX_AC_DEVICE_PER_CONTROLLER];
+  uint8_t ssndSize = 0;
+  uint8_t arrMCNode[MAX_AC_DEVICE_PER_CONTROLLER];
+  uint8_t mcndSize = 0;
+  memset(arrSSNode,0x00,sizeof(arrSSNode));
+  memset(arrMCNode,0x00,sizeof(arrMCNode));
   for(uint8_t i = 0;i<m_lstACDev.count();i++)
   {
-    Serial.printf("ProcessCheck nodeid:%d,sid:%d,ec:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",m_lstACDev._pItems[i].nid,\
+    Serial.printlnf("ProcessCheck nodeid:%d,sid:%d,ec:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",m_lstACDev._pItems[i].nid,\
                  m_lstACDev._pItems[i].sid,m_lstACDev._pItems[i].m_nElecCurrent,m_lstACDev._pItems[i].m_nSSLastMsgTime,m_lstACDev._pItems[i].m_nCMLastMsgTime,\
                  m_lstACDev._pItems[i].m_sLastOp.onoff,m_lstACDev._pItems[i].m_sLastOp.mode,m_lstACDev._pItems[i].m_sLastOp.temp,m_lstACDev._pItems[i].m_sLastOp.fanlevel,\
                  m_lstACDev._pItems[i].m_nEndDay);
-    if( !IS_NOT_AC_NODEID(m_lstACDev._pItems[i].nid) && now - m_lstACDev._pItems[i].m_nSSLastMsgTime < 3600*HISTORYEQDAYS)
+    if( !IS_NOT_AC_NODEID(m_lstACDev._pItems[i].nid) && now - m_lstACDev._pItems[i].m_nSSLastMsgTime < 3600*24*HISTORYEQDAYS)
     {
       // TODO timeout check
+      if(now - m_lstACDev._pItems[i].m_nSSLastMsgTime > 180)
+      { // 3min timeout
+        arrSSNode[ssndSize++] = m_lstACDev._pItems[i].nid;
+        Serial.printlnf("SS node:%d,timeout",m_lstACDev._pItems[i].nid);
+      }
+      if(now - m_lstACDev._pItems[i].m_nCMLastMsgTime > 180)
+      { // 3min timeout
+        arrMCNode[mcndSize++] = m_lstACDev._pItems[i].nid;
+        Serial.printlnf("MC node:%d,timeout",m_lstACDev._pItems[i].nid);
+      }
       //  day eq array check
       bool bNeedpublish = FALSE;
       if(nLastDay > m_lstACDev._pItems[i].m_nEndDay)
       { // day eq array need update
-        for(int i=HISTORYEQDAYS-1;i>=0;i++)
+        for(int i=HISTORYEQDAYS-1;i>=0;i--)
         {
           if(i>0)
           {
@@ -229,6 +311,14 @@ void xlAirCondManager::ProcessCheck()
       LOGW(LOGTAG_MSG, "ProcessCheck check not ac node,what?");
     }
   }
+  if(mcndSize > 0)
+  {
+    PublishTimeoutAlarm(arrMCNode,mcndSize,2);
+  }
+  if(ssndSize > 0)
+  {
+      PublishTimeoutAlarm(arrSSNode,ssndSize,3);
+  }
   SaveACNode();
 }
 
@@ -237,7 +327,7 @@ bool xlAirCondManager::LoadACNode()
 {
   bool bReadmain = TRUE;
   ACDev_t ACNodeArray[MAX_AC_DEVICE_PER_CONTROLLER];
-  if (sizeof(ACDev_t)*MAX_NODE_PER_CONTROLLER <= MEM_ACLIST_LEN)
+  if (sizeof(ACDev_t)*MAX_NODE_PER_CONTROLLER >= MEM_ACLIST_LEN)
   {
     if (theConfig.getP1Flash()->read<ACDev_t[MAX_AC_DEVICE_PER_CONTROLLER]>(ACNodeArray, MEM_ACLIST_OFFSET))
     {
@@ -271,7 +361,7 @@ bool xlAirCondManager::LoadACNode()
   }
   if(!bReadmain)
   { //read from backup
-    if (sizeof(ACDev_t)*MAX_NODE_PER_CONTROLLER <= MEM_ACLIST_BACKUP_LEN)
+    if (sizeof(ACDev_t)*MAX_NODE_PER_CONTROLLER >= MEM_ACLIST_BACKUP_LEN)
     {
       if (theConfig.getP1Flash()->read<ACDev_t[MAX_AC_DEVICE_PER_CONTROLLER]>(ACNodeArray, MEM_ACLIST_BACKUP_OFFSET))
       {

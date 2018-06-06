@@ -59,6 +59,7 @@ public:
   BOOL IsBLEGood();
   BOOL IsLANGood();
   BOOL IsWANGood();
+  void OnCloudStatusChanged();
 
   BOOL connectWiFi(BOOL bNeedWait=true);
   BOOL connectCloud(BOOL bNeedWait=true);
@@ -166,6 +167,7 @@ public:
   void Array2Hue(JsonArray& data, Hue_t& hue);     // Copy JSON array to Hue structure
   void SetRelayKeyFlag(const UC _code, const bool _on);
   void PublishRelayKeyFlag();
+  void LoadStatusData();
 
 };
 

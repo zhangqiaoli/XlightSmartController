@@ -660,6 +660,17 @@ BOOL SmartControllerClass::IsWANGood()
 	return m_isWAN;
 }
 
+void SmartControllerClass::OnCloudStatusChanged()
+{
+	BOOL isConnected = Particle.connected();
+	//LOGW(LOGTAG_MSG, "Cloudstatus changed to %s",isConnected?"connected":"disconnected");
+	Serial.printlnf("Cloudstatus changed to %s",isConnected?"connected":"disconnected");
+	if(isConnected)
+	{
+    theACManager.PublishHistoryInfo();
+	}
+}
+
 // Process Local bridge commands
 void SmartControllerClass::ProcessLocalCommands() {
 	// Check RF Message
@@ -3499,4 +3510,10 @@ void SmartControllerClass::PublishRelayKeyFlag()
 		strTemp += "}";
 		PublishDeviceStatus(strTemp.c_str());
 	}
+}
+
+void SmartControllerClass::LoadStatusData()
+{
+	// Load AIRConditioning Status data
+	theACManager.LoadACNode();
 }
