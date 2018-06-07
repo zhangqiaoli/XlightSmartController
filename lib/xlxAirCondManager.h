@@ -36,7 +36,7 @@ typedef struct
   uint32_t m_nCMLastMsgTime;
   // total eq
   uint64_t m_nTotalEQ;
-  uint16_t m_arrHistoryEQ[HISTORYEQDAYS];
+  uint32_t m_arrHistoryEQ[HISTORYEQDAYS];
   uint32_t m_nEndDay;
   // air smartsocket last eq msg index for distinct
   uint16_t m_lastEQIndex;

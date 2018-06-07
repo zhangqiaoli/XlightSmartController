@@ -42,7 +42,7 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
           if(eqindex !=0 && eqindex != acNode.m_lastEQIndex)
           {
             acNode.m_arrHistoryEQ[0] += eq;
-            if((acNode.m_nTotalEQ >> 16)^0xFFFFFFFFFFFF == 0 )
+            if(((acNode.m_nTotalEQ >> 16)^0xFFFFFFFFFFFF) == 0 )
             {
               LOGW(LOGTAG_MSG, "Total EQ need clear to 0");
               acNode.m_nTotalEQ = 0;
@@ -58,7 +58,7 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
     {
       if(eqindex !=0 && eqindex != acNode.m_lastEQIndex)
       {
-        if((acNode.m_nTotalEQ >> 16)^0xFFFFFFFFFFFF == 0 )
+        if(((acNode.m_nTotalEQ >> 16)^0xFFFFFFFFFFFF) == 0 )
         {
           LOGW(LOGTAG_MSG, "Total EQ need clear to 0");
           acNode.m_nTotalEQ = 0;
