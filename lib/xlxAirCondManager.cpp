@@ -12,79 +12,137 @@ xlAirCondManager::~xlAirCondManager()
 {
 
 }
-
-bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/*=FALSE*/,uint16_t eq/* = 0*/,uint16_t eqindex /* = 0*/)
+void xlAirCondManager::InitACNode(ACDev_t& acNode)
 {
-  Serial.printlnf("UpdateACByNodeid update nodeid:%d,ec:%d,eq:%d,index:%d",nodeid,ec,eq,eqindex);
+  memset(&acNode,0x00,sizeof(ACDev_t));
+  uint32_t now = Time.now();
+  acNode.m_nSSLastMsgTime = now;
+  acNode.m_nCMLastMsgTime = now;
+  acNode.m_nTotalEQ = 0;
+  acNode.m_nLastTotalEQ =0;
+  acNode.m_todayStart.nTotalEQ = 0;
+  acNode.m_todayStart.timestamp = now;
+  acNode.m_todayStart.bEQReset = 0;
+  acNode.m_todayEnd.nTotalEQ = 0;
+  acNode.m_todayEnd.timestamp = now;
+  acNode.m_todayEnd.bEQReset = 1;
+  acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
+}
+
+bool xlAirCondManager::UpdateACCurrentByNodeid(uint8_t nodeid,uint16_t ec)
+{
+  Serial.printlnf("UpdateACCurrentByNodeid update nodeid:%d,ec:%d",nodeid,ec);
   ACDev_t acNode;
   memset(&acNode,0x00,sizeof(ACDev_t));
   acNode.nid = nodeid;
-  uint32_t now = Time.now();
   if(m_lstACDev.get(&acNode) >=0)
   { // old node,need update
+    uint32_t now = Time.now();
     acNode.m_nElecCurrent = ec;
+    acNode.m_nSSLastMsgTime = now;
+    acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
+  }
+  else
+  {// not found,need add
+    InitACNode(acNode);
+    acNode.nid = nodeid;
+    acNode.m_nElecCurrent = ec;
+  }
+  PublishACEC(acNode);
+  return TRUE;
+}
+
+bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,uint32_t eq/* = 0*/,uint16_t eqindex/* = 0*/,uint8_t eqreset/* = 0*/)
+{
+  Serial.printlnf("UpdateACByNodeid update nodeid:%d,ec:%d,eq:%d,index:%d,eqreset:%d",nodeid,ec,eq,eqindex,eqreset);
+  ACDev_t acNode;
+  memset(&acNode,0x00,sizeof(ACDev_t));
+  acNode.nid = nodeid;
+  if(m_lstACDev.get(&acNode) >=0)
+  { // old node,need update
+    uint32_t now = Time.now();
+    acNode.m_nElecCurrent = ec;
+    uint32_t lasttime = acNode.m_nSSLastMsgTime;
     acNode.m_nSSLastMsgTime = now;
     uint32_t nLastDay = acNode.m_nEndDay;
     acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
-    ////////////////////update eq////////////////////
+    if(eqindex == acNode.m_lastEQIndex)
+    { // same msg,ignore
+      Serial.printlnf("same msg,ignore");
+      return TRUE;
+    }
+    acNode.m_lastEQIndex = eqindex;
+    bool updateLastTotal = FALSE;
+    if(eqreset == 1)
+    {// total eq was reset to 0,need accumulate
+      if(acNode.m_todayEnd.bEQReset == 0 || (acNode.m_todayEnd.bEQReset == 1 && now - acNode.m_todayEnd.timestamp > 3600))
+      { // reset more than 1hour
+        updateLastTotal = TRUE;
+      }
+    }
+    else if(eq < acNode.m_nTotalEQ)
+    { // need reset lasttotal
+      LOGE(LOGTAG_MSG,"warning:smartsocket total eq:%.2f less than p1 total eq:%.2f!",eq/100.0,acNode.m_nTotalEQ/100.0);
+    }
+    if(updateLastTotal == TRUE)
+    {
+      LOGN(LOGTAG_MSG,"Reset,before update lasttotal=%.2f,total=%.2f",acNode.m_nLastTotalEQ/100.0,acNode.m_nTotalEQ/100.0);
+      acNode.m_nLastTotalEQ = acNode.m_nTotalEQ;
+    }
+    Serial.printlnf("before total:%.2f,lasttotal:%.2f",acNode.m_nTotalEQ/100.0,acNode.m_nLastTotalEQ/100.0);
+    acNode.m_nTotalEQ = acNode.m_nLastTotalEQ + eq;
+    Serial.printlnf("after total:%.2f,lasttotal:%.2f",acNode.m_nTotalEQ/100.0,acNode.m_nLastTotalEQ/100.0);
+
+    acNode.m_todayEnd.timestamp = now;
+    acNode.m_todayEnd.nTotalEQ = acNode.m_nTotalEQ;
+    acNode.m_todayEnd.bEQReset = eqreset;
     if(acNode.m_nEndDay > nLastDay)
-    { // new day,update m_arrHistoryEQ
-      Serial.printlnf("Update day,now is %d",acNode.m_nEndDay);
-      for(int i=HISTORYEQDAYS-1;i>=0;i--)
+    {  ////////////////////update day eq////////////////////
+      if(now - lasttime > 3600*(HISTORYEQDAYS+1))
+      { // history data invalid,clear
+        Serial.printlnf("now=%d,last=%d,need clear history data",now,lasttime);
+        memset(acNode.m_arrHistoryEQ,0x00,HISTORYEQDAYS*sizeof(uint32_t));
+      }
+      else
       {
-        if(i>0)
+        // new day,update m_arrHistoryEQ
+        acNode.m_arrHistoryEQ[0] = acNode.m_todayEnd.nTotalEQ - acNode.m_todayStart.nTotalEQ;
+        Serial.printlnf("Update day,now is %d,lastdaytotal:%d",acNode.m_nEndDay,acNode.m_arrHistoryEQ[0]);
+        for(int8_t i=HISTORYEQDAYS-1;i>=0;i--)
         {
-          acNode.m_arrHistoryEQ[i] = acNode.m_arrHistoryEQ[i-1];
-        }
-        else
-        {
-          acNode.m_arrHistoryEQ[0] = 0;
-          if(eqindex !=0 && eqindex != acNode.m_lastEQIndex)
+          if(i>0)
           {
-            acNode.m_arrHistoryEQ[0] += eq;
-            if(((acNode.m_nTotalEQ >> 16)^0xFFFFFFFFFFFF) == 0 )
-            {
-              LOGW(LOGTAG_MSG, "Total EQ need clear to 0");
-              acNode.m_nTotalEQ = 0;
-            }
-            acNode.m_nTotalEQ += eq;
-            Serial.printlnf("totaleq:%d,today add eq:%d,lastindex=%d,index:%d",acNode.m_nTotalEQ,eq,acNode.m_lastEQIndex,eqindex);
-            acNode.m_lastEQIndex = eqindex;
+            acNode.m_arrHistoryEQ[i] = acNode.m_arrHistoryEQ[i-1];
+          }
+          else
+          {
+            acNode.m_arrHistoryEQ[0] = 0;
           }
         }
       }
+      acNode.m_todayStart.timestamp = now;
+      acNode.m_todayStart.nTotalEQ = acNode.m_nTotalEQ;
+      acNode.m_todayStart.bEQReset = eqreset;
+      acNode.m_arrHistoryEQ[0] = 0;
     }
     else
     {
-      if(eqindex !=0 && eqindex != acNode.m_lastEQIndex)
-      {
-        if(((acNode.m_nTotalEQ >> 16)^0xFFFFFFFFFFFF) == 0 )
-        {
-          LOGW(LOGTAG_MSG, "Total EQ need clear to 0");
-          acNode.m_nTotalEQ = 0;
-        }
-        acNode.m_arrHistoryEQ[0] += eq;
-        acNode.m_nTotalEQ += eq;
-        Serial.printlnf("totaleq:%.2f,today add eq:%d,lastindex=%d,index:%d",acNode.m_nTotalEQ/100.0,eq,acNode.m_lastEQIndex,eqindex);
-        acNode.m_lastEQIndex = eqindex;
-      }
+        acNode.m_arrHistoryEQ[0] = acNode.m_todayEnd.nTotalEQ - acNode.m_todayStart.nTotalEQ;
+        Serial.printlnf("toadyeq:%d",acNode.m_arrHistoryEQ[0]);
     }
     ////////////////////update eq end////////////////
   }
   else
   {// not found,need add
+    InitACNode(acNode);
+    acNode.nid = nodeid;
     acNode.m_nElecCurrent = ec;
-    acNode.m_nSSLastMsgTime = now;
-    acNode.m_nCMLastMsgTime = now;
-    acNode.m_lastEQIndex = 0;
-    acNode.m_nTotalEQ = 0;
-    acNode.m_arrHistoryEQ[0] = 0;
-    if(eq > 0)
-    {
-      acNode.m_nTotalEQ += eq;
-      acNode.m_arrHistoryEQ[0] += eq;
-    }
-    acNode.m_nEndDay = Time.format(now, "%Y%m%d").toInt();
+    acNode.m_todayStart.bEQReset = eqreset;
+    acNode.m_todayEnd.bEQReset = eqreset;
+    acNode.m_todayStart.nTotalEQ = eq;
+    acNode.m_todayEnd.nTotalEQ = eq;
+    acNode.m_nTotalEQ = eq;
+    acNode.m_nLastTotalEQ = 0;
   }
   m_lstACDev.add(&acNode);
   Serial.printlnf("UpdateACByNodeid nodeid:%d,sid:%d,ec:%d,eq:%d,ss:%d,mc:%d,onoff:%d,mode:%d,temp:%d,fan:%d,endday:%d",acNode.nid,\
@@ -92,13 +150,13 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec/
                acNode.m_sLastOp.onoff,acNode.m_sLastOp.mode,acNode.m_sLastOp.temp,acNode.m_sLastOp.fanlevel,\
                acNode.m_nEndDay);
   m_isChanged = TRUE;
-  if(bOnlyec)
+  PublishACInfo(acNode);
+
+  if(((acNode.m_nTotalEQ >> 16)^0xFFFFFFFFFFFF) == 0 )
   {
-    PublishACEC(acNode);
-  }
-  else
-  {
-    PublishACInfo(acNode);
+    LOGW(LOGTAG_MSG, "Total EQ need clear to 0");
+    acNode.m_nTotalEQ = 0;
+    acNode.m_nLastTotalEQ = 0;
   }
   return TRUE;
 }
@@ -305,12 +363,13 @@ void xlAirCondManager::ProcessCheck()
       bool bNeedpublish = FALSE;
       if(nLastDay > m_lstACDev._pItems[i].m_nEndDay)
       { // day eq array need update
-        for(int i=HISTORYEQDAYS-1;i>=0;i--)
+        m_lstACDev._pItems[i].m_arrHistoryEQ[0] = m_lstACDev._pItems[i].m_todayEnd.nTotalEQ - m_lstACDev._pItems[i].m_todayStart.nTotalEQ;
+        for(int8_t j = HISTORYEQDAYS-1;j>=0;j--)
         {
-          if(i>0)
+          if(j>0)
           {
-            if(m_lstACDev._pItems[i].m_arrHistoryEQ[i] != 0) bNeedpublish = TRUE;
-            m_lstACDev._pItems[i].m_arrHistoryEQ[i] = m_lstACDev._pItems[i].m_arrHistoryEQ[i-1];
+            if(m_lstACDev._pItems[i].m_arrHistoryEQ[j] != 0) bNeedpublish = TRUE;
+            m_lstACDev._pItems[i].m_arrHistoryEQ[j] = m_lstACDev._pItems[i].m_arrHistoryEQ[j-1];
           }
           else
           {

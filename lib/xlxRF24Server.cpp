@@ -778,19 +778,35 @@ bool RF24ServerClass::ProcessReceiveMQ()
 						uint16_t eCurrent = payload[1]<<8 | payload[0];
 						UC lv_nNodeID = msg.getSender();
 						LOGD(LOGTAG_MSG, "Recv nd:%d current msg:%d",lv_nNodeID,eCurrent);
-						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,TRUE);
+						theACManager.UpdateACCurrentByNodeid(lv_nNodeID,eCurrent);
 					}
 				}
 				else if(msgType == V_KWH)
 				{
-					if(payl_len >= 4)
+					if(payl_len >= 9)
+					{
+						uint32_t eQuantity = 0;
+						memcpy(&eQuantity,&payload[0],4);
+						uint16_t eqindex = payload[5]<<8 | payload[4];
+						uint16_t eCurrent = payload[7]<<8 | payload[6];
+						uint8_t bReset = payload[8];
+						UC lv_nNodeID = msg.getSender();
+						LOGD(LOGTAG_MSG, "Recv eq msg,nd:%d,eq:%d,index=%d,current:%d,reset:%d",lv_nNodeID,eQuantity,eqindex,eCurrent,bReset);
+						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,eQuantity,eqindex,bReset);
+						if(_needAck)
+						{
+							msg.build(transTo, replyTo, _sensor, C_REQ, msgType, 0, 1, true);
+							msgReady = true;
+						}
+					}
+					else if(payl_len >= 4)
 					{ // electric current change msg
 						uint16_t eQuantity = payload[1]<<8 | payload[0];
 						uint16_t eqindex = payload[3]<<8 | payload[2];
 						uint16_t eCurrent = payload[5]<<8 | payload[4];
 						UC lv_nNodeID = msg.getSender();
 						LOGD(LOGTAG_MSG, "Recv eq msg,nd:%d,eq:%d,index=%d,current:%d",lv_nNodeID,eQuantity,eqindex,eCurrent);
-						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,FALSE,eQuantity,eqindex);
+						theACManager.UpdateACByNodeid(lv_nNodeID,eCurrent,eQuantity,eqindex);
 					}
 				}
 				else if(msgType == V_HVAC_FLOW_STATE)

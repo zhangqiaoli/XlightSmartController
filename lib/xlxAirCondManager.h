@@ -18,6 +18,15 @@ typedef struct
   uint8_t fanlevel;
 } AirConditioningStauts_t;
 
+typedef struct
+	__attribute__((packed))
+{
+  uint64_t nTotalEQ;
+  uint32_t timestamp;
+  uint8_t bEQReset;
+}EQInfo_t;
+
+
 
 typedef struct
 	__attribute__((packed))
@@ -34,8 +43,13 @@ typedef struct
   uint32_t m_nSSLastMsgTime;
   // control module last msg time
   uint32_t m_nCMLastMsgTime;
-  // total eq
+  // total eq,unit wh need divided 100
   uint64_t m_nTotalEQ;
+  uint64_t m_nLastTotalEQ;
+
+  EQInfo_t m_todayStart;
+  EQInfo_t m_todayEnd;
+
   uint32_t m_arrHistoryEQ[HISTORYEQDAYS];
   uint32_t m_nEndDay;
   // air smartsocket last eq msg index for distinct
@@ -67,10 +81,12 @@ private:
 public:
   xlAirCondManager();
   ~xlAirCondManager();
+  void InitACNode(ACDev_t& acNode);
+  bool UpdateACCurrentByNodeid(uint8_t nodeid,uint16_t ec);
 
   // nodeid search functions
   //ListNode<xlAirConditioning> *SearchAC(UC nodeid);
-  bool UpdateACByNodeid(uint8_t nodeid,uint16_t ec,bool bOnlyec=FALSE,uint16_t eq = 0,uint16_t eqindex = 0);
+  bool UpdateACByNodeid(uint8_t nodeid,uint16_t ec,uint32_t eq = 0,uint16_t eqindex = 0,uint8_t eqreset = 0);
 
   bool UpdateACStatusByNodeid(uint8_t nodeid,AirConditioningStauts_t& acStatus);
   bool UpdateACStatusByNodeid(uint8_t nodeid,uint8_t onoff,uint8_t mode,uint8_t temp,uint8_t fanlevel);
