@@ -93,42 +93,62 @@ bool xlAirCondManager::UpdateACByNodeid(uint8_t nodeid,uint16_t ec,uint32_t eq/*
     acNode.m_nTotalEQ = acNode.m_nLastTotalEQ + eq;
     Serial.printlnf("after total:%.2f,lasttotal:%.2f",acNode.m_nTotalEQ/100.0,acNode.m_nLastTotalEQ/100.0);
 
-    acNode.m_todayEnd.timestamp = now;
-    acNode.m_todayEnd.nTotalEQ = acNode.m_nTotalEQ;
-    acNode.m_todayEnd.bEQReset = eqreset;
     if(acNode.m_nEndDay > nLastDay)
     {  ////////////////////update day eq////////////////////
-      if(now - lasttime > 3600*(HISTORYEQDAYS+1))
+      uint8_t notrundays = (now - lasttime)/(3600*24);
+      if(notrundays >= HISTORYEQDAYS)
       { // history data invalid,clear
-        Serial.printlnf("now=%d,last=%d,need clear history data",now,lasttime);
+        LOGW(LOGTAG_MSG,"now=%d,last=%d,need clear history data",now,lasttime);
         memset(acNode.m_arrHistoryEQ,0x00,HISTORYEQDAYS*sizeof(uint32_t));
       }
       else
       {
-        // new day,update m_arrHistoryEQ
-        acNode.m_arrHistoryEQ[0] = acNode.m_todayEnd.nTotalEQ - acNode.m_todayStart.nTotalEQ;
-        Serial.printlnf("Update day,now is %d,lastdaytotal:%d",acNode.m_nEndDay,acNode.m_arrHistoryEQ[0]);
+        uint8_t nowWeekday = Time.weekday(now);
+        uint8_t lastWeekday = Time.weekday(lasttime);
+        uint8_t intervalday = (nowWeekday+7-lastWeekday)%7;
+        if(intervalday==1 && (now - lasttime)<=300 )
+        {
+          //normal new day,update m_arrHistoryEQ
+          acNode.m_arrHistoryEQ[0] = acNode.m_nTotalEQ - acNode.m_todayStart.nTotalEQ;
+        }
+        else
+        {
+          acNode.m_arrHistoryEQ[0] = acNode.m_todayEnd.nTotalEQ - acNode.m_todayStart.nTotalEQ;
+        }
         for(int8_t i=HISTORYEQDAYS-1;i>=0;i--)
         {
-          if(i>0)
+          if(i >= intervalday)
           {
-            acNode.m_arrHistoryEQ[i] = acNode.m_arrHistoryEQ[i-1];
+            acNode.m_arrHistoryEQ[i] = acNode.m_arrHistoryEQ[i-intervalday];
           }
           else
           {
-            acNode.m_arrHistoryEQ[0] = 0;
+            acNode.m_arrHistoryEQ[i] = 0;
           }
         }
       }
       acNode.m_todayStart.timestamp = now;
       acNode.m_todayStart.nTotalEQ = acNode.m_nTotalEQ;
       acNode.m_todayStart.bEQReset = eqreset;
+      acNode.m_todayEnd.timestamp = now;
+      acNode.m_todayEnd.nTotalEQ = acNode.m_nTotalEQ;
+      acNode.m_todayEnd.bEQReset = eqreset;
       acNode.m_arrHistoryEQ[0] = 0;
     }
     else
     {
+      if(acNode.m_nEndDay == nLastDay)
+      {
+        acNode.m_todayEnd.timestamp = now;
+        acNode.m_todayEnd.nTotalEQ = acNode.m_nTotalEQ;
+        acNode.m_todayEnd.bEQReset = eqreset;
         acNode.m_arrHistoryEQ[0] = acNode.m_todayEnd.nTotalEQ - acNode.m_todayStart.nTotalEQ;
         Serial.printlnf("toadyeq:%d",acNode.m_arrHistoryEQ[0]);
+      }
+      else
+      {
+        LOGE(LOGTAG_MSG,"now=%d,last=%d,time has occur error!",now,lasttime);
+      }
     }
     ////////////////////update eq end////////////////
   }
@@ -363,7 +383,9 @@ void xlAirCondManager::ProcessCheck()
       bool bNeedpublish = FALSE;
       if(nLastDay > m_lstACDev._pItems[i].m_nEndDay)
       { // day eq array need update
+        m_lstACDev._pItems[i].m_nEndDay = nLastDay;
         m_lstACDev._pItems[i].m_arrHistoryEQ[0] = m_lstACDev._pItems[i].m_todayEnd.nTotalEQ - m_lstACDev._pItems[i].m_todayStart.nTotalEQ;
+        m_lstACDev._pItems[i].m_todayStart.nTotalEQ = m_lstACDev._pItems[i].m_todayEnd.nTotalEQ;
         for(int8_t j = HISTORYEQDAYS-1;j>=0;j--)
         {
           if(j>0)
