@@ -111,7 +111,6 @@ bool xlPanelClass::HC595Available()
 bool xlPanelClass::ProcessEncoder()
 {
   if( !m_pEncoder ) return false;
-
   if(!theConfig.GetDisableLamp())
   {
 	  // Read dimmer value
@@ -122,6 +121,7 @@ bool xlPanelClass::ProcessEncoder()
 		  _dimValue = GetCCTValue();
 		  _dimValue += _delta;
 		  SetCCTValue(_dimValue);
+
 		  // CCT idle timeout: automatically clear CCT flag
 		  if( _delta > 0 ) {
 			  m_nCCTick = millis();
@@ -135,7 +135,6 @@ bool xlPanelClass::ProcessEncoder()
 		  SetDimmerValue(_dimValue);
 	  }
   }
-
 	// Read button input
 	ButtonType b = m_pEncoder->getButton();
   if (b != BUTTON_OPEN) {
@@ -155,6 +154,8 @@ bool xlPanelClass::ProcessEncoder()
         break;
       case BUTTON_CLICKED:
         LOGD(LOGTAG_ACTION, "Button Clicked,keyobj=%d",theConfig.GetRelayKeyObj());
+        theSys.m_action[4] = 1;
+        theSys.m_actionchanged = 1;
         if( theConfig.GetRelayKeyObj() == BTN_OBJ_SCAN_KEY_MAP ) {
           theSys.ToggleAllHardSwitchs();
         } else if( theConfig.GetRelayKeyObj() == BTN_OBJ_LOOP_KEY_MAP ) {
@@ -168,6 +169,8 @@ bool xlPanelClass::ProcessEncoder()
         break;
       case BUTTON_DOUBLE_CLICKED:
         LOGD(LOGTAG_ACTION, "Button DoubleClicked");
+        theSys.m_action[4] = 3;
+        theSys.m_actionchanged = 1;
         ReverseCCTFlag();
         //m_pEncoder->setAccelerationEnabled(!m_pEncoder->getAccelerationEnabled());
         //SERIAL_LN("  Acceleration is %s", m_pEncoder->getAccelerationEnabled() ? "enabled" : "disabled");
@@ -184,6 +187,7 @@ int16_t xlPanelClass::GetDimmerValue()
 
 void xlPanelClass::SetDimmerValue(int16_t _value)
 {
+  static bool bBRNeedsend = false;
 	// Restrict range
   _value = constrain(_value, 0, 100);
   if( m_nDimmerValue != _value ) {
@@ -192,8 +196,15 @@ void xlPanelClass::SetDimmerValue(int16_t _value)
     SetHC595();
     // Send Light Percentage message
     theSys.ChangeLampBrightness(CURRENT_DEVICE, _value, CURRENT_SUBDEVICE);
-		LOGD(LOGTAG_EVENT, "Dimmer-BR changed to %d", _value);
+		//LOGD(LOGTAG_EVENT, "Dimmer-BR changed to %d", _value);
+    bBRNeedsend = true;
 	}
+  if(bBRNeedsend &&  millis() - m_nLastOpPast > 500)
+  {
+    String strTemp = String::format("{'nd':%d,'subid':0,'fr':1,'BR':%d}",CURRENT_DEVICE,m_nDimmerValue);
+    theSys.PublishAction(strTemp.c_str());
+    bBRNeedsend = false;
+  }
 }
 
 // Update Dimmer value according to confirmation
@@ -221,6 +232,7 @@ int16_t xlPanelClass::GetCCTValue(const bool _percent)
 
 void xlPanelClass::SetCCTValue(int16_t _value)
 {
+  static bool bCctNeedsend = false;
 	// Restrict range
   _value = constrain(_value, 0, 100);
 
@@ -231,8 +243,15 @@ void xlPanelClass::SetCCTValue(int16_t _value)
     // Send CCT message
     US cctValue = map(_value, 0, 100, CT_MIN_VALUE, CT_MAX_VALUE);
     theSys.ChangeLampCCT(CURRENT_DEVICE, cctValue);
-		LOGD(LOGTAG_EVENT, "Dimmer-CCT changed to %d", cctValue);
+		//LOGD(LOGTAG_EVENT, "Dimmer-CCT changed to %d", cctValue);
+    bCctNeedsend = true;
 	}
+  if(bCctNeedsend &&  millis() - m_nLastOpPast > 500)
+  {
+    String strTemp = String::format("{'nd':%d,'subid':0,'fr':1,'CCT':%d}",CURRENT_DEVICE,m_nCCTValue);
+    theSys.PublishAction(strTemp.c_str());
+    bCctNeedsend = false;
+  }
 }
 
 void xlPanelClass::UpdateCCTValue(uint16_t _value)

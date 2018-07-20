@@ -476,6 +476,19 @@ BOOL CloudObjClass::PublishAlarm(const char *msg)
   return rc;
 }
 
+BOOL CloudObjClass::PublishAction(const char *msg)
+{
+  BOOL rc = true;
+  if( !theConfig.GetDisableWiFi() ) {
+    if( Particle.connected() ) {
+      //rc = Particle.publish(CLT_NAME_LOGMSG, msg, CLT_TTL_LOGMSG, PRIVATE);
+      rc = Particle.publish(CLT_NAME_ACTION, msg, CLT_TTL_ACStatus, PRIVATE);
+    }
+  }
+
+  return rc;
+}
+
 // Concatenate string with regard to the length limitation of cloud API
 /// Return value:
 /// 0 - string is intact, can be executed

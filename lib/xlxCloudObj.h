@@ -54,6 +54,11 @@
 #define CLT_NAME_DeviceConfig   "xlc-config-device"
 #define CLT_TTL_DeviceConfig    30
 
+/// action
+#define CLT_ID_ACTION           7
+#define CLT_NAME_ACTION         "xlc-action"
+#define CLT_TTL_ACStatus        30
+
 typedef struct
 {
   UC node_id;                       // RF nodeID
@@ -136,6 +141,7 @@ public:
   BOOL PublishDeviceConfig(const char *msg);
   void GotNodeConfigAck(const UC _nodeID, const UC *data);
   BOOL PublishAlarm(const char *msg);
+  BOOL PublishAction(const char *msg);
 
 protected:
   void InitCloudObj();

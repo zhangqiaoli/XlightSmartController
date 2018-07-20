@@ -106,6 +106,8 @@ SmartControllerClass::SmartControllerClass()
 	m_tickLoopKeyCode = 0;
 	m_relaykeyflag = 0x00;
 	memset(m_mac,0,sizeof(m_mac));
+	memset(m_action,0,sizeof(m_action));
+  m_actionchanged = 0;
 }
 
 // Primitive initialization before loading configuration
@@ -516,7 +518,7 @@ BOOL SmartControllerClass::SelfCheck(US ms)
 	static US tickCheckRadio = 0;				// must be static
 	static UC tickAcitveCheck = 0;
 	static UC tickWiFiOff = 0;
-
+  PublishBtnAction();
 	// Check all alarms. This triggers them.
 	Alarm.delay(ms);
 
@@ -3500,5 +3502,29 @@ void SmartControllerClass::PublishRelayKeyFlag()
 	if( strTemp.length() > 0 ) {
 		strTemp += "}";
 		PublishDeviceStatus(strTemp.c_str());
+	}
+}
+
+void SmartControllerClass::PublishBtnAction()
+{
+	String strTemp = String::format("{'nd':%d,'sid':%d,'km':%d",0,0,theConfig.GetRelayKeys());
+	if(m_actionchanged == 1)
+	{
+		m_actionchanged = 0;
+		uint8_t needpublish = 0;
+		for(uint8_t i = 0; i< MAX_NUM_BUTTONS+1;i++)
+		{
+			if(m_action[i] != 0)
+			{
+				needpublish = 1;
+        strTemp += String::format(",'btn%d':%d",i+1,m_action[i]);
+			}
+		}
+		if(needpublish == 1)
+		{
+			strTemp += "}";
+		}
+		SERIAL_LN("Action %s",strTemp.c_str());
+		PublishAction(strTemp.c_str());
 	}
 }

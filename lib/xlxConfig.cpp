@@ -1431,6 +1431,7 @@ BOOL ConfigClass::ExecuteBtnAction(const UC _btn, const UC _opt)
 {
 	UC _key;
 	bool _st;
+	BOOL rc=false;
 	if( _btn < MAX_NUM_BUTTONS && _opt < MAX_BTN_OP_TYPE ) {
 		if( m_config.btnAction[_btn][_opt].keyMap > 0 ) {
 			// scan key map and act on keys one by one
@@ -1452,11 +1453,12 @@ BOOL ConfigClass::ExecuteBtnAction(const UC _btn, const UC _opt)
 
 				}
 			}
-			return true;
+			rc = true;
 		}
 	}
-
-	return false;
+	theSys.m_action[_btn] = _opt+1;
+	theSys.m_actionchanged = 1;
+	return rc;
 }
 
 void ConfigClass::showButtonActions()
