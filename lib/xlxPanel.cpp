@@ -235,7 +235,6 @@ void xlPanelClass::SetCCTValue(int16_t _value)
   static bool bCctNeedsend = false;
 	// Restrict range
   _value = constrain(_value, 0, 100);
-
 	if( m_nCCTValue != _value ) {
 		m_nCCTValue = _value;
 		m_nLastOpPast = millis();
@@ -248,7 +247,8 @@ void xlPanelClass::SetCCTValue(int16_t _value)
 	}
   if(bCctNeedsend &&  millis() - m_nLastOpPast > 500)
   {
-    String strTemp = String::format("{'nd':%d,'subid':0,'fr':1,'CCT':%d}",CURRENT_DEVICE,m_nCCTValue);
+	  US cct_dimmer = map(m_nCCTValue, 0, 100, CT_MIN_VALUE, CT_MAX_VALUE);
+    String strTemp = String::format("{'nd':%d,'subid':0,'fr':1,'CCT':%d}",CURRENT_DEVICE,cct_dimmer);
     theSys.PublishAction(strTemp.c_str());
     bCctNeedsend = false;
   }

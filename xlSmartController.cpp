@@ -3518,6 +3518,7 @@ void SmartControllerClass::PublishBtnAction()
 			{
 				needpublish = 1;
         strTemp += String::format(",'btn%d':%d",i+1,m_action[i]);
+				m_action[i] = 0;
 			}
 		}
 		if(needpublish == 1)
