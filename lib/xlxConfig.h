@@ -415,7 +415,7 @@ public:
   BOOL LoadConfig();
   BOOL SaveConfig();
   BOOL IsConfigLoaded();
-  
+
   BOOL IsValidConfig();
   BOOL LoadBackupConfig();
   BOOL SaveBackupConfig();
@@ -452,6 +452,7 @@ public:
   void SetNIDChanged(BOOL flag);
 
   UC GetVersion();
+  BOOL SetVersion(UC ver,BOOL force=false);
 
   US GetTimeZoneID();
   BOOL SetTimeZoneID(US tz);

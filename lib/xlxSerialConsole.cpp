@@ -462,7 +462,7 @@ bool SerialConsoleClass::doCheck(const char *cmd)
 #else
 		  SERIAL_LN("**Resolving IP for www.google.com...%s\n\r", (WiFi.resolve("www.google.com") ? "OK" : "failed!"));
 #endif
-        
+
       } else {
         SERIAL("**Wi-Fi module is disabled\n\r");
       }
@@ -1248,7 +1248,10 @@ bool SerialConsoleClass::doSysSub(const char *cmd)
               CloudOutput("Failed to clear NodeID:%s", sParam1);
             }
           }
-        } else if( wal_stricmp(sParam1, "credentials") == 0 ) {
+        }else if( wal_stricmp(sParam1, "config") == 0 )
+  			{
+          theConfig.SetVersion(0xFF,true);
+  			}else if( wal_stricmp(sParam1, "credentials") == 0 ) {
           WiFi.clearCredentials();
           SERIAL_LN("WiFi credentials cleared\n\r");
           CloudOutput("WiFi credentials cleared");

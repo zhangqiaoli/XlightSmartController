@@ -152,6 +152,7 @@ public:
   BOOL ToggleLampOnOff(UC _nodeID = NODEID_MAINDEVICE, const UC subID = 0);
   BOOL ChangeLampBrightness(UC _nodeID = NODEID_MAINDEVICE, UC _percentage = 50, const UC subID = 0);
   BOOL ChangeLampCCT(UC _nodeID = NODEID_MAINDEVICE, US _cct = 3000, const UC subID = 0);
+  BOOL ChangeBR_RGB(UC _nodeID,UC _br,  US _rgb, const UC subID = 0);
   BOOL ChangeBR_CCT(UC _nodeID, UC _br, US _cct, const UC subID = 0);
   BOOL ChangeLampScenario(UC _nodeID, UC _scenarioID, UC _replyTo = 0, const UC _sensor = 0);
   BOOL RequestDeviceStatus(UC _nodeID, const UC subID = 0);

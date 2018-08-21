@@ -290,6 +290,7 @@ bool xlPanelClass::SetHC595()
     pos = map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING);
   }
   SetRingPos(pos);
+  Serial.printlnf("SetHC595 pos=%d ",pos);
   return true;
 }
 

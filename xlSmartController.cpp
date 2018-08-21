@@ -2810,6 +2810,18 @@ BOOL SmartControllerClass::ChangeLampCCT(UC _nodeID, US _cct, const UC subID)
 	return rc;
 }
 
+BOOL SmartControllerClass::ChangeBR_RGB(UC _nodeID,UC _br,  US _rgb, const UC subID)
+{
+	BOOL rc = false;
+	US rgb = _rgb & 0x00FFFFFF;
+	UC r = (rgb>>4);
+	UC g = ((rgb>>2) & 0x000000FF);
+	UC b = (rgb & 0x000000FF);
+	String strCmd = String::format("%d:13:%d:0:%d:%d:%d", _nodeID,_br, r,g,b);
+	rc = theRadio.ProcessSend(strCmd, 0, subID);
+	return rc;
+}
+
 BOOL SmartControllerClass::ChangeBR_CCT(UC _nodeID, UC _br, US _cct, const UC subID)
 {
 	String strCmd = String::format("%d:13:%d:%d", _nodeID, _br, _cct);

@@ -405,7 +405,7 @@ void ConfigClass::InitConfig()
 	m_config.rfDataRate = RF24_DATARATE;
 	m_config.maxBaseNetworkDuration = MAX_BASE_NETWORK_DUR;
 	m_config.disableWiFi = 0;
-	m_config.disableLamp = 1;
+	m_config.disableLamp = 0;
 	m_config.useCloud = CLOUD_ENABLE;
 	m_config.stWiFi = 1;
 	m_config.bcMsgRtpTimes = 3;
@@ -651,6 +651,16 @@ void ConfigClass::SetNIDChanged(BOOL flag)
 UC ConfigClass::GetVersion()
 {
   return m_config.version;
+}
+
+BOOL ConfigClass::SetVersion(UC ver,BOOL force/*=false*/)
+{
+	if(force)
+	{
+		Serial.printlnf("set ver=%d",ver);
+		m_config.version = ver;
+	}
+	return true;
 }
 
 US ConfigClass::GetTimeZoneID()
