@@ -123,7 +123,7 @@ bool xlPanelClass::ProcessEncoder()
 		  SetCCTValue(_dimValue);
 
 		  // CCT idle timeout: automatically clear CCT flag
-		  if( _delta > 0 ) {
+		  if( _delta != 0 ) {
 			  m_nCCTick = millis();
 		  } else if( (millis() - m_nCCTick) / 1000 > RTE_TM_MAX_CCT_IDLE ) {
 			  // Clear CCT flag
@@ -288,9 +288,13 @@ bool xlPanelClass::SetHC595()
   } else {
     // Change dimmer value to LED ring position
     pos = map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING);
+    if(pos == 0 && m_nDimmerValue > 0)
+    {
+      pos = 1;
+    }
   }
   SetRingPos(pos);
-  Serial.printlnf("SetHC595 pos=%d ",pos);
+  //Serial.printlnf("SetHC595 pos=%d,br=%d ",pos,m_nDimmerValue);
   return true;
 }
 
@@ -319,6 +323,10 @@ void xlPanelClass::SetRingOnOff(bool _switch)
     pos = (_switch ? map(m_nCCTValue, 0, 100, 0, PANEL_NUM_LEDS_CCTIDX) : 0);
   } else {
     pos = (_switch ? map(m_nDimmerValue, 0, 100, 0, PANEL_NUM_LEDS_RING) : 0);
+  	if(_switch>0 && pos == 0 && m_nDimmerValue>0)
+    {
+      pos = 1;
+    }
   }
   m_stSwitch = _switch;
   if(theConfig.GetDisableLamp())

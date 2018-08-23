@@ -16,7 +16,7 @@
 // _button configuration (values for 1ms timer service calls)
 //
 #define ENC_buttonINTERVAL    10  // check _button every x milliseconds, also debouce time
-#define ENC_DOUBLECLICKTIME  600  // second click within 600ms
+#define ENC_DOUBLECLICKTIME  800  // second click within 600ms
 #define ENC_HOLDTIME        1200  // report held _button after 1.2s
 
 // ----------------------------------------------------------------------------
